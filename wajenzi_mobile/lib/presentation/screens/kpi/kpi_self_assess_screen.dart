@@ -155,7 +155,7 @@ class _KpiSelfAssessScreenState extends ConsumerState<KpiSelfAssessScreen> {
     final state = ref.watch(kpiReviewDetailProvider(widget.reviewId));
 
     return Scaffold(
-      appBar: AppBar(title: Text('Self-Assessment', style: AppType.display(18))),
+      appBar: kpiAppBar(context: context, ref: ref, title: 'Self-Assessment'),
       body: state.when(
         loading: () => const LoadingWidget(message: 'Loading...'),
         error: (e, _) => CustomErrorWidget(
@@ -310,6 +310,9 @@ class _KpiSelfAssessScreenState extends ConsumerState<KpiSelfAssessScreen> {
       color: Theme.of(context).cardColor,
       child: SafeArea(
         top: false,
+        // Extra bottom space so the action bar sits above the outer curved
+        // bottom nav (MainScaffold uses extendBody:true).
+        minimum: const EdgeInsets.only(bottom: 90),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           child: Column(

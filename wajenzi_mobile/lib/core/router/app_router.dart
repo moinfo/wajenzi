@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../core/config/app_config.dart';
+import '../../core/config/theme_config.dart';
 import '../../core/network/api_client.dart';
 import '../services/external_launcher_service.dart';
 import '../../presentation/providers/auth_provider.dart';
@@ -139,6 +140,35 @@ import '../../presentation/screens/kpi/kpi_detail_screen.dart';
 import '../../presentation/screens/kpi/kpi_self_assess_screen.dart';
 import '../../presentation/screens/kpi/kpi_reviewer_screen.dart';
 import '../../presentation/screens/web/portal_webview_screen.dart';
+// ── Native-mobile-screens fan-out (Clusters A–E) ────────────────────────
+// Cluster A: Calculators & Design Catalogs
+import '../../presentation/screens/calculators/currencies_screen.dart';
+import '../../presentation/screens/calculators/design_packages_screen.dart';
+import '../../presentation/screens/calculators/design_addons_screen.dart';
+import '../../presentation/screens/calculators/special_structures_screen.dart';
+import '../../presentation/screens/calculators/site_visit_locations_screen.dart';
+import '../../presentation/screens/calculators/design_pricing_calculator_screen.dart';
+import '../../presentation/screens/calculators/site_visit_calculator_screen.dart';
+// Cluster B: Marketing trio
+import '../../presentation/screens/marketing/field_marketing_screen.dart';
+import '../../presentation/screens/marketing/whatsapp_marketing_screen.dart';
+import '../../presentation/screens/marketing/content_creator_screen.dart';
+// Cluster C: Engineering Design
+import '../../presentation/screens/engineering/structural_design_screen.dart';
+import '../../presentation/screens/engineering/service_design_screen.dart';
+// Cluster D: Website Content CMS (mobile admin)
+import '../../presentation/screens/landing_admin/awards_admin_screen.dart';
+import '../../presentation/screens/landing_admin/services_admin_screen.dart';
+import '../../presentation/screens/landing_admin/posters_admin_screen.dart';
+import '../../presentation/screens/landing_admin/stats_admin_screen.dart';
+import '../../presentation/screens/landing_admin/values_admin_screen.dart';
+import '../../presentation/screens/landing_admin/portfolio_admin_screen.dart';
+import '../../presentation/screens/landing_admin/about_admin_screen.dart';
+import '../../presentation/screens/landing_admin/team_admin_screen.dart';
+// Cluster E: Finance & Procurement leftovers
+import '../../presentation/screens/finance/finance_dashboard_screen.dart';
+import '../../presentation/screens/finance/expenditure_dashboard_screen.dart';
+import '../../presentation/screens/procurement/material_transfers_screen.dart';
 import '../../presentation/widgets/curved_internal_nav.dart';
 
 final rootScaffoldKeyProvider = Provider<GlobalKey<ScaffoldState>>((ref) {
@@ -1356,6 +1386,128 @@ final routerProvider = Provider<GoRouter>((ref) {
               reviewId: int.parse(state.pathParameters['id']!),
             ),
           ),
+          // ── Cluster A: Calculators & design catalogs ────────────────
+          GoRoute(
+            path: '/settings/currencies',
+            name: 'settings-currencies',
+            builder: (context, state) => const CurrenciesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/design-packages',
+            name: 'settings-design-packages',
+            builder: (context, state) => const DesignPackagesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/design-addons',
+            name: 'settings-design-addons',
+            builder: (context, state) => const DesignAddonsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/design-special-structures',
+            name: 'settings-design-special-structures',
+            builder: (context, state) => const SpecialStructuresScreen(),
+          ),
+          GoRoute(
+            path: '/settings/site-visit-locations',
+            name: 'settings-site-visit-locations',
+            builder: (context, state) => const SiteVisitLocationsScreen(),
+          ),
+          GoRoute(
+            path: '/calculators/design-pricing',
+            name: 'calculators-design-pricing',
+            builder: (context, state) =>
+                const DesignPricingCalculatorScreen(),
+          ),
+          GoRoute(
+            path: '/calculators/site-visit',
+            name: 'calculators-site-visit',
+            builder: (context, state) => const SiteVisitCalculatorScreen(),
+          ),
+          // ── Cluster B: Marketing trio ───────────────────────────────
+          GoRoute(
+            path: '/field-marketing',
+            name: 'field-marketing',
+            builder: (context, state) => const FieldMarketingScreen(),
+          ),
+          GoRoute(
+            path: '/whatsapp-marketing',
+            name: 'whatsapp-marketing',
+            builder: (context, state) => const WhatsAppMarketingScreen(),
+          ),
+          GoRoute(
+            path: '/content-creator',
+            name: 'content-creator',
+            builder: (context, state) => const ContentCreatorScreen(),
+          ),
+          // ── Cluster C: Engineering Design ───────────────────────────
+          GoRoute(
+            path: '/structural-design',
+            name: 'structural-design',
+            builder: (context, state) => const StructuralDesignScreen(),
+          ),
+          GoRoute(
+            path: '/service-design',
+            name: 'service-design',
+            builder: (context, state) => const ServiceDesignScreen(),
+          ),
+          // ── Cluster D: Website Content CMS admin ────────────────────
+          GoRoute(
+            path: '/landing-admin/portfolio',
+            name: 'landing-admin-portfolio',
+            builder: (context, state) => const PortfolioAdminScreen(),
+          ),
+          GoRoute(
+            path: '/landing-admin/awards',
+            name: 'landing-admin-awards',
+            builder: (context, state) => const AwardsAdminScreen(),
+          ),
+          GoRoute(
+            path: '/landing-admin/services',
+            name: 'landing-admin-services',
+            builder: (context, state) => const ServicesAdminScreen(),
+          ),
+          GoRoute(
+            path: '/landing-admin/posters',
+            name: 'landing-admin-posters',
+            builder: (context, state) => const PostersAdminScreen(),
+          ),
+          GoRoute(
+            path: '/landing-admin/stats',
+            name: 'landing-admin-stats',
+            builder: (context, state) => const StatsAdminScreen(),
+          ),
+          GoRoute(
+            path: '/landing-admin/about',
+            name: 'landing-admin-about',
+            builder: (context, state) => const AboutAdminScreen(),
+          ),
+          GoRoute(
+            path: '/landing-admin/values',
+            name: 'landing-admin-values',
+            builder: (context, state) => const ValuesAdminScreen(),
+          ),
+          GoRoute(
+            path: '/landing-admin/team',
+            name: 'landing-admin-team',
+            builder: (context, state) => const TeamAdminScreen(),
+          ),
+          // ── Cluster E: Finance & Procurement leftovers ──────────────
+          GoRoute(
+            path: '/finance',
+            name: 'finance',
+            builder: (context, state) => const FinanceDashboardScreen(),
+          ),
+          GoRoute(
+            path: '/finance/expenditure-dashboard',
+            name: 'finance-expenditure-dashboard',
+            builder: (context, state) =>
+                const ExpenditureDashboardScreen(),
+          ),
+          GoRoute(
+            path: '/material-transfers',
+            name: 'material-transfers',
+            builder: (context, state) => const MaterialTransfersScreen(),
+          ),
         ],
       ),
     ],
@@ -1558,50 +1710,57 @@ class MainDrawer extends ConsumerWidget {
                     fallbackText: userInitial,
                     isDarkMode: isDarkMode,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   Text(
                     user?.name ?? 'User',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                    style: AppType.display(
+                      20,
+                      weight: FontWeight.w700,
                       color: Colors.white,
+                      letterSpacing: -0.2,
                     ),
                   ),
                   if (user?.email != null)
-                    Text(
-                      user!.email,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.white.withValues(alpha: 0.8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        user!.email,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.7),
+                        ),
                       ),
                     ),
                   if (user?.designation != null)
                     Container(
-                      margin: const EdgeInsets.only(top: 8),
+                      margin: const EdgeInsets.only(top: 10),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
-                        vertical: 4,
+                        vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: isDarkMode
-                            ? const Color(0xFF193340).withValues(alpha: 0.2)
-                            : Colors.white.withValues(alpha: 0.2),
+                        color: AppColors.brandGreen.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.brandGreen.withValues(alpha: 0.4),
+                          width: 1,
+                        ),
                       ),
                       child: Text(
-                        user!.designation!,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDarkMode
-                              ? const Color(0xFF193340)
-                              : Colors.white,
-                          fontWeight: FontWeight.w500,
+                        user!.designation!.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF7BCB8E),
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.0,
                         ),
                       ),
                     ),
                 ],
               ),
             ),
+            // Thin brand-yellow stripe under the header for a signature accent.
+            Container(height: 2, color: AppColors.brandYellow),
             const SizedBox(height: 8),
 
             // Menu items
@@ -2049,50 +2208,229 @@ class MainDrawer extends ConsumerWidget {
           ),
         ],
       ),
-      data: (menus) {
-        return ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            ...menus.map<Widget>((m) {
-            final menu = m as Map<String, dynamic>;
-            final name = menu['name'] as String? ?? '';
-            final route = menu['route'] as String? ?? '';
-            final menuUrl = menu['url'] as String?;
-            final icon = _mapFaIcon(menu['icon'] as String? ?? '');
-            final children =
-                (menu['children'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      data: (menus) => _StaffMenuList(
+        menus: menus,
+        isDarkMode: isDarkMode,
+        currentLanguage: currentLanguage,
+        onTap: (label, route, url) => _openMenuFromDrawer(
+          context,
+          label: label,
+          route: route,
+          url: url,
+        ),
+      ),
+    );
+  }
+}
 
-            if (children.isEmpty) {
-              return _DrawerItem(
-                icon: icon,
-                label: name,
-                isDarkMode: isDarkMode,
-                onTap: () => _openMenuFromDrawer(
-                  context,
-                  label: name,
-                  route: route,
-                  url: menuUrl,
+/// Searchable wrapper around the staff drawer menu list. Filters parents and
+/// any of their submenu children by name, and auto-expands parents whose
+/// children match so users can spot the exact submenu without tapping.
+class _StaffMenuList extends StatefulWidget {
+  final List<dynamic> menus;
+  final bool isDarkMode;
+  final AppLanguage currentLanguage;
+  final Future<void> Function(String label, String route, String? url) onTap;
+  const _StaffMenuList({
+    required this.menus,
+    required this.isDarkMode,
+    required this.currentLanguage,
+    required this.onTap,
+  });
+
+  @override
+  State<_StaffMenuList> createState() => _StaffMenuListState();
+}
+
+class _StaffMenuListState extends State<_StaffMenuList> {
+  final _controller = TextEditingController();
+  String _q = '';
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _hint() => switch (widget.currentLanguage) {
+    AppLanguage.swahili => 'Tafuta menyu...',
+    AppLanguage.french => 'Rechercher dans le menu...',
+    AppLanguage.arabic => 'البحث في القائمة...',
+    AppLanguage.english => 'Search menus…',
+  };
+
+  String _emptyHint() => switch (widget.currentLanguage) {
+    AppLanguage.swahili => 'Hakuna menyu zinazolingana',
+    AppLanguage.french => 'Aucun menu correspondant',
+    AppLanguage.arabic => 'لا توجد قوائم مطابقة',
+    AppLanguage.english => 'No menus match your search',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final q = _q.trim().toLowerCase();
+    final filtering = q.isNotEmpty;
+    bool matches(String s) => s.toLowerCase().contains(q);
+
+    // Build the filtered list. When filtering, parents whose children match
+    // are shown with only those children, flagged to render expanded.
+    final filtered = <Map<String, dynamic>>[];
+    for (final m in widget.menus) {
+      final menu = m as Map<String, dynamic>;
+      final name = (menu['name'] as String?) ?? '';
+      final children =
+          (menu['children'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      if (!filtering) {
+        filtered.add(menu);
+        continue;
+      }
+      if (matches(name)) {
+        filtered.add(menu); // parent matches — show with all its children
+        continue;
+      }
+      final matchedChildren = children
+          .where((c) => matches((c['name'] as String?) ?? ''))
+          .toList();
+      if (matchedChildren.isNotEmpty) {
+        filtered.add({
+          ...menu,
+          'children': matchedChildren,
+          '__forceExpanded': true,
+        });
+      }
+    }
+
+    final hintColor = widget.isDarkMode
+        ? Colors.white.withValues(alpha: 0.55)
+        : Colors.grey.shade500;
+    final searchBg = widget.isDarkMode
+        ? Colors.white.withValues(alpha: 0.06)
+        : AppColors.brandBlue.withValues(alpha: 0.04);
+    final searchBorder = widget.isDarkMode
+        ? Colors.white.withValues(alpha: 0.10)
+        : AppColors.brandBlue.withValues(alpha: 0.10);
+
+    return Column(
+      children: [
+        // Search field
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+          child: TextField(
+            controller: _controller,
+            onChanged: (v) => setState(() => _q = v),
+            textInputAction: TextInputAction.search,
+            style: TextStyle(
+              fontSize: 14,
+              color: widget.isDarkMode ? Colors.white : AppColors.brandBlue,
+            ),
+            decoration: InputDecoration(
+              hintText: _hint(),
+              hintStyle: TextStyle(color: hintColor, fontSize: 13),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                size: 20,
+                color: AppColors.brandGreen,
+              ),
+              suffixIcon: q.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Clear',
+                      icon: Icon(Icons.close_rounded, size: 18, color: hintColor),
+                      onPressed: () {
+                        setState(() {
+                          _q = '';
+                          _controller.clear();
+                        });
+                      },
+                    ),
+              isDense: true,
+              filled: true,
+              fillColor: searchBg,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: searchBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: searchBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.brandGreen,
+                  width: 1.5,
                 ),
-              );
-            }
-
-            return _ExpandableDrawerItem(
-              icon: icon,
-              label: name,
-              isDarkMode: isDarkMode,
-              children: children,
-              onChildTap: (childName, childRoute, childUrl) =>
-                  _openMenuFromDrawer(
-                    context,
-                    label: childName,
-                    route: childRoute,
-                    url: childUrl,
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: filtered.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.search_off_rounded,
+                          size: 36,
+                          color: hintColor,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _emptyHint(),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: hintColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-            );
-          }),
-          ],
-        );
-      },
+                )
+              : ListView.builder(
+                  padding: EdgeInsets.zero,
+                  itemCount: filtered.length,
+                  itemBuilder: (context, i) {
+                    final menu = filtered[i];
+                    final name = (menu['name'] as String?) ?? '';
+                    final route = (menu['route'] as String?) ?? '';
+                    final menuUrl = menu['url'] as String?;
+                    final icon = _mapFaIcon((menu['icon'] as String?) ?? '');
+                    final children =
+                        (menu['children'] as List?)
+                            ?.cast<Map<String, dynamic>>() ??
+                        [];
+                    final force = menu['__forceExpanded'] == true;
+
+                    if (children.isEmpty) {
+                      return _DrawerItem(
+                        key: ValueKey('drawer-leaf-$name'),
+                        icon: icon,
+                        label: name,
+                        isDarkMode: widget.isDarkMode,
+                        onTap: () => widget.onTap(name, route, menuUrl),
+                      );
+                    }
+                    return _ExpandableDrawerItem(
+                      key: ValueKey('drawer-group-$name'),
+                      icon: icon,
+                      label: name,
+                      isDarkMode: widget.isDarkMode,
+                      children: children,
+                      forceExpanded: force,
+                      onChildTap: (cn, cr, cu) => widget.onTap(cn, cr, cu),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }
@@ -2425,6 +2763,15 @@ String? _mapWebRoute(String webRoute) {
     'sites.create': '/sites',
     'site-supervisor-assignments.index': '/site-supervisor-assignments',
     'site-supervisor-assignments.create': '/site-supervisor-assignments',
+    // KPI sub-routes whose backend URL is /settings/... — the URL fallback
+    // would otherwise hit the "settings" fuzzy branch and land on /settings.
+    // These are web-only management screens; route to the mobile KPI list.
+    'supervisor_assignments.index': '/performance',
+    'supervisor_assignments': '/performance',
+    'performance.templates': '/performance',
+    'performance_templates': '/performance',
+    'settings/supervisor-assignments': '/performance',
+    'settings_supervisor_assignments': '/performance',
     'site-daily-reports.index': '/site-daily-reports',
     'site-daily-reports.create': '/site-daily-reports',
     'site-daily-reports.my-reports': '/site-daily-reports',
@@ -2686,6 +3033,73 @@ String? _mapWebRoute(String webRoute) {
     'messages': '/messages',
     'requests.approval': '/attendance',
     'inspections.approval': '/attendance',
+    // ── Cluster A: Calculators & design catalogs ───────────────────────
+    'hr_settings_currencies': '/settings/currencies',
+    'settings/currencies': '/settings/currencies',
+    'currencies': '/settings/currencies',
+    'hr_settings_design_packages': '/settings/design-packages',
+    'settings/design_packages': '/settings/design-packages',
+    'settings/design-packages': '/settings/design-packages',
+    'hr_settings_design_addons': '/settings/design-addons',
+    'settings/design_addons': '/settings/design-addons',
+    'settings/design-addons': '/settings/design-addons',
+    'hr_settings_design_special_structures':
+        '/settings/design-special-structures',
+    'settings/design_special_structures': '/settings/design-special-structures',
+    'settings/design-special-structures': '/settings/design-special-structures',
+    'hr_settings_site_visit_locations': '/settings/site-visit-locations',
+    'settings/site_visit_locations': '/settings/site-visit-locations',
+    'settings/site-visit-locations': '/settings/site-visit-locations',
+    'calculators.design-pricing': '/calculators/design-pricing',
+    'calculators/design-pricing': '/calculators/design-pricing',
+    'calculators.design_pricing': '/calculators/design-pricing',
+    'calculators.site-visit': '/calculators/site-visit',
+    'calculators/site-visit': '/calculators/site-visit',
+    'calculators.site_visit': '/calculators/site-visit',
+    // ── Cluster B: Marketing trio ──────────────────────────────────────
+    'field_marketing.index': '/field-marketing',
+    'field_marketing': '/field-marketing',
+    'field-marketing': '/field-marketing',
+    'whatsapp_marketing.index': '/whatsapp-marketing',
+    'whatsapp_marketing': '/whatsapp-marketing',
+    'whatsapp-marketing': '/whatsapp-marketing',
+    'content_creator.index': '/content-creator',
+    'content_creator': '/content-creator',
+    'content-creator': '/content-creator',
+    // ── Cluster C: Engineering Design ──────────────────────────────────
+    'structural_design': '/structural-design',
+    'structural-design': '/structural-design',
+    'structural_design.index': '/structural-design',
+    'structural_design_index': '/structural-design',
+    'service_design': '/service-design',
+    'service-design': '/service-design',
+    'service_design.index': '/service-design',
+    'service_design_index': '/service-design',
+    // ── Cluster D: Website Content CMS admin ───────────────────────────
+    'landing_portfolio': '/landing-admin/portfolio',
+    'landing_awards': '/landing-admin/awards',
+    'landing_services': '/landing-admin/services',
+    'landing_posters': '/landing-admin/posters',
+    'landing_stats': '/landing-admin/stats',
+    'landing_about': '/landing-admin/about',
+    'landing_values': '/landing-admin/values',
+    'landing_team': '/landing-admin/team',
+    // ── Cluster E: Finance & Procurement leftovers ─────────────────────
+    'finance': '/finance',
+    'finance.dashboard': '/finance',
+    'finance/dashboard': '/finance',
+    'finance_dashboard': '/finance',
+    'finance.expenditure_dashboard': '/finance/expenditure-dashboard',
+    'finance/expenditure_dashboard': '/finance/expenditure-dashboard',
+    'finance/expenditure-dashboard': '/finance/expenditure-dashboard',
+    'expenditure_dashboard': '/finance/expenditure-dashboard',
+    'expenditure-dashboard': '/finance/expenditure-dashboard',
+    'material_transfers': '/material-transfers',
+    'material-transfers': '/material-transfers',
+    'material_transfer': '/material-transfers',
+    'material-transfer': '/material-transfers',
+    'procurement/material_transfers': '/material-transfers',
+    'procurement/material-transfers': '/material-transfers',
   };
   return map[webRoute];
 }
@@ -2903,7 +3317,17 @@ String? _resolveWebRoute(String webRoute) {
     return '/employee-profile';
   }
   if (route.contains('report')) return '/dashboard';
-  if (route.contains('setting')) return '/settings';
+  // Only catch routes that are *about* settings — not nested URLs like
+  // `settings/supervisor-assignments` (which are unrelated features served
+  // under the settings module on the web).
+  if (route == 'settings' ||
+      route == 'setting' ||
+      route.startsWith('settings.') ||
+      route.endsWith('.settings') ||
+      route.endsWith('_settings') ||
+      route.startsWith('settings_')) {
+    return '/settings';
+  }
   if (route.contains('vat')) return '/vat-sales';
 
   return null;
@@ -3101,13 +3525,18 @@ class _ExpandableDrawerItem extends StatefulWidget {
   final List<Map<String, dynamic>> children;
   final Future<void> Function(String name, String route, String? url)
   onChildTap;
+  // Force the group to render expanded — used by the search filter so parents
+  // whose children match the query open automatically.
+  final bool forceExpanded;
 
   const _ExpandableDrawerItem({
+    super.key,
     required this.icon,
     required this.label,
     required this.isDarkMode,
     required this.children,
     required this.onChildTap,
+    this.forceExpanded = false,
   });
 
   @override
@@ -3116,78 +3545,105 @@ class _ExpandableDrawerItem extends StatefulWidget {
 
 class _ExpandableDrawerItemState extends State<_ExpandableDrawerItem> {
   bool _expanded = false;
+  bool get _open => widget.forceExpanded || _expanded;
 
   @override
   Widget build(BuildContext context) {
-    final textColor = widget.isDarkMode
-        ? Colors.white
-        : const Color(0xFF2C3E50);
+    final textColor = widget.isDarkMode ? Colors.white : AppColors.brandBlue;
     final subTextColor = widget.isDarkMode
         ? Colors.white70
-        : const Color(0xFF5D6D7E);
+        : AppColors.brandBlue.withValues(alpha: 0.78);
 
     return Column(
       children: [
         ListTile(
-          leading: Icon(widget.icon, color: textColor.withValues(alpha: 0.8)),
+          leading: Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: widget.isDarkMode
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : AppColors.brandGreen.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(
+              widget.icon,
+              size: 19,
+              color: widget.isDarkMode
+                  ? const Color(0xFF7BCB8E)
+                  : AppColors.brandGreen,
+            ),
+          ),
           title: Text(
             widget.label,
             style: TextStyle(
               color: textColor,
               fontWeight: FontWeight.w600,
               fontSize: 14,
+              letterSpacing: -0.1,
             ),
           ),
           trailing: AnimatedRotation(
-            turns: _expanded ? 0.5 : 0,
-            duration: const Duration(milliseconds: 200),
+            turns: _open ? 0.5 : 0,
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
             child: Icon(
               Icons.expand_more_rounded,
-              color: textColor.withValues(alpha: 0.5),
+              color: textColor.withValues(alpha: 0.45),
               size: 20,
             ),
           ),
           onTap: () => setState(() => _expanded = !_expanded),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 0,
-          ),
-          dense: true,
-          visualDensity: VisualDensity.compact,
+          hoverColor: AppColors.brandGreen.withValues(alpha: 0.08),
+          splashColor: AppColors.brandGreen.withValues(alpha: 0.15),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          horizontalTitleGap: 12,
+          visualDensity: const VisualDensity(horizontal: 0, vertical: -2),
         ),
         AnimatedCrossFade(
           firstChild: const SizedBox.shrink(),
           secondChild: Padding(
-            padding: const EdgeInsets.only(left: 28),
-            child: Column(
-              children: widget.children.map((child) {
-                final childName = child['name'] as String? ?? '';
-                final childRoute = child['route'] as String? ?? '';
-                final childUrl = child['url'] as String?;
-                final childIcon = _mapFaIcon(child['icon'] as String? ?? '');
-                return ListTile(
-                  leading: Icon(childIcon, size: 18, color: subTextColor),
-                  title: Text(
-                    childName,
-                    style: TextStyle(
-                      color: subTextColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                    ),
+            padding: const EdgeInsets.only(left: 44, right: 8, bottom: 4),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(
+                    color: AppColors.brandGreen.withValues(alpha: 0.22),
+                    width: 2,
                   ),
-                  onTap: () =>
-                      widget.onChildTap(childName, childRoute, childUrl),
-                  dense: true,
-                  visualDensity: VisualDensity.compact,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                );
-              }).toList(),
+                ),
+              ),
+              child: Column(
+                children: widget.children.map((child) {
+                  final childName = child['name'] as String? ?? '';
+                  final childRoute = child['route'] as String? ?? '';
+                  final childUrl = child['url'] as String?;
+                  final childIcon = _mapFaIcon(child['icon'] as String? ?? '');
+                  return ListTile(
+                    leading: Icon(childIcon, size: 16, color: subTextColor),
+                    title: Text(
+                      childName,
+                      style: TextStyle(
+                        color: subTextColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    onTap: () =>
+                        widget.onChildTap(childName, childRoute, childUrl),
+                    dense: true,
+                    visualDensity: VisualDensity.compact,
+                    hoverColor: AppColors.brandGreen.withValues(alpha: 0.06),
+                    contentPadding: const EdgeInsets.only(left: 12, right: 12),
+                    horizontalTitleGap: 8,
+                  );
+                }).toList(),
+              ),
             ),
           ),
-          crossFadeState: _expanded
+          crossFadeState: _open
               ? CrossFadeState.showSecond
               : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 200),
@@ -3204,6 +3660,7 @@ class _DrawerItem extends StatelessWidget {
   final VoidCallback onTap;
 
   const _DrawerItem({
+    super.key,
     required this.icon,
     required this.label,
     required this.isDarkMode,
@@ -3212,24 +3669,43 @@ class _DrawerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tileColor = isDarkMode ? Colors.white.withValues(alpha: 0.04) : null;
     return ListTile(
-      leading: Icon(
-        icon,
-        color: isDarkMode ? Colors.white70 : const Color(0xFF2C3E50),
+      leading: Container(
+        width: 34,
+        height: 34,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isDarkMode
+              ? Colors.white.withValues(alpha: 0.06)
+              : AppColors.brandGreen.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: Icon(
+          icon,
+          size: 19,
+          color: isDarkMode
+              ? const Color(0xFF7BCB8E)
+              : AppColors.brandGreen,
+        ),
       ),
       title: Text(
         label,
         style: TextStyle(
-          color: isDarkMode ? Colors.white : const Color(0xFF2C3E50),
-          fontWeight: FontWeight.w500,
+          color: isDarkMode ? Colors.white : AppColors.brandBlue,
+          fontWeight: FontWeight.w600,
           fontSize: 14,
+          letterSpacing: -0.1,
         ),
       ),
       onTap: onTap,
+      tileColor: tileColor,
+      hoverColor: AppColors.brandGreen.withValues(alpha: 0.08),
+      splashColor: AppColors.brandGreen.withValues(alpha: 0.15),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-      dense: true,
-      visualDensity: VisualDensity.compact,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      horizontalTitleGap: 12,
+      visualDensity: const VisualDensity(horizontal: 0, vertical: -2),
     );
   }
 }

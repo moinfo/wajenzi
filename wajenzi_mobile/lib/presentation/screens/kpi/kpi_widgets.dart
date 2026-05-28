@@ -1,6 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/config/theme_config.dart';
+import '../../../core/router/app_router.dart';
 import '../../../data/models/kpi_common.dart';
+
+/// Shared AppBar for the KPI feature: back arrow on the left, hamburger that
+/// opens the outer drawer on the right (plus any extra actions you pass in).
+PreferredSizeWidget kpiAppBar({
+  required BuildContext context,
+  required WidgetRef ref,
+  required String title,
+  PreferredSizeWidget? bottom,
+  List<Widget> actions = const [],
+}) {
+  return AppBar(
+    title: Text(title, style: AppType.display(18)),
+    leading: IconButton(
+      icon: const Icon(Icons.arrow_back_rounded),
+      tooltip: 'Back',
+      onPressed: () =>
+          context.canPop() ? context.pop() : context.go('/dashboard'),
+    ),
+    actions: [
+      ...actions,
+      IconButton(
+        icon: const Icon(Icons.menu_rounded),
+        tooltip: 'Menu',
+        onPressed: () =>
+            ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
+      ),
+    ],
+    bottom: bottom,
+  );
+}
 
 /// A small colored status chip for a review status.
 class KpiStatusChip extends StatelessWidget {

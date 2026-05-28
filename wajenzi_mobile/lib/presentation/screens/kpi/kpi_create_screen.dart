@@ -8,6 +8,7 @@ import '../../../data/models/kpi_create_info.dart';
 import '../../providers/kpi_provider.dart';
 import '../../widgets/common/error_widget.dart';
 import '../../widgets/common/loading_widget.dart';
+import 'kpi_widgets.dart';
 
 class KpiCreateScreen extends ConsumerStatefulWidget {
   const KpiCreateScreen({super.key});
@@ -117,7 +118,7 @@ class _KpiCreateScreenState extends ConsumerState<KpiCreateScreen> {
     final infoAsync = ref.watch(kpiCreateInfoProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text('New Review', style: AppType.display(18))),
+      appBar: kpiAppBar(context: context, ref: ref, title: 'New Review'),
       body: infoAsync.when(
         loading: () => const LoadingWidget(message: 'Loading...'),
         error: (e, _) => CustomErrorWidget(

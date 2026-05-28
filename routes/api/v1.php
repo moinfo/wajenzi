@@ -110,6 +110,20 @@ use App\Http\Controllers\Api\V1\SalarySlipApiController;
 use App\Http\Controllers\Api\V1\SiteApiController;
 use App\Http\Controllers\Api\V1\SiteSupervisorAssignmentApiController;
 use App\Http\Controllers\Api\V1\KpiApiController;
+use App\Http\Controllers\Api\V1\CurrencyApiController;
+use App\Http\Controllers\Api\V1\DesignServicePackageApiController;
+use App\Http\Controllers\Api\V1\DesignServiceAddonApiController;
+use App\Http\Controllers\Api\V1\DesignSpecialStructureApiController;
+use App\Http\Controllers\Api\V1\SiteVisitLocationApiController;
+use App\Http\Controllers\Api\V1\DesignPricingCalculatorApiController;
+use App\Http\Controllers\Api\V1\SiteVisitCalculatorApiController;
+use App\Http\Controllers\Api\V1\FieldMarketingApiController;
+use App\Http\Controllers\Api\V1\WhatsAppMarketingApiController;
+use App\Http\Controllers\Api\V1\ContentCreatorApiController;
+use App\Http\Controllers\Api\V1\StructuralDesignApiController;
+use App\Http\Controllers\Api\V1\ServiceDesignApiController;
+use App\Http\Controllers\Api\V1\MaterialTransferController;
+use App\Http\Controllers\Api\V1\FinanceDashboardApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -906,6 +920,23 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('{id}/reject', [MaterialRequestController::class, 'reject']);
     });
 
+    // Material Transfers — inter-site movement of BOQ + free-stock items.
+    Route::prefix('material-transfers')->group(function () {
+        Route::get('reference-data', [MaterialTransferController::class, 'referenceData']);
+        Route::get('/', [MaterialTransferController::class, 'index']);
+        Route::post('/', [MaterialTransferController::class, 'store']);
+        Route::get('{id}', [MaterialTransferController::class, 'show']);
+        Route::delete('{id}', [MaterialTransferController::class, 'destroy']);
+        Route::post('{id}/approve', [MaterialTransferController::class, 'approve']);
+        Route::post('{id}/reject', [MaterialTransferController::class, 'reject']);
+    });
+
+    // Finance — parent landing dashboard + expenditure dashboard.
+    Route::prefix('finance')->group(function () {
+        Route::get('dashboard', [FinanceDashboardApiController::class, 'index']);
+        Route::get('expenditure-dashboard', [FinanceDashboardApiController::class, 'expenditureDashboard']);
+    });
+
     // Billing Documents
     Route::prefix('billing')->group(function () {
         Route::get('dashboard', [BillingDashboardApiController::class, 'index']);
@@ -1085,6 +1116,55 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('inspections/{id}', [MaterialInspectionController::class, 'show']);
     });
 
+    // ───────────────────────────────────────────────────────────────────
+    // Cluster A: Calculators + Design / Site-visit catalog settings
+    // Catalog settings are admin-only (writes AND reads scoped to admins);
+    // calculator compute endpoints below remain open to all auth users.
+    // ───────────────────────────────────────────────────────────────────
+    Route::middleware('role:System Administrator|Admin')->group(function () {
+        Route::prefix('currencies')->group(function () {
+            Route::get('/', [CurrencyApiController::class, 'index']);
+            Route::post('/', [CurrencyApiController::class, 'store']);
+            Route::get('{id}', [CurrencyApiController::class, 'show']);
+            Route::put('{id}', [CurrencyApiController::class, 'update']);
+            Route::delete('{id}', [CurrencyApiController::class, 'destroy']);
+        });
+        Route::prefix('design-service-packages')->group(function () {
+            Route::get('/', [DesignServicePackageApiController::class, 'index']);
+            Route::post('/', [DesignServicePackageApiController::class, 'store']);
+            Route::get('{id}', [DesignServicePackageApiController::class, 'show']);
+            Route::put('{id}', [DesignServicePackageApiController::class, 'update']);
+            Route::delete('{id}', [DesignServicePackageApiController::class, 'destroy']);
+        });
+        Route::prefix('design-service-addons')->group(function () {
+            Route::get('/', [DesignServiceAddonApiController::class, 'index']);
+            Route::post('/', [DesignServiceAddonApiController::class, 'store']);
+            Route::get('{id}', [DesignServiceAddonApiController::class, 'show']);
+            Route::put('{id}', [DesignServiceAddonApiController::class, 'update']);
+            Route::delete('{id}', [DesignServiceAddonApiController::class, 'destroy']);
+        });
+        Route::prefix('design-special-structures')->group(function () {
+            Route::get('/', [DesignSpecialStructureApiController::class, 'index']);
+            Route::post('/', [DesignSpecialStructureApiController::class, 'store']);
+            Route::get('{id}', [DesignSpecialStructureApiController::class, 'show']);
+            Route::put('{id}', [DesignSpecialStructureApiController::class, 'update']);
+            Route::delete('{id}', [DesignSpecialStructureApiController::class, 'destroy']);
+        });
+        Route::prefix('site-visit-locations')->group(function () {
+            Route::get('/', [SiteVisitLocationApiController::class, 'index']);
+            Route::post('/', [SiteVisitLocationApiController::class, 'store']);
+            Route::get('{id}', [SiteVisitLocationApiController::class, 'show']);
+            Route::put('{id}', [SiteVisitLocationApiController::class, 'update']);
+            Route::delete('{id}', [SiteVisitLocationApiController::class, 'destroy']);
+        });
+    });
+    Route::prefix('calculators')->group(function () {
+        Route::get('design-pricing',           [DesignPricingCalculatorApiController::class, 'index']);
+        Route::post('design-pricing/compute',  [DesignPricingCalculatorApiController::class, 'compute']);
+        Route::get('site-visit',               [SiteVisitCalculatorApiController::class, 'index']);
+        Route::post('site-visit/compute',      [SiteVisitCalculatorApiController::class, 'compute']);
+    });
+
     // Performance / KPI reviews (mirrors web KpiController)
     Route::prefix('performance')->group(function () {
         Route::get('/', [KpiApiController::class, 'index']);
@@ -1095,5 +1175,155 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('{id}/submit', [KpiApiController::class, 'submit']);
         Route::post('{id}/recall', [KpiApiController::class, 'recall']);
         Route::patch('{id}/review', [KpiApiController::class, 'updateReviewer']);
+    });
+
+    // Field Marketing (mirrors web FieldMarketingController)
+    Route::prefix('field-marketing')->group(function () {
+        Route::get('reference-data', [FieldMarketingApiController::class, 'referenceData']);
+        Route::get('stats', [FieldMarketingApiController::class, 'stats']);
+        Route::get('/', [FieldMarketingApiController::class, 'index']);
+        Route::post('sessions', [FieldMarketingApiController::class, 'storeSession']);
+        Route::get('sessions/{id}', [FieldMarketingApiController::class, 'showSession']);
+        Route::put('sessions/{id}', [FieldMarketingApiController::class, 'updateSession']);
+        Route::delete('sessions/{id}', [FieldMarketingApiController::class, 'destroySession']);
+        Route::post('sessions/{id}/visits', [FieldMarketingApiController::class, 'storeVisit']);
+        Route::put('visits/{id}', [FieldMarketingApiController::class, 'updateVisit']);
+        Route::delete('visits/{id}', [FieldMarketingApiController::class, 'destroyVisit']);
+        Route::post('targets', [FieldMarketingApiController::class, 'storeTarget']);
+    });
+
+    // WhatsApp Marketing (mirrors web WhatsAppMarketingController)
+    Route::prefix('whatsapp-marketing')->group(function () {
+        Route::get('reference-data', [WhatsAppMarketingApiController::class, 'referenceData']);
+        Route::get('/', [WhatsAppMarketingApiController::class, 'index']);
+        Route::get('campaigns', [WhatsAppMarketingApiController::class, 'indexCampaigns']);
+        Route::post('campaigns', [WhatsAppMarketingApiController::class, 'storeCampaign']);
+        Route::put('campaigns/{id}', [WhatsAppMarketingApiController::class, 'updateCampaign']);
+        Route::patch('campaigns/{id}/close', [WhatsAppMarketingApiController::class, 'closeCampaign']);
+        Route::delete('campaigns/{id}', [WhatsAppMarketingApiController::class, 'destroyCampaign']);
+        Route::post('contacts', [WhatsAppMarketingApiController::class, 'storeContact']);
+        Route::get('contacts/{id}', [WhatsAppMarketingApiController::class, 'showContact']);
+        Route::put('contacts/{id}', [WhatsAppMarketingApiController::class, 'updateContact']);
+        Route::patch('contacts/{id}/stage', [WhatsAppMarketingApiController::class, 'updateContactStage']);
+        Route::delete('contacts/{id}', [WhatsAppMarketingApiController::class, 'destroyContact']);
+        Route::get('contacts/{id}/calls', [WhatsAppMarketingApiController::class, 'indexCalls']);
+        Route::post('contacts/{id}/calls', [WhatsAppMarketingApiController::class, 'storeCall']);
+    });
+
+    // Content Creator (mirrors web ContentCreatorController)
+    Route::prefix('content-creator')->group(function () {
+        Route::get('reference-data', [ContentCreatorApiController::class, 'referenceData']);
+        Route::get('board', [ContentCreatorApiController::class, 'board']);
+        Route::get('/', [ContentCreatorApiController::class, 'index']);
+        Route::post('tasks', [ContentCreatorApiController::class, 'storeTask']);
+        Route::get('tasks/{id}', [ContentCreatorApiController::class, 'showTask']);
+        Route::put('tasks/{id}', [ContentCreatorApiController::class, 'updateTask']);
+        Route::delete('tasks/{id}', [ContentCreatorApiController::class, 'destroyTask']);
+        Route::post('tasks/{id}/progress', [ContentCreatorApiController::class, 'updateProgress']);
+        Route::post('tasks/{id}/approve', [ContentCreatorApiController::class, 'approveTask']);
+        Route::post('tasks/{id}/comments', [ContentCreatorApiController::class, 'addComment']);
+        Route::post('targets', [ContentCreatorApiController::class, 'setTarget']);
+    });
+
+    // Engineering Design — Structural Design (mirrors ProjectStructuralDesignController)
+    Route::prefix('structural-designs')->group(function () {
+        Route::get('reference-data', [StructuralDesignApiController::class, 'referenceData']);
+        Route::get('/', [StructuralDesignApiController::class, 'index']);
+        Route::post('/', [StructuralDesignApiController::class, 'store']);
+        Route::get('{id}', [StructuralDesignApiController::class, 'show']);
+        Route::put('{id}', [StructuralDesignApiController::class, 'update']);
+        Route::delete('{id}', [StructuralDesignApiController::class, 'destroy']);
+        Route::post('{id}/submit', [StructuralDesignApiController::class, 'submit']);
+        Route::post('{id}/schedule', [StructuralDesignApiController::class, 'submitSchedule']);
+        Route::post('{id}/stages/{stageId}', [StructuralDesignApiController::class, 'updateStage']);
+        Route::post('{id}/stages/{stageId}/submit', [StructuralDesignApiController::class, 'submitStage']);
+    });
+
+    // Engineering Design — Service Design (mirrors ProjectServiceDesignController)
+    Route::prefix('service-designs')->group(function () {
+        Route::get('reference-data', [ServiceDesignApiController::class, 'referenceData']);
+        Route::get('/', [ServiceDesignApiController::class, 'index']);
+        Route::post('/', [ServiceDesignApiController::class, 'store']);
+        Route::get('{id}', [ServiceDesignApiController::class, 'show']);
+        Route::put('{id}', [ServiceDesignApiController::class, 'update']);
+        Route::delete('{id}', [ServiceDesignApiController::class, 'destroy']);
+        Route::post('{id}/submit', [ServiceDesignApiController::class, 'submit']);
+        Route::post('{id}/schedule', [ServiceDesignApiController::class, 'submitSchedule']);
+        Route::post('{id}/stages/{stageId}', [ServiceDesignApiController::class, 'updateStage']);
+        Route::post('{id}/stages/{stageId}/submit', [ServiceDesignApiController::class, 'submitStage']);
+    });
+
+    // ──────────────────────────────────────────────────────────────────────
+    // Landing CMS — mobile admin (write side). Public read endpoints live
+    // outside the auth group at /api/v1/public/{portfolio,awards,...}.
+    // Admin-role only — landing CMS is internal-staff content management.
+    // ──────────────────────────────────────────────────────────────────────
+    Route::prefix('landing-admin')->middleware('role:System Administrator|Admin')->group(function () {
+        // Portfolio
+        Route::get('portfolio', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'index']);
+        Route::post('portfolio', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'store']);
+        Route::post('portfolio/reorder', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'reorder']);
+        Route::get('portfolio/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'show']);
+        Route::post('portfolio/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'update']); // multipart-friendly
+        Route::put('portfolio/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'update']);
+        Route::delete('portfolio/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'destroy']);
+        Route::delete('portfolio/images/{imageId}', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'deleteImage']);
+        Route::post('portfolio/images/{imageId}/primary', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'setPrimaryImage']);
+
+        // Awards
+        Route::get('awards', [\App\Http\Controllers\Api\V1\Landing\LandingAwardAdminController::class, 'index']);
+        Route::post('awards', [\App\Http\Controllers\Api\V1\Landing\LandingAwardAdminController::class, 'store']);
+        Route::post('awards/reorder', [\App\Http\Controllers\Api\V1\Landing\LandingAwardAdminController::class, 'reorder']);
+        Route::get('awards/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingAwardAdminController::class, 'show']);
+        Route::post('awards/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingAwardAdminController::class, 'update']);
+        Route::put('awards/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingAwardAdminController::class, 'update']);
+        Route::delete('awards/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingAwardAdminController::class, 'destroy']);
+
+        // Services
+        Route::get('services', [\App\Http\Controllers\Api\V1\Landing\LandingServiceAdminController::class, 'index']);
+        Route::post('services', [\App\Http\Controllers\Api\V1\Landing\LandingServiceAdminController::class, 'store']);
+        Route::post('services/reorder', [\App\Http\Controllers\Api\V1\Landing\LandingServiceAdminController::class, 'reorder']);
+        Route::get('services/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingServiceAdminController::class, 'show']);
+        Route::post('services/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingServiceAdminController::class, 'update']);
+        Route::put('services/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingServiceAdminController::class, 'update']);
+        Route::delete('services/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingServiceAdminController::class, 'destroy']);
+
+        // Posters (Home Banners)
+        Route::get('posters', [\App\Http\Controllers\Api\V1\Landing\LandingPosterAdminController::class, 'index']);
+        Route::post('posters', [\App\Http\Controllers\Api\V1\Landing\LandingPosterAdminController::class, 'store']);
+        Route::post('posters/reorder', [\App\Http\Controllers\Api\V1\Landing\LandingPosterAdminController::class, 'reorder']);
+        Route::get('posters/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPosterAdminController::class, 'show']);
+        Route::post('posters/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPosterAdminController::class, 'update']);
+        Route::put('posters/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPosterAdminController::class, 'update']);
+        Route::delete('posters/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPosterAdminController::class, 'destroy']);
+
+        // Stats (Hero Stats)
+        Route::get('stats', [\App\Http\Controllers\Api\V1\Landing\LandingStatAdminController::class, 'index']);
+        Route::post('stats', [\App\Http\Controllers\Api\V1\Landing\LandingStatAdminController::class, 'store']);
+        Route::post('stats/reorder', [\App\Http\Controllers\Api\V1\Landing\LandingStatAdminController::class, 'reorder']);
+        Route::get('stats/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingStatAdminController::class, 'show']);
+        Route::put('stats/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingStatAdminController::class, 'update']);
+        Route::delete('stats/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingStatAdminController::class, 'destroy']);
+
+        // About (singleton)
+        Route::get('about', [\App\Http\Controllers\Api\V1\Landing\LandingAboutAdminController::class, 'index']);
+        Route::put('about', [\App\Http\Controllers\Api\V1\Landing\LandingAboutAdminController::class, 'update']);
+
+        // Core Values
+        Route::get('values', [\App\Http\Controllers\Api\V1\Landing\LandingValueAdminController::class, 'index']);
+        Route::post('values', [\App\Http\Controllers\Api\V1\Landing\LandingValueAdminController::class, 'store']);
+        Route::post('values/reorder', [\App\Http\Controllers\Api\V1\Landing\LandingValueAdminController::class, 'reorder']);
+        Route::get('values/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingValueAdminController::class, 'show']);
+        Route::put('values/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingValueAdminController::class, 'update']);
+        Route::delete('values/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingValueAdminController::class, 'destroy']);
+
+        // Team
+        Route::get('team', [\App\Http\Controllers\Api\V1\Landing\LandingTeamAdminController::class, 'index']);
+        Route::post('team', [\App\Http\Controllers\Api\V1\Landing\LandingTeamAdminController::class, 'store']);
+        Route::post('team/reorder', [\App\Http\Controllers\Api\V1\Landing\LandingTeamAdminController::class, 'reorder']);
+        Route::get('team/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingTeamAdminController::class, 'show']);
+        Route::post('team/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingTeamAdminController::class, 'update']);
+        Route::put('team/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingTeamAdminController::class, 'update']);
+        Route::delete('team/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingTeamAdminController::class, 'destroy']);
     });
 });

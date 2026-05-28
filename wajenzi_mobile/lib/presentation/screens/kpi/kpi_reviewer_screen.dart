@@ -191,7 +191,7 @@ class _KpiReviewerScreenState extends ConsumerState<KpiReviewerScreen> {
     final state = ref.watch(kpiReviewDetailProvider(widget.reviewId));
 
     return Scaffold(
-      appBar: AppBar(title: Text('Review', style: AppType.display(18))),
+      appBar: kpiAppBar(context: context, ref: ref, title: 'Review'),
       body: state.when(
         loading: () => const LoadingWidget(message: 'Loading...'),
         error: (e, _) => CustomErrorWidget(
@@ -386,6 +386,8 @@ class _KpiReviewerScreenState extends ConsumerState<KpiReviewerScreen> {
       color: Theme.of(context).cardColor,
       child: SafeArea(
         top: false,
+        // Lift the action bar above the outer curved bottom nav.
+        minimum: const EdgeInsets.only(bottom: 90),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           child: Column(

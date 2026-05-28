@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/services/external_launcher_service.dart';
 import '../../../data/datasources/remote/kpi_api.dart';
+import '../../../data/models/kpi_common.dart';
 import '../../../data/models/kpi_review_detail.dart';
 import '../../providers/kpi_provider.dart';
 import '../../widgets/common/error_widget.dart';
@@ -31,11 +32,14 @@ class KpiDetailScreen extends ConsumerWidget {
     final notifier = ref.read(kpiReviewDetailProvider(reviewId).notifier);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Review', style: AppType.display(18)),
+      appBar: kpiAppBar(
+        context: context,
+        ref: ref,
+        title: 'Review',
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
             onPressed: notifier.refresh,
           ),
         ],
@@ -50,7 +54,14 @@ class KpiDetailScreen extends ConsumerWidget {
           onRefresh: notifier.refresh,
           color: AppColors.brandGreen,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+            // Bottom padding clears the curved nav (MainScaffold uses
+            // extendBody:true, so the body scrolls under the nav).
+            padding: EdgeInsets.fromLTRB(
+              12,
+              12,
+              12,
+              MediaQuery.of(context).padding.bottom + 110,
+            ),
             children: [
               _headerCard(context, d),
               const SizedBox(height: 12),
@@ -192,61 +203,204 @@ class KpiDetailScreen extends ConsumerWidget {
   }
 
   Widget _ratingRow(BuildContext context, KpiRating r) {
-    final muted = Theme.of(context)
-        .textTheme
-        .bodyMedium
-        ?.color
-        ?.withValues(alpha: 0.7);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final muted = isDark
+        ? Colors.white.withValues(alpha: 0.65)
+        : Colors.black.withValues(alpha: 0.55);
+    final labelColor = isDark
+        ? Colors.white.withValues(alpha: 0.78)
+        : AppColors.brandBlue.withValues(alpha: 0.85);
+    // Progress bar uses overall first, then supervisor, then self — the most
+    // authoritative score available so far.
+    final progress = (r.overallRate ?? r.supervisorRate ?? r.selfRate);
+    final progressColor =
+        kpiGradeColor(progress ?? 0); // brand-green/yellow/etc.
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : AppColors.brandBlue.withValues(alpha: 0.025),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : AppColors.brandBlue.withValues(alpha: 0.10),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(r.kpa,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w700, fontSize: 13)),
-          if (r.measure.isNotEmpty)
-            Text('Measure: ${r.measure}',
-                style: TextStyle(fontSize: 12, color: muted)),
-          if (r.target.isNotEmpty)
-            Text('Target: ${r.target}',
-                style: TextStyle(fontSize: 12, color: muted)),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            runSpacing: 4,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _pct('Weight', r.weight, isWeight: true),
-              _pct('Self', r.selfRate),
-              _pct('Supervisor', r.supervisorRate),
-              _pct('Overall', r.overallRate),
+              Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.brandGreen.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: const Icon(
+                  Icons.track_changes_rounded,
+                  size: 18,
+                  color: AppColors.brandGreen,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  r.kpa,
+                  style: AppType.display(
+                    15,
+                    weight: FontWeight.w700,
+                    color: isDark ? Colors.white : AppColors.brandBlue,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
             ],
           ),
+          if (r.measure.isNotEmpty)
+            _metaRow(Icons.flag_outlined, 'MEASURE', r.measure, muted, labelColor),
+          if (r.target.isNotEmpty)
+            _metaRow(Icons.adjust_rounded, 'TARGET', r.target, muted, labelColor),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _pct('Weight', r.weight,
+                  isWeight: true,
+                  color: isDark ? Colors.white70 : AppColors.brandBlue,
+                  icon: Icons.scale_outlined),
+              _pct('Self', r.selfRate,
+                  color: AppColors.brandGreen, icon: Icons.person_outline_rounded),
+              _pct('Supervisor', r.supervisorRate,
+                  color: AppColors.brandBlue,
+                  icon: Icons.supervisor_account_outlined),
+              _pct('Overall', r.overallRate,
+                  color: const Color(0xFFB58900),
+                  icon: Icons.verified_outlined,
+                  filled: r.overallRate != null),
+            ],
+          ),
+          if (progress != null) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: (progress / 100).clamp(0.0, 1.0),
+                minHeight: 5,
+                backgroundColor: progressColor.withValues(alpha: 0.12),
+                valueColor: AlwaysStoppedAnimation(progressColor),
+              ),
+            ),
+          ],
           if (r.comment != null && r.comment!.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text('“${r.comment}”',
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontStyle: FontStyle.italic,
-                      color: muted)),
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                '“${r.comment}”',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: muted,
+                ),
+              ),
             ),
         ],
       ),
     );
   }
 
-  Widget _pct(String label, double? value, {bool isWeight = false}) {
-    final text = value == null ? '—' : value.toStringAsFixed(isWeight ? 0 : 1);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
+  Widget _metaRow(IconData icon, String label, String value, Color? muted,
+      Color labelColor) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(icon, size: 12, color: labelColor.withValues(alpha: 0.8)),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: '$label  ',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: labelColor,
+                    ),
+                  ),
+                  TextSpan(
+                    text: value,
+                    style: TextStyle(fontSize: 12.5, color: muted, height: 1.35),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
-      child: Text(
-        '$label: $text${isWeight ? '' : '%'}',
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+    );
+  }
+
+  Widget _pct(
+    String label,
+    double? value, {
+    bool isWeight = false,
+    required Color color,
+    IconData? icon,
+    bool filled = false,
+  }) {
+    final text =
+        value == null ? '—' : value.toStringAsFixed(isWeight ? 0 : 1);
+    final bg = filled
+        ? color.withValues(alpha: 0.18)
+        : color.withValues(alpha: 0.10);
+    final border = color.withValues(alpha: filled ? 0.45 : 0.22);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: border, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 11, color: color),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            '$label  ',
+            style: TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.4,
+              color: color.withValues(alpha: 0.75),
+            ),
+          ),
+          Text(
+            value == null ? '—' : '$text${isWeight ? '' : '%'}',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
