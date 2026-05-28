@@ -587,7 +587,7 @@ class _ProjectSummaryCard extends ConsumerWidget {
     final type = item['type']?.toString() ?? '-';
     final accent = type == 'site_visit'
         ? const Color(0xFF27AE60)
-        : const Color(0xFF2980B9);
+        : const Color(0xFF2E8043);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

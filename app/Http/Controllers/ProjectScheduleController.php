@@ -40,6 +40,19 @@ class ProjectScheduleController extends Controller
             }))
             ->when($request->status, fn($q, $status) => $q->where('status', $status))
             ->when($request->architect_id, fn($q, $id) => $q->where('assigned_architect_id', $id))
+            ->when($request->search, function ($q, $term) {
+                // Match lead name/number, client name, or architect name.
+                $q->where(function ($qq) use ($term) {
+                    $qq->whereHas('lead', fn($lq) => $lq
+                            ->where('name', 'like', "%{$term}%")
+                            ->orWhere('lead_number', 'like', "%{$term}%"))
+                       ->orWhereHas('client', fn($cq) => $cq
+                            ->where('first_name', 'like', "%{$term}%")
+                            ->orWhere('last_name', 'like', "%{$term}%")
+                            ->orWhereRaw("CONCAT(first_name, ' ', last_name) like ?", ["%{$term}%"]))
+                       ->orWhereHas('assignedArchitect', fn($aq) => $aq->where('name', 'like', "%{$term}%"));
+                });
+            })
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 

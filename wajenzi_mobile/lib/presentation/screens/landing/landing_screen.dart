@@ -1,7 +1,16 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../core/config/app_config.dart';
+import '../../../core/config/theme_config.dart';
 import '../../../core/services/external_launcher_service.dart';
+import '../../../data/models/landing_poster_model.dart';
+import '../../../data/models/landing_project_model.dart';
+import '../../providers/home_content_provider.dart';
+import '../../providers/portfolio_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/curved_bottom_nav.dart';
 import '../../widgets/landing_top_bar.dart';
@@ -22,7 +31,10 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   bool get _isFrench => _language == AppLanguage.french;
   bool get _isArabic => _language == AppLanguage.arabic;
 
-  List<ProjectShowcase> get _projects => [
+  // Fallback content shown only when the portal CMS has no published
+  // portfolio yet (or the API is unreachable). Live data comes from
+  // [portfolioProvider]; see _resolveProjects() in build().
+  List<ProjectShowcase> get _fallbackProjects => [
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.10.png',
       title: _tr(
@@ -199,8 +211,108 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
     ),
   ];
 
+  /// Resolves live portfolio from the portal CMS, falling back to the bundled
+  /// content while loading or if nothing has been published yet.
+  List<ProjectShowcase> _resolveProjects(
+    AsyncValue<List<LandingProjectModel>> state,
+  ) {
+    final models = state.valueOrNull;
+    if (models == null || models.isEmpty) return _fallbackProjects;
+    return models.map(_showcaseFromModel).toList();
+  }
+
+  ProjectShowcase _showcaseFromModel(LandingProjectModel m) {
+    final gallery = (m.images.isNotEmpty
+            ? m.images
+            : [if (m.image != null) m.image!])
+        .map((p) => AppConfig.resolvePortalMediaUrl(p) ?? '')
+        .where((u) => u.isNotEmpty)
+        .toList();
+    return ProjectShowcase(
+      id: m.id,
+      image: AppConfig.resolvePortalMediaUrl(m.image) ?? '',
+      images: gallery,
+      title: m.title,
+      priceTZS: (m.priceTzs ?? 0).toString(),
+      priceUSD: (m.priceUsd ?? 0).toString(),
+      features: m.amenities,
+      category: m.category ?? '',
+      likes: m.likesCount,
+      liked: m.liked,
+      timeAgo: _relativeTime(m.createdAt),
+      description: m.description ?? '',
+      isFeatured: m.isFeatured,
+      youtubeUrl: m.youtubeUrl,
+      model3dUrl: m.model3dUrl,
+    );
+  }
+
+  String _relativeTime(DateTime? date) {
+    if (date == null) return '';
+    final days = DateTime.now().difference(date).inDays;
+    if (days <= 0) {
+      return _tr(en: 'Today', sw: 'Leo', fr: "Aujourd'hui", ar: 'اليوم');
+    }
+    if (days == 1) {
+      return _tr(en: '1 day ago', sw: 'siku 1 iliyopita', fr: 'il y a 1 jour', ar: 'منذ يوم');
+    }
+    if (days < 7) {
+      return _tr(
+        en: '$days days ago',
+        sw: 'siku $days zilizopita',
+        fr: 'il y a $days jours',
+        ar: 'منذ $days أيام',
+      );
+    }
+    final weeks = (days / 7).floor();
+    return _tr(
+      en: weeks == 1 ? '1 week ago' : '$weeks weeks ago',
+      sw: 'wiki $weeks zilizopita',
+      fr: 'il y a $weeks semaine${weeks > 1 ? 's' : ''}',
+      ar: 'منذ $weeks أسابيع',
+    );
+  }
+
+  static const List<IconData> _statIcons = [
+    Icons.folder_special_rounded,
+    Icons.engineering_rounded,
+    Icons.verified_rounded,
+    Icons.star_rounded,
+  ];
+  static const List<Color> _statColors = [
+    Color(0xFF193340),
+    Color(0xFF3BA154),
+    Color(0xFF3BA154),
+    Color(0xFFFECC04),
+  ];
+
+  /// Live hero stats from the portal CMS, falling back to bundled values.
+  List<_StatData> _resolveStats() {
+    final models = ref.watch(statsProvider).valueOrNull;
+    if (models == null || models.isEmpty) {
+      return [
+        _StatData(_statIcons[0], '120+', _isSwahili ? 'Miradi ya Kipekee' : 'Flagship Projects', _statColors[0]),
+        _StatData(_statIcons[1], '50+', _isSwahili ? 'Wataalamu' : 'Experts', _statColors[1]),
+        _StatData(_statIcons[2], '200+', _isSwahili ? 'Imekamilika' : 'Completed', _statColors[2]),
+        _StatData(_statIcons[3], '4.9', _isSwahili ? 'Ukadiriaji' : 'Rating', _statColors[3]),
+      ];
+    }
+    return models
+        .asMap()
+        .entries
+        .map(
+          (e) => _StatData(
+            _statIcons[e.key % _statIcons.length],
+            e.value.value,
+            e.value.label,
+            _statColors[e.key % _statColors.length],
+          ),
+        )
+        .toList();
+  }
+
   Color get _bgColor =>
-      _isDarkMode ? const Color(0xFF0F0F1A) : const Color(0xFFF0F4F8);
+      _isDarkMode ? const Color(0xFF0E1A20) : const Color(0xFFEAF1F8);
 
   Color get _surfaceColor =>
       _isDarkMode ? const Color(0xFF1A1A2E) : Colors.white;
@@ -210,19 +322,6 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
     if (_isFrench) return fr ?? en;
     if (_isArabic) return ar ?? en;
     return en;
-  }
-
-  Widget _languageFlag() {
-    switch (_language) {
-      case AppLanguage.swahili:
-        return const TanzaniaFlag();
-      case AppLanguage.french:
-        return const FranceFlag();
-      case AppLanguage.arabic:
-        return const ArabicLanguageBadge();
-      case AppLanguage.english:
-        return const UKFlag();
-    }
   }
 
   Future<void> _launchWhatsApp(String projectName) async {
@@ -268,33 +367,12 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
     }
   }
 
-  Widget _buildTopBarButton({
-    required VoidCallback onTap,
-    required Widget child,
-    bool isWide = false,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: isWide ? null : 40,
-        height: 40,
-        padding: isWide ? const EdgeInsets.symmetric(horizontal: 8) : null,
-        decoration: BoxDecoration(
-          color: _isDarkMode ? const Color(0xFF16213E) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: _isDarkMode
-                ? Colors.white.withValues(alpha: 0.15)
-                : Colors.grey.withValues(alpha: 0.25),
-          ),
-        ),
-        child: child,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final portfolioState = ref.watch(portfolioProvider);
+    final projects = _resolveProjects(portfolioState);
+    final portfolioLoading = portfolioState.isLoading;
+    final statsLoading = ref.watch(statsProvider).isLoading;
     return Scaffold(
       backgroundColor: _bgColor,
       extendBody: true,
@@ -315,10 +393,10 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1ABC9C).withValues(alpha: 0.1),
+                    color: const Color(0xFF193340).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: const Color(0xFF1ABC9C).withValues(alpha: 0.3),
+                      color: const Color(0xFF193340).withValues(alpha: 0.3),
                     ),
                   ),
                   child: ClipRRect(
@@ -330,7 +408,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                         fit: BoxFit.contain,
                         errorBuilder: (_, _, _) => const Icon(
                           Icons.business,
-                          color: Color(0xFF1ABC9C),
+                          color: Color(0xFF193340),
                           size: 24,
                         ),
                       ),
@@ -346,24 +424,28 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       const Text(
                         'Wajenzi Professionals',
                         style: TextStyle(
-                          color: Color(0xFF1ABC9C),
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF193340),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(height: 1),
                       Text(
                         _tr(
-                          en: 'Masters of Consistency and Quality',
-                          sw: 'Mabingwa wa Uthabiti na Ubora',
-                          fr: 'Experts en constance et en qualite',
-                          ar: 'رواد الثبات والجودة',
+                          en: 'Construction · Architecture · Engineering',
+                          sw: 'Ujenzi · Usanifu · Uhandisi',
+                          fr: 'Construction · Architecture · Ingénierie',
+                          ar: 'البناء · العمارة · الهندسة',
                         ),
                         style: TextStyle(
                           color: _isDarkMode
                               ? Colors.white54
                               : Colors.grey[500],
-                          fontSize: 8,
-                          fontStyle: FontStyle.italic,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -374,131 +456,93 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
               ],
             ),
             actions: [
-              Container(
-                height: 40,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(
-                  color: _isDarkMode ? const Color(0xFF16213E) : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _isDarkMode
-                        ? Colors.white.withValues(alpha: 0.15)
-                        : Colors.grey.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: PopupMenuButton<AppLanguage>(
-                  initialValue: _language,
-                  tooltip: _tr(
-                    en: 'Select language',
-                    sw: 'Chagua lugha',
-                    fr: 'Choisir la langue',
-                    ar: 'اختر اللغة',
-                  ),
-                  color: _isDarkMode ? const Color(0xFF1F2A44) : Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  onSelected: (value) =>
-                      ref.read(settingsProvider.notifier).setLanguage(value),
-                  itemBuilder: (context) => AppLanguage.values
-                      .map(
-                        (lang) => PopupMenuItem<AppLanguage>(
-                          value: lang,
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 20,
-                                height: 13,
-                                child: switch (lang) {
-                                  AppLanguage.swahili => const TanzaniaFlag(),
-                                  AppLanguage.french => const FranceFlag(),
-                                  AppLanguage.arabic =>
-                                    const ArabicLanguageBadge(),
-                                  AppLanguage.english => const UKFlag(),
-                                },
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${lang.code} - ${switch (lang) {
-                                  AppLanguage.english => 'English',
-                                  AppLanguage.swahili => 'Kiswahili',
-                                  AppLanguage.french => 'Français',
-                                  AppLanguage.arabic => 'العربية',
-                                }}',
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(2),
-                        child: SizedBox(
-                          width: 20,
-                          height: 13,
-                          child: _languageFlag(),
-                        ),
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        _language.code,
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: _isDarkMode
-                              ? Colors.white
-                              : const Color(0xFF2C3E50),
-                        ),
-                      ),
-                      Icon(
-                        Icons.arrow_drop_down_rounded,
-                        size: 14,
-                        color: _isDarkMode
-                            ? Colors.white
-                            : const Color(0xFF2C3E50),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              _buildTopBarButton(
-                onTap: () =>
+              LandingActionsMenu(
+                isDarkMode: _isDarkMode,
+                language: _language,
+                onDarkModeToggle: () =>
                     ref.read(settingsProvider.notifier).toggleDarkMode(),
-                child: Icon(
-                  _isDarkMode
-                      ? Icons.dark_mode_rounded
-                      : Icons.light_mode_rounded,
-                  size: 20,
-                  color: _isDarkMode
-                      ? const Color(0xFF1ABC9C)
-                      : const Color(0xFFF39C12),
-                ),
-              ),
-              const SizedBox(width: 8),
-              _buildTopBarButton(
-                onTap: () => context.go('/login'),
-                child: Icon(
-                  Icons.login_rounded,
-                  size: 20,
-                  color: _isDarkMode ? Colors.white : const Color(0xFF2C3E50),
-                ),
+                onLanguageChanged: (value) =>
+                    ref.read(settingsProvider.notifier).setLanguage(value),
+                onLogin: () => context.go('/login'),
               ),
               const SizedBox(width: 12),
             ],
           ),
 
+          // ── Brand hero — tagline at scale ────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(width: 24, height: 2, color: const Color(0xFF3BA154)),
+                      const SizedBox(width: 8),
+                      Text(
+                        _tr(
+                          en: 'EST. 2012 · DAR ES SALAAM',
+                          sw: 'TANGU 2012 · DAR ES SALAAM',
+                          fr: 'DEPUIS 2012 · DAR ES SALAAM',
+                          ar: 'منذ 2012 · دار السلام',
+                        ),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          letterSpacing: 1.4,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF3BA154),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: _tr(
+                            en: 'Masters of\nConsistency ',
+                            sw: 'Mabingwa wa\nUthabiti ',
+                            fr: 'Maîtres de\nConstance ',
+                            ar: 'خبراء\nالاتساق ',
+                          ),
+                        ),
+                        TextSpan(
+                          text: '& ',
+                          style: AppType.display(34, color: const Color(0xFF3BA154)),
+                        ),
+                        TextSpan(
+                          text: _tr(en: 'Quality', sw: 'na Ubora', fr: 'et Qualité', ar: 'والجودة'),
+                          style: AppType.display(34, color: const Color(0xFFFECC04)),
+                        ),
+                      ],
+                    ),
+                    style: AppType.display(
+                      34,
+                      color: _isDarkMode ? Colors.white : const Color(0xFF193340),
+                      height: 1.04,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Home banner (CMS posters) ────────────────────────────────
+          SliverToBoxAdapter(
+            child: _PosterBanner(isDarkMode: _isDarkMode),
+          ),
+
           // ── Hero stats banner ────────────────────────────────────────
           SliverToBoxAdapter(
-            child: _HeroStats(
-              isDarkMode: _isDarkMode,
-              isSwahili: _isSwahili,
-              surfaceColor: _surfaceColor,
-            ),
+            child: statsLoading
+                ? _StatsSkeleton(isDarkMode: _isDarkMode, surfaceColor: _surfaceColor)
+                : _HeroStats(
+                    isDarkMode: _isDarkMode,
+                    surfaceColor: _surfaceColor,
+                    stats: _resolveStats(),
+                  ),
           ),
 
           // ── Section header ───────────────────────────────────────────
@@ -512,7 +556,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                     height: 22,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF1ABC9C), Color(0xFF3498DB)],
+                        colors: [Color(0xFF193340), Color(0xFF3BA154)],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
@@ -531,22 +575,21 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                             fr: 'Notre Portefeuille',
                             ar: 'أعمالنا',
                           ),
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
+                          style: AppType.display(
+                            25,
                             color: _isDarkMode
                                 ? Colors.white
-                                : const Color(0xFF1A1A2E),
+                                : const Color(0xFF193340),
                           ),
                         ),
                         Text(
                           _isSwahili
-                              ? '${_projects.length} miradi iliyochaguliwa'
+                              ? '${projects.length} miradi iliyochaguliwa'
                               : _isFrench
-                              ? '${_projects.length} projets en vedette'
+                              ? '${projects.length} projets en vedette'
                               : _isArabic
-                              ? '${_projects.length} مشاريع مميزة'
-                              : '${_projects.length} featured projects',
+                              ? '${projects.length} مشاريع مميزة'
+                              : '${projects.length} featured projects',
                           style: TextStyle(
                             fontSize: 12,
                             color: _isDarkMode
@@ -562,30 +605,41 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
             ),
           ),
 
-          // ── Project cards ────────────────────────────────────────────
-          SliverList(
+          // ── Project cards (skeletons while loading) ──────────────────
+          if (portfolioLoading)
+            SliverList.list(
+              children: List.generate(
+                3,
+                (_) => _ProjectCardSkeleton(isDarkMode: _isDarkMode),
+              ),
+            )
+          else
+            SliverList(
             delegate: SliverChildBuilderDelegate(
-              (context, index) => _ProjectCard(
-                project: _projects[index],
+              (context, index) => _RevealOnAppear(
                 index: index,
-                total: _projects.length,
-                isDarkMode: _isDarkMode,
-                isSwahili: _isSwahili,
-                callLabel: _tr(
-                  en: 'Call',
-                  sw: 'Piga Simu',
-                  fr: 'Appeler',
-                  ar: 'اتصال',
-                ),
-                onWhatsApp: () => _launchWhatsApp(_projects[index].title),
-                onCall: _launchPhone,
-                onImageTap: () => _showImageModal(
-                  context,
-                  _projects[index].image,
-                  _projects[index].title,
+                child: _ProjectCard(
+                  project: projects[index],
+                  isDarkMode: _isDarkMode,
+                  isSwahili: _isSwahili,
+                  callLabel: _tr(
+                    en: 'Call',
+                    sw: 'Piga Simu',
+                    fr: 'Appeler',
+                    ar: 'اتصال',
+                  ),
+                  onWhatsApp: () => _launchWhatsApp(projects[index].title),
+                  onCall: _launchPhone,
+                  onLike: projects[index].id != null
+                      ? () => ref
+                            .read(portfolioProvider.notifier)
+                            .toggleLike(projects[index].id!)
+                      : null,
+                  onImageTap: (url) =>
+                      _showImageModal(context, url, projects[index].title),
                 ),
               ),
-              childCount: _projects.length,
+              childCount: projects.length,
             ),
           ),
 
@@ -598,14 +652,14 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                 gradient: LinearGradient(
                   colors: _isDarkMode
                       ? [const Color(0xFF0D3B34), const Color(0xFF0A2A40)]
-                      : [const Color(0xFF1ABC9C), const Color(0xFF2980B9)],
+                      : [const Color(0xFF193340), const Color(0xFF2E8043)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF1ABC9C).withValues(alpha: 0.25),
+                    color: const Color(0xFF193340).withValues(alpha: 0.25),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
@@ -695,9 +749,10 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF1ABC9C),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: const Color(0xFFFECC04),
+                        foregroundColor: const Color(0xFF193340),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -828,14 +883,22 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
 
 // ─── Hero Stats ───────────────────────────────────────────────────────────────
 
+class _StatData {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+  const _StatData(this.icon, this.value, this.label, this.color);
+}
+
 class _HeroStats extends StatelessWidget {
   final bool isDarkMode;
-  final bool isSwahili;
   final Color surfaceColor;
+  final List<_StatData> stats;
   const _HeroStats({
     required this.isDarkMode,
-    required this.isSwahili,
     required this.surfaceColor,
+    required this.stats,
   });
 
   @override
@@ -861,37 +924,16 @@ class _HeroStats extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _StatItem(
-            icon: Icons.folder_special_rounded,
-            value: '120+',
-            label: isSwahili ? 'Miradi ya Kipekee' : 'Flagship Projects',
-            color: const Color(0xFF1ABC9C),
-            isDarkMode: isDarkMode,
-          ),
-          _Divider(isDarkMode: isDarkMode),
-          _StatItem(
-            icon: Icons.engineering_rounded,
-            value: '50+',
-            label: isSwahili ? 'Wataalamu' : 'Experts',
-            color: const Color(0xFF3498DB),
-            isDarkMode: isDarkMode,
-          ),
-          _Divider(isDarkMode: isDarkMode),
-          _StatItem(
-            icon: Icons.verified_rounded,
-            value: '200+',
-            label: isSwahili ? 'Imekamilika' : 'Completed',
-            color: const Color(0xFF2ECC71),
-            isDarkMode: isDarkMode,
-          ),
-          _Divider(isDarkMode: isDarkMode),
-          _StatItem(
-            icon: Icons.star_rounded,
-            value: '4.9',
-            label: isSwahili ? 'Ukadiriaji' : 'Rating',
-            color: const Color(0xFFF39C12),
-            isDarkMode: isDarkMode,
-          ),
+          for (int i = 0; i < stats.length; i++) ...[
+            if (i > 0) _Divider(isDarkMode: isDarkMode),
+            _StatItem(
+              icon: stats[i].icon,
+              value: stats[i].value,
+              label: stats[i].label,
+              color: stats[i].color,
+              isDarkMode: isDarkMode,
+            ),
+          ],
         ],
       ),
     );
@@ -914,25 +956,37 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Parse "120+", "4.9", "200+" → animated number + suffix.
+    final m = RegExp(r'^([0-9]*\.?[0-9]+)(.*)$').firstMatch(value);
+    final target = double.tryParse(m?.group(1) ?? '') ?? 0;
+    final suffix = m?.group(2) ?? '';
+    final decimals = (m?.group(1) ?? '').contains('.') ? 1 : 0;
+    final numColor = isDarkMode ? Colors.white : const Color(0xFF193340);
+
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: isDarkMode ? Colors.white : const Color(0xFF1A1A2E),
+          Icon(icon, size: 20, color: color),
+          const SizedBox(height: 6),
+          TweenAnimationBuilder<double>(
+            key: ValueKey(value),
+            tween: Tween(begin: 0, end: target),
+            duration: const Duration(milliseconds: 1100),
+            curve: Curves.easeOutCubic,
+            builder: (context, v, _) => Text(
+              '${decimals > 0 ? v.toStringAsFixed(1) : v.toInt()}$suffix',
+              style: AppType.display(23, color: numColor, letterSpacing: -0.5),
             ),
           ),
+          const SizedBox(height: 2),
           Text(
             label,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 9,
+              fontSize: 9.5,
+              letterSpacing: 0.3,
               color: isDarkMode ? Colors.white38 : Colors.grey[500],
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -957,43 +1011,408 @@ class _Divider extends StatelessWidget {
   }
 }
 
+// ─── Reveal-on-appear (staggered entrance) ──────────────────────────────────
+
+class _RevealOnAppear extends StatefulWidget {
+  final int index;
+  final Widget child;
+  const _RevealOnAppear({required this.index, required this.child});
+
+  @override
+  State<_RevealOnAppear> createState() => _RevealOnAppearState();
+}
+
+class _RevealOnAppearState extends State<_RevealOnAppear>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 520),
+  );
+  late final Animation<double> _fade =
+      CurvedAnimation(parent: _c, curve: Curves.easeOut);
+  late final Animation<Offset> _slide =
+      Tween(begin: const Offset(0, 0.06), end: Offset.zero)
+          .animate(CurvedAnimation(parent: _c, curve: Curves.easeOutCubic));
+
+  @override
+  void initState() {
+    super.initState();
+    final delay = Duration(milliseconds: 60 * widget.index.clamp(0, 6));
+    Future.delayed(delay, () {
+      if (mounted) _c.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.of(context).disableAnimations) return widget.child;
+    return FadeTransition(
+      opacity: _fade,
+      child: SlideTransition(position: _slide, child: widget.child),
+    );
+  }
+}
+
+// ─── Project image gallery (swipeable) ──────────────────────────────────────
+
+class _ProjectGallery extends StatefulWidget {
+  final List<String> images;
+  final String title;
+  final Color catColor;
+  final IconData icon;
+  final bool isDarkMode;
+  final void Function(String imageUrl) onTap;
+
+  const _ProjectGallery({
+    required this.images,
+    required this.title,
+    required this.catColor,
+    required this.icon,
+    required this.isDarkMode,
+    required this.onTap,
+  });
+
+  @override
+  State<_ProjectGallery> createState() => _ProjectGalleryState();
+}
+
+class _ProjectGalleryState extends State<_ProjectGallery> {
+  final PageController _pc = PageController();
+  int _page = 0;
+
+  @override
+  void dispose() {
+    _pc.dispose();
+    super.dispose();
+  }
+
+  Widget _image(String src) {
+    final placeholder = _PlaceholderImage(
+      title: widget.title,
+      color: widget.catColor,
+      icon: widget.icon,
+    );
+    if (src.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: src,
+        fit: BoxFit.cover,
+        fadeInDuration: const Duration(milliseconds: 350),
+        placeholder: (_, _) =>
+            Container(color: widget.catColor.withValues(alpha: 0.08)),
+        errorWidget: (_, _, _) => placeholder,
+      );
+    }
+    if (src.isEmpty) return placeholder;
+    return Image.asset(src, fit: BoxFit.cover, errorBuilder: (_, _, _) => placeholder);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final imgs = widget.images.isEmpty ? [''] : widget.images;
+    final multi = imgs.length > 1;
+    final page = _page.clamp(0, imgs.length - 1);
+
+    return Stack(
+      children: [
+        GestureDetector(
+          onTap: () => widget.onTap(imgs[page]),
+          child: AspectRatio(
+            aspectRatio: 16 / 10,
+            child: PageView.builder(
+              controller: _pc,
+              itemCount: imgs.length,
+              onPageChanged: (i) => setState(() => _page = i),
+              itemBuilder: (_, i) => _image(imgs[i]),
+            ),
+          ),
+        ),
+        // Bottom fade into the panel
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 44,
+          child: IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    (widget.isDarkMode
+                            ? const Color(0xFF141428)
+                            : const Color(0xFFF4F6F8))
+                        .withValues(alpha: 0.7),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Page counter (only when there's more than one image)
+        if (multi)
+          Positioned(
+            bottom: 10,
+            right: 10,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '${page + 1} / ${imgs.length}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        // Dot indicators
+        if (multi)
+          Positioned(
+            bottom: 12,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(imgs.length, (i) {
+                final active = i == page;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeOut,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: active ? 18 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: active
+                        ? const Color(0xFFFECC04)
+                        : Colors.white.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                );
+              }),
+            ),
+          ),
+        // Zoom affordance (icon only — gesture is expected)
+        Positioned(
+          top: 10,
+          right: 10,
+          child: IgnorePointer(
+            child: Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.35),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.zoom_in_rounded,
+                size: 14,
+                color: Colors.white70,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Loading skeletons (shimmer) ────────────────────────────────────────────
+
+class _ShimmerBox extends StatelessWidget {
+  final double? width;
+  final double height;
+  final double radius;
+  const _ShimmerBox({this.width, required this.height, this.radius = 8});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: width,
+    height: height,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(radius),
+    ),
+  );
+}
+
+Shimmer _brandShimmer(bool isDarkMode, {required Widget child}) => Shimmer.fromColors(
+  baseColor: isDarkMode ? const Color(0xFF1A2F38) : const Color(0xFFDCE4EC),
+  highlightColor: isDarkMode ? const Color(0xFF274854) : const Color(0xFFF2F6FA),
+  child: child,
+);
+
+class _StatsSkeleton extends StatelessWidget {
+  final bool isDarkMode;
+  final Color surfaceColor;
+  const _StatsSkeleton({required this.isDarkMode, required this.surfaceColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      decoration: BoxDecoration(
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: _brandShimmer(
+        isDarkMode,
+        child: Row(
+          children: List.generate(
+            4,
+            (i) => const Expanded(
+              child: Column(
+                children: [
+                  _ShimmerBox(width: 22, height: 22, radius: 6),
+                  SizedBox(height: 8),
+                  _ShimmerBox(width: 42, height: 18),
+                  SizedBox(height: 6),
+                  _ShimmerBox(width: 54, height: 9),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProjectCardSkeleton extends StatelessWidget {
+  final bool isDarkMode;
+  const _ProjectCardSkeleton({required this.isDarkMode});
+
+  @override
+  Widget build(BuildContext context) {
+    final surface = isDarkMode ? const Color(0xFF1A1A2E) : Colors.white;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.06),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: _brandShimmer(
+          isDarkMode,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: const [
+                    _ShimmerBox(width: 44, height: 44, radius: 12),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _ShimmerBox(width: 150, height: 16),
+                          SizedBox(height: 8),
+                          _ShimmerBox(width: 80, height: 10),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    _ShimmerBox(width: 70, height: 22, radius: 20),
+                  ],
+                ),
+              ),
+              const AspectRatio(
+                aspectRatio: 16 / 10,
+                child: _ShimmerBox(height: double.infinity, radius: 0),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    _ShimmerBox(width: 120, height: 30, radius: 24),
+                    SizedBox(height: 12),
+                    _ShimmerBox(width: double.infinity, height: 10),
+                    SizedBox(height: 6),
+                    _ShimmerBox(width: 220, height: 10),
+                    SizedBox(height: 14),
+                    Row(
+                      children: [
+                        _ShimmerBox(width: 90, height: 26, radius: 20),
+                        SizedBox(width: 6),
+                        _ShimmerBox(width: 90, height: 26, radius: 20),
+                      ],
+                    ),
+                    SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(child: _ShimmerBox(height: 44, radius: 14)),
+                        SizedBox(width: 10),
+                        _ShimmerBox(width: 90, height: 44, radius: 14),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ─── Project Card ─────────────────────────────────────────────────────────────
 
 class _ProjectCard extends StatelessWidget {
   final ProjectShowcase project;
-  final int index;
-  final int total;
   final bool isDarkMode;
   final bool isSwahili;
   final String callLabel;
   final VoidCallback onWhatsApp;
   final VoidCallback onCall;
-  final VoidCallback onImageTap;
+  final void Function(String imageUrl) onImageTap;
+  final VoidCallback? onLike;
 
   const _ProjectCard({
     required this.project,
-    required this.index,
-    required this.total,
     required this.isDarkMode,
     required this.isSwahili,
     required this.callLabel,
     required this.onWhatsApp,
     required this.onCall,
     required this.onImageTap,
+    this.onLike,
   });
 
   Color get _catColor {
     switch (project.category.toUpperCase()) {
       case 'COMPLETED':
-        return const Color(0xFF2ECC71);
+        return const Color(0xFF3BA154);
       case 'IN PROGRESS':
-        return const Color(0xFFF39C12);
+        return const Color(0xFFFECC04);
       case '3D DESIGN':
-        return const Color(0xFF3498DB);
+        return const Color(0xFF193340); // brand dark blue (distinct from green "Completed")
       case 'DESIGN':
-        return const Color(0xFF9B59B6);
+        return const Color(0xFF27505F); // brand steel blue (on-palette, distinct)
       default:
-        return const Color(0xFF1ABC9C);
+        return const Color(0xFF3BA154);
     }
   }
 
@@ -1011,6 +1430,11 @@ class _ProjectCard extends StatelessWidget {
         return Icons.business_rounded;
     }
   }
+
+  // Readable foreground for the category colour — dark ink on light/yellow
+  // backgrounds, white on the dark/green ones (fixes white-on-yellow badges).
+  Color get _onCat =>
+      _catColor.computeLuminance() > 0.55 ? const Color(0xFF193340) : Colors.white;
 
   String _fmt(String price) {
     final n = double.tryParse(price.replaceAll(',', '')) ?? 0;
@@ -1049,16 +1473,6 @@ class _ProjectCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         child: Column(
           children: [
-            // ── Accent top border ──────────────────────────────────────
-            Container(
-              height: 3,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [catColor, catColor.withValues(alpha: 0.4)],
-                ),
-              ),
-            ),
-
             // ── TOP HEADER ────────────────────────────────────────────
             Container(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
@@ -1084,7 +1498,7 @@ class _ProjectCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Icon(_catIcon, color: Colors.white, size: 22),
+                    child: Icon(_catIcon, color: _onCat, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -1093,13 +1507,13 @@ class _ProjectCard extends StatelessWidget {
                       children: [
                         Text(
                           project.title,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
+                          style: AppType.display(
+                            18,
+                            weight: FontWeight.w700,
                             color: isDarkMode
                                 ? Colors.white
-                                : const Color(0xFF1A1A2E),
-                            letterSpacing: -0.2,
+                                : const Color(0xFF193340),
+                            letterSpacing: -0.3,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1151,8 +1565,8 @@ class _ProjectCard extends StatelessWidget {
                     ),
                     child: Text(
                       project.category,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: _onCat,
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.3,
@@ -1164,12 +1578,12 @@ class _ProjectCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFD700).withValues(alpha: 0.15),
+                        color: const Color(0xFFFECC04).withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.star_rounded,
-                        color: Color(0xFFFFD700),
+                        color: Color(0xFFFECC04),
                         size: 16,
                       ),
                     ),
@@ -1178,100 +1592,16 @@ class _ProjectCard extends StatelessWidget {
               ),
             ),
 
-            // ── IMAGE ─────────────────────────────────────────────────
-            Stack(
-              children: [
-                GestureDetector(
-                  onTap: onImageTap,
-                  child: AspectRatio(
-                    aspectRatio: 16 / 10,
-                    child: Image.asset(
-                      project.image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _PlaceholderImage(
-                        title: project.title,
-                        color: catColor,
-                        icon: _catIcon,
-                      ),
-                    ),
-                  ),
-                ),
-                // Subtle bottom fade connecting image to panel
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: 40,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          (isDarkMode
-                                  ? const Color(0xFF141428)
-                                  : const Color(0xFFF4F6F8))
-                              .withValues(alpha: 0.7),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                // Counter
-                Positioned(
-                  bottom: 8,
-                  right: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '${index + 1} / $total',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-                // Zoom hint
-                Positioned(
-                  bottom: 8,
-                  left: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 7,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.zoom_in_rounded,
-                          size: 11,
-                          color: Colors.white70,
-                        ),
-                        SizedBox(width: 3),
-                        Text(
-                          'Tap to zoom',
-                          style: TextStyle(fontSize: 9, color: Colors.white70),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+            // ── IMAGE GALLERY (swipeable) ─────────────────────────────
+            _ProjectGallery(
+              images: project.images.isNotEmpty
+                  ? project.images
+                  : [project.image],
+              title: project.title,
+              catColor: catColor,
+              icon: _catIcon,
+              isDarkMode: isDarkMode,
+              onTap: onImageTap,
             ),
 
             // ── BOTTOM PANEL ──────────────────────────────────────────
@@ -1295,13 +1625,13 @@ class _ProjectCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
+                            colors: [Color(0xFF193340), Color(0xFF122833)],
                           ),
                           borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
                               color: const Color(
-                                0xFF1ABC9C,
+                                0xFF193340,
                               ).withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
@@ -1317,50 +1647,90 @@ class _ProjectCard extends StatelessWidget {
                               color: Colors.white,
                             ),
                             const SizedBox(width: 5),
-                            Text(
-                              displayPrice,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 14,
+                            Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: '${displayPrice.split(' ').first} ',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: displayPrice.split(' ').skip(1).join(' '),
+                                    style: AppType.display(
+                                      17,
+                                      color: Colors.white,
+                                      letterSpacing: -0.3,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
                       const Spacer(),
-                      // Likes
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE74C3C).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: const Color(
-                              0xFFE74C3C,
-                            ).withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.favorite_rounded,
-                              color: Color(0xFFE74C3C),
-                              size: 14,
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              '${project.likes}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12,
-                                color: Color(0xFFE74C3C),
+                      // Likes (tappable when the project is CMS-managed)
+                      GestureDetector(
+                        onTap: onLike,
+                        behavior: HitTestBehavior.opaque,
+                        child: Builder(
+                          builder: (context) {
+                            final liked = project.liked;
+                            final likeColor = liked
+                                ? const Color(0xFFE74C3C)
+                                : (isDarkMode
+                                      ? Colors.white54
+                                      : Colors.grey.shade500);
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
                               ),
-                            ),
-                          ],
+                              decoration: BoxDecoration(
+                                color: liked
+                                    ? const Color(0xFFE74C3C).withValues(alpha: 0.12)
+                                    : (isDarkMode
+                                          ? Colors.white.withValues(alpha: 0.06)
+                                          : Colors.grey.withValues(alpha: 0.10)),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: likeColor.withValues(alpha: 0.25),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  TweenAnimationBuilder<double>(
+                                    key: ValueKey(liked),
+                                    tween: Tween(begin: liked ? 0.5 : 1.0, end: 1.0),
+                                    duration: const Duration(milliseconds: 360),
+                                    curve: Curves.elasticOut,
+                                    builder: (context, s, child) =>
+                                        Transform.scale(scale: s, child: child),
+                                    child: Icon(
+                                      liked
+                                          ? Icons.favorite_rounded
+                                          : Icons.favorite_border_rounded,
+                                      color: likeColor,
+                                      size: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    '${project.likes}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12,
+                                      color: likeColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -1378,54 +1748,61 @@ class _ProjectCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
 
-                  // Feature chips — horizontal scroll, no wrapping
-                  SizedBox(
-                    height: 30,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: project.features.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 6),
-                      itemBuilder: (_, i) => Container(
+                  // Feature chips — wrap (never clips), max 4 + "+N" overflow
+                  Builder(
+                    builder: (context) {
+                      const maxChips = 4;
+                      final shown = project.features.take(maxChips).toList();
+                      final extra = project.features.length - shown.length;
+                      Widget chip(String label, {bool muted = false}) => Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
-                          vertical: 4,
+                          vertical: 5,
                         ),
                         decoration: BoxDecoration(
                           color: isDarkMode
-                              ? Colors.white.withValues(alpha: 0.07)
-                              : Colors.white,
+                              ? Colors.white.withValues(alpha: 0.06)
+                              : const Color(0xFF193340).withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isDarkMode
-                                ? Colors.white.withValues(alpha: 0.1)
-                                : const Color(
-                                    0xFF1ABC9C,
-                                  ).withValues(alpha: 0.3),
+                                ? Colors.white.withValues(alpha: 0.10)
+                                : const Color(0xFF193340).withValues(alpha: 0.14),
                           ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
-                              Icons.check_circle_rounded,
-                              size: 12,
-                              color: Color(0xFF1ABC9C),
-                            ),
-                            const SizedBox(width: 4),
+                            if (!muted) ...[
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                size: 12,
+                                color: Color(0xFF3BA154),
+                              ),
+                              const SizedBox(width: 4),
+                            ],
                             Text(
-                              project.features[i],
+                              label,
                               style: TextStyle(
                                 color: isDarkMode
                                     ? Colors.white70
-                                    : const Color(0xFF2C3E50),
+                                    : const Color(0xFF193340),
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ),
+                      );
+                      return Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          for (final f in shown) chip(f),
+                          if (extra > 0) chip('+$extra', muted: true),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 14),
 
@@ -1439,13 +1816,13 @@ class _ProjectCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 13),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [Color(0xFF25D366), Color(0xFF20B558)],
+                                colors: [Color(0xFF3BA154), Color(0xFF2E8043)],
                               ),
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
                                   color: const Color(
-                                    0xFF25D366,
+                                    0xFF3BA154,
                                   ).withValues(alpha: 0.35),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
@@ -1484,13 +1861,13 @@ class _ProjectCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF3498DB), Color(0xFF2980B9)],
+                              colors: [Color(0xFF193340), Color(0xFF27505F)],
                             ),
                             borderRadius: BorderRadius.circular(14),
                             boxShadow: [
                               BoxShadow(
                                 color: const Color(
-                                  0xFF3498DB,
+                                  0xFF193340,
                                 ).withValues(alpha: 0.35),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
@@ -1614,27 +1991,175 @@ class _StatBadge extends StatelessWidget {
 // ─── Data Model ───────────────────────────────────────────────────────────────
 
 class ProjectShowcase {
+  final int? id; // null for bundled fallback entries (no like action)
   final String image;
+  final List<String> images; // full gallery; falls back to [image]
   final String title;
   final String priceTZS;
   final String priceUSD;
   final List<String> features;
   final String category;
   final int likes;
+  final bool liked;
   final String timeAgo;
   final String description;
   final bool isFeatured;
+  final String? youtubeUrl;
+  final String? model3dUrl;
 
   ProjectShowcase({
+    this.id,
     required this.image,
+    this.images = const [],
     required this.title,
     required this.priceTZS,
     required this.priceUSD,
     required this.features,
     required this.category,
     required this.likes,
+    this.liked = false,
     required this.timeAgo,
     required this.description,
     this.isFeatured = false,
+    this.youtubeUrl,
+    this.model3dUrl,
   });
+}
+
+// ─── Poster banner (CMS-managed home banners) ─────────────────────────────────
+
+class _PosterBanner extends ConsumerWidget {
+  final bool isDarkMode;
+  const _PosterBanner({required this.isDarkMode});
+
+  Future<void> _open(String? url) async {
+    if (url == null || url.isEmpty) return;
+    final normalized = AppConfig.normalizeExternalUrl(url) ?? url;
+    final uri = Uri.tryParse(normalized);
+    if (uri != null) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final posters = ref.watch(postersProvider).valueOrNull ?? const [];
+    if (posters.isEmpty) return const SizedBox.shrink();
+
+    final single = posters.length == 1;
+    final width = MediaQuery.of(context).size.width;
+
+    return Container(
+      height: 170,
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: single
+            ? const NeverScrollableScrollPhysics()
+            : const BouncingScrollPhysics(),
+        itemCount: posters.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
+        itemBuilder: (context, i) {
+          final p = posters[i];
+          return SizedBox(
+            width: single ? width - 32 : width * 0.82,
+            child: _PosterCard(poster: p, onTap: () => _open(p.tapUrl)),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PosterCard extends StatelessWidget {
+  final LandingPosterModel poster;
+  final VoidCallback onTap;
+  const _PosterCard({required this.poster, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = AppConfig.resolvePortalMediaUrl(poster.image) ?? '';
+    final hasText =
+        (poster.title?.isNotEmpty ?? false) ||
+        (poster.subtitle?.isNotEmpty ?? false);
+
+    return GestureDetector(
+      onTap: poster.tapUrl == null ? null : onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (imageUrl.isNotEmpty)
+              CachedNetworkImage(
+                imageUrl: imageUrl,
+                fit: BoxFit.cover,
+                placeholder: (_, _) =>
+                    Container(color: const Color(0xFF193340)),
+                errorWidget: (_, _, _) =>
+                    Container(color: const Color(0xFF193340)),
+              )
+            else
+              Container(color: const Color(0xFF193340)),
+            if (hasText)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.65),
+                      ],
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (poster.title?.isNotEmpty ?? false)
+                        Text(
+                          poster.title!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      if (poster.subtitle?.isNotEmpty ?? false)
+                        Text(
+                          poster.subtitle!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            if (poster.hasVideo)
+              const Positioned(
+                top: 10,
+                right: 10,
+                child: Icon(
+                  Icons.play_circle_fill_rounded,
+                  color: Colors.white,
+                  size: 34,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }

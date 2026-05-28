@@ -258,7 +258,7 @@ class _DatePickerRow extends StatelessWidget {
                       ),
                       style: const TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF1ABC9C),
+                        color: Color(0xFF193340),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -318,7 +318,7 @@ class _StatsRow extends StatelessWidget {
       _StatItem(
         label: _attendanceTr(language, en: 'On Time', sw: 'Kwa wakati', fr: 'À l’heure', ar: 'في الوقت'),
         value: '${stats['on_time'] ?? 0}',
-        color: const Color(0xFF1ABC9C),
+        color: const Color(0xFF193340),
         icon: Icons.schedule_rounded,
       ),
       _StatItem(

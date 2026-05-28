@@ -153,7 +153,7 @@ class _Body extends StatelessWidget {
                     ar: 'قيد التنفيذ',
                   ),
                   icon: Icons.sync_rounded,
-                  color: const Color(0xFF2980B9),
+                  color: const Color(0xFF2E8043),
                   bgColor: const Color(0xFFEBF5FB),
                 ),
               ],
@@ -278,7 +278,7 @@ class _ActivityCard extends StatelessWidget {
     if (activity.isOverdue) return const Color(0xFFE74C3C);
     switch (activity.status) {
       case 'in_progress':
-        return const Color(0xFF2980B9);
+        return const Color(0xFF2E8043);
       case 'completed':
         return const Color(0xFF27AE60);
       case 'pending':
@@ -291,7 +291,7 @@ class _ActivityCard extends StatelessWidget {
     if (activity.isOverdue) return const Color(0xFFE74C3C).withValues(alpha: 0.3);
     switch (activity.status) {
       case 'in_progress':
-        return const Color(0xFF2980B9).withValues(alpha: 0.3);
+        return const Color(0xFF2E8043).withValues(alpha: 0.3);
       case 'completed':
         return const Color(0xFF27AE60).withValues(alpha: 0.3);
       default:

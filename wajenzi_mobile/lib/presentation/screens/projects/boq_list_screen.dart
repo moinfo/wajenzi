@@ -465,7 +465,7 @@ class _BoqListScreenState extends ConsumerState<BoqListScreen> {
                             IconButton(
                               icon: const Icon(
                                 Icons.edit,
-                                color: Color(0xFF1ABC9C),
+                                color: Color(0xFF193340),
                               ),
                               onPressed: () {
                                 Navigator.pop(ctx);
@@ -1238,7 +1238,7 @@ class _BoqCard extends StatelessWidget {
         statusColor = const Color(0xFFEF4444);
         break;
       default:
-        statusColor = const Color(0xFF3498db);
+        statusColor = const Color(0xFF3BA154);
     }
 
     return Card(
@@ -1260,12 +1260,12 @@ class _BoqCard extends StatelessWidget {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF3498db).withValues(alpha: 0.1),
+                          color: const Color(0xFF3BA154).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(
                           Icons.inventory_2_rounded,
-                          color: Color(0xFF3498db),
+                          color: Color(0xFF3BA154),
                           size: 22,
                         ),
                       ),
@@ -1293,7 +1293,7 @@ class _BoqCard extends StatelessWidget {
                                   ),
                                   decoration: BoxDecoration(
                                     color: const Color(
-                                      0xFF3498db,
+                                      0xFF3BA154,
                                     ).withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
@@ -1302,7 +1302,7 @@ class _BoqCard extends StatelessWidget {
                                     style: const TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF3498db),
+                                      color: Color(0xFF3BA154),
                                     ),
                                   ),
                                 ),
@@ -1400,7 +1400,7 @@ class _BoqCard extends StatelessWidget {
                   icon: const Icon(Icons.edit, size: 16),
                   label: Text(isSwahili ? 'Hariri' : 'Edit'),
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF1ABC9C),
+                    foregroundColor: const Color(0xFF193340),
                   ),
                 ),
                 const SizedBox(width: 8),

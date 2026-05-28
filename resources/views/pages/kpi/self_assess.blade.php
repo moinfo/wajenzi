@@ -131,7 +131,7 @@
             </button>
             <button type="submit" name="action" value="submit"
                     style="background:#1BC5BD; color:#fff; padding:10px 24px; border-radius:8px; font-weight:700; font-size:13px; border:none;"
-                    onclick="return confirm('Submit this self-assessment to your supervisor? You can recall it before they start reviewing, but not after.')">
+                    onclick="return validateSelfSubmit()">
                 <i class="fa fa-paper-plane"></i> Submit to Supervisor
             </button>
         </div>
@@ -190,5 +190,30 @@
     });
     recalc();
 }());
+
+/**
+ * Submit-time guard: block forwarding to the supervisor while any self-rate is
+ * blank, jump the user to the first empty field, and only then ask to confirm.
+ * Save Draft never calls this, so partial work can still be saved.
+ */
+function validateSelfSubmit() {
+    const inputs = document.querySelectorAll('.kpi-self-input');
+    let blank = 0, firstBlank = null;
+    inputs.forEach(el => {
+        if (el.value === null || el.value.trim() === '') {
+            blank++;
+            if (!firstBlank) firstBlank = el;
+        }
+    });
+    if (blank > 0) {
+        alert('Please rate every KPI (0–100) before submitting. ' + blank + ' row(s) are still blank.\n\nUse “Save Draft” if you want to finish later.');
+        if (firstBlank) {
+            firstBlank.focus();
+            firstBlank.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+        return false;
+    }
+    return confirm('Submit this self-assessment to your supervisor? You can recall it before they start reviewing, but not after.');
+}
 </script>
 @endsection

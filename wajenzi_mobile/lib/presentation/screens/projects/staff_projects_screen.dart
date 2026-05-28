@@ -289,13 +289,13 @@ class _StatsRow extends StatelessWidget {
       (
         _tr(context, en: 'Total', sw: 'Jumla', ar: 'الإجمالي'),
         '${stats['total'] ?? 0}',
-        const Color(0xFF3498DB),
+        const Color(0xFF3BA154),
         Icons.folder_rounded,
       ),
       (
         _tr(context, en: 'Active', sw: 'Inayoendelea', ar: 'نشط'),
         '${stats['active'] ?? 0}',
-        const Color(0xFF1ABC9C),
+        const Color(0xFF193340),
         Icons.construction_rounded,
       ),
       (
@@ -556,8 +556,8 @@ class _ProjectCard extends StatelessWidget {
       'APPROVED' => const Color(0xFF27AE60),
       'COMPLETED' => const Color(0xFF9B59B6),
       'REJECTED' => const Color(0xFFE74C3C),
-      'IN_PROGRESS' || 'SUBMITTED' => const Color(0xFF3498DB),
-      _ => const Color(0xFFF39C12),
+      'IN_PROGRESS' || 'SUBMITTED' => const Color(0xFF3BA154),
+      _ => const Color(0xFFFECC04),
     };
   }
 
@@ -725,7 +725,7 @@ class _ProjectCard extends StatelessWidget {
                   runSpacing: 4,
                   children: [
                     if (category.isNotEmpty)
-                      _Tag(category, color: const Color(0xFF3498DB)),
+                      _Tag(category, color: const Color(0xFF3BA154)),
                     if (serviceType.isNotEmpty)
                       _Tag(serviceType, color: const Color(0xFF9B59B6)),
                   ],
@@ -808,7 +808,7 @@ class _ProjectCard extends StatelessWidget {
                     ),
                     value: _display(project['planned_duration']),
                     icon: Icons.schedule_rounded,
-                    color: const Color(0xFF3498DB),
+                    color: const Color(0xFF3BA154),
                   ),
                   const SizedBox(width: 8),
                   _Metric(
@@ -820,7 +820,7 @@ class _ProjectCard extends StatelessWidget {
                     ),
                     value: _display(project['actual_duration']),
                     icon: Icons.timer_rounded,
-                    color: const Color(0xFF1ABC9C),
+                    color: const Color(0xFF193340),
                   ),
                   const SizedBox(width: 8),
                   _Metric(
@@ -878,13 +878,13 @@ class _ProjectCard extends StatelessWidget {
                       _PersonChip(
                         icon: Icons.sell_rounded,
                         label: salesperson,
-                        color: const Color(0xFFF39C12),
+                        color: const Color(0xFFFECC04),
                       ),
                     if (manager.isNotEmpty)
                       _PersonChip(
                         icon: Icons.manage_accounts_rounded,
                         label: manager,
-                        color: const Color(0xFF3498DB),
+                        color: const Color(0xFF3BA154),
                       ),
                   ],
                 ),
@@ -1832,8 +1832,8 @@ class _StatusPill extends StatelessWidget {
       'APPROVED' => AppColors.success,
       'COMPLETED' => const Color(0xFF9B59B6),
       'REJECTED' => AppColors.error,
-      'PENDING' || 'CREATED' => const Color(0xFFF39C12),
-      'IN_PROGRESS' || 'SUBMITTED' => const Color(0xFF3498DB),
+      'PENDING' || 'CREATED' => const Color(0xFFFECC04),
+      'IN_PROGRESS' || 'SUBMITTED' => const Color(0xFF3BA154),
       _ => Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45),
     };
     return Container(

@@ -647,6 +647,14 @@
         ];
         $platformEmoji = ['instagram'=>'📸','tiktok'=>'🎵','facebook'=>'👍','linkedin'=>'💼','youtube'=>'▶️','general'=>'🌐'];
     @endphp
+    <div style="margin-bottom:14px;">
+        <div style="position:relative; max-width:420px;">
+            <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8;"></i>
+            <input type="text" id="kanbanSearch" onkeyup="filterKanban()"
+                   placeholder="Search tasks by title or assignee…"
+                   style="width:100%; padding:9px 12px 9px 34px; border:1.5px solid #e2e8f0; border-radius:9px; font-size:13px; outline:none;">
+        </div>
+    </div>
     <div class="cc-kanban">
         @foreach($cols as $status => $col)
         <div class="cc-kanban-col" data-status="{{ $status }}"
@@ -1000,6 +1008,24 @@
 .datepicker-dropdown { z-index: 1400 !important; }
 </style>
 <script>
+// ─── Kanban live search ───────────────────────────────────────────
+// Filters task cards by title/assignee text and updates each column's
+// count badge to reflect what's visible. Client-side: all cards are
+// already loaded on the board.
+function filterKanban() {
+    var term = (document.getElementById('kanbanSearch').value || '').toLowerCase().trim();
+    document.querySelectorAll('.cc-kanban-col').forEach(function (col) {
+        var shown = 0;
+        col.querySelectorAll('.cc-task-card').forEach(function (card) {
+            var match = card.textContent.toLowerCase().indexOf(term) !== -1;
+            card.style.display = match ? '' : 'none';
+            if (match) shown++;
+        });
+        var count = col.querySelector('.cc-kanban-count');
+        if (count) count.textContent = shown;
+    });
+}
+
 // ─── Bootstrap Datepicker init ────────────────────────────────────
 $(function () {
     // Use a dedicated class so we don't accidentally init other pickers

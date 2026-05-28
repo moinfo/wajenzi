@@ -487,7 +487,7 @@ class _SalesDailyReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = const Color(0xFF1ABC9C);
+    final accent = const Color(0xFF193340);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -1977,7 +1977,7 @@ class _StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF3498DB).withValues(alpha: 0.08),
+        color: const Color(0xFF3BA154).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(

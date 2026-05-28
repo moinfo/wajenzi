@@ -565,7 +565,7 @@ class _ExpenseStatsSection extends ConsumerWidget {
                   ),
                   value: '$recordsCount',
                   icon: Icons.receipt,
-                  color: const Color(0xFF3498DB),
+                  color: const Color(0xFF3BA154),
                   isDarkMode: isDarkMode,
                 ),
               ),
@@ -1681,12 +1681,12 @@ class _ExpenseCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3498DB).withValues(alpha: 0.1),
+                      color: const Color(0xFF3BA154).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
                       Icons.receipt_long,
-                      color: Color(0xFF3498DB),
+                      color: Color(0xFF3BA154),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1789,7 +1789,7 @@ class _ExpenseCard extends StatelessWidget {
                       ),
                     ),
                     style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF1ABC9C),
+                      foregroundColor: const Color(0xFF193340),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1931,12 +1931,12 @@ class _StatusBadge extends StatelessWidget {
     final color =
         {
           'approved': const Color(0xFF27AE60),
-          'pending': const Color(0xFFF39C12),
+          'pending': const Color(0xFFFECC04),
           'rejected': const Color(0xFFE74C3C),
         }.containsKey(status)
         ? {
             'approved': const Color(0xFF27AE60),
-            'pending': const Color(0xFFF39C12),
+            'pending': const Color(0xFFFECC04),
             'rejected': const Color(0xFFE74C3C),
           }[status]
         : const Color(0xFF95A5A6);

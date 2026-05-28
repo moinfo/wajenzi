@@ -313,7 +313,7 @@ class _HeroBanner extends StatelessWidget {
         gradient: LinearGradient(
           colors: isDarkMode
               ? [const Color(0xFF0D3B34), const Color(0xFF0A2A40)]
-              : [const Color(0xFF1ABC9C), const Color(0xFF2980B9)],
+              : [const Color(0xFF193340), const Color(0xFF2E8043)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

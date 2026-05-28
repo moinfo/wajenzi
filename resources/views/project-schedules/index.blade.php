@@ -10,7 +10,19 @@
         <!-- Filters -->
         <div class="block block-themed">
             <div class="block-content">
-                <form method="GET" class="row">
+                <form method="GET" class="row" style="align-items:flex-end;">
+                    <div class="col-md-5">
+                        <div class="form-group">
+                            <label>Search</label>
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" value="{{ request('search') }}"
+                                       placeholder="Project, lead, client or architect…">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="col-md-3">
                         <div class="form-group">
                             <label>Status</label>
@@ -24,6 +36,15 @@
                             </select>
                         </div>
                     </div>
+                    @if(request('search') || request('status'))
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <a href="{{ route('project-schedules.index') }}" class="btn btn-alt-secondary btn-block">
+                                    <i class="fa fa-times"></i> Clear
+                                </a>
+                            </div>
+                        </div>
+                    @endif
                 </form>
             </div>
         </div>
@@ -153,7 +174,7 @@
                     </table>
                 </div>
 
-                {{ $schedules->links() }}
+                {{ $schedules->appends(request()->query())->links() }}
             </div>
         </div>
     </div>

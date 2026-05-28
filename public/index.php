@@ -9,6 +9,12 @@
 
 define('LARAVEL_START', microtime(true));
 ini_set('memory_limit', '512M'); // Or '512M', '1G', etc.
+// Keep PHP deprecation notices (e.g. PDO::MYSQL_ATTR_SSL_CA on PHP 8.5+) from
+// leaking into JSON responses in local dev — they would otherwise prepend HTML
+// to the body and break Dio's JSON parser on the mobile client. Production has
+// display_errors=Off in php.ini anyway, so this is a no-op there.
+ini_set('display_errors', '0');
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
 
 
 /*

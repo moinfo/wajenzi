@@ -393,12 +393,12 @@ class _DocumentCard extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3498DB).withValues(alpha: 0.1),
+                  color: const Color(0xFF3BA154).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
                   Icons.description_outlined,
-                  color: Color(0xFF3498DB),
+                  color: Color(0xFF3BA154),
                 ),
               ),
               const SizedBox(width: 12),

@@ -244,7 +244,7 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
                       ? const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
+                          colors: [Color(0xFF193340), Color(0xFF122833)],
                         )
                       : null,
                   color: isCenter ? null : Colors.transparent,
@@ -253,7 +253,7 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
                       ? [
                           BoxShadow(
                             color: const Color(
-                              0xFF1ABC9C,
+                              0xFF193340,
                             ).withValues(alpha: 0.6),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
@@ -288,7 +288,7 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
                   fontSize: isCenter ? 11 : 10,
                   fontWeight: isCenter ? FontWeight.w700 : FontWeight.w500,
                   color: isCenter
-                      ? const Color(0xFF1ABC9C)
+                      ? const Color(0xFF193340)
                       : isDarkMode
                       ? Colors.white.withValues(alpha: 0.7)
                       : const Color(0xFF2C3E50).withValues(alpha: 0.7),
@@ -428,7 +428,7 @@ class _CurvedNavBorderPainter extends CustomPainter {
     canvas.drawPath(path, borderPaint);
 
     final glowPaint = Paint()
-      ..color = const Color(0xFF1ABC9C).withValues(alpha: isDark ? 0.3 : 0.4)
+      ..color = const Color(0xFF193340).withValues(alpha: isDark ? 0.3 : 0.4)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);

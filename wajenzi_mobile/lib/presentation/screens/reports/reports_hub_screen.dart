@@ -746,7 +746,7 @@ class _ReportCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: item.supportsMobile
-                      ? const Color(0xFF16A085)
+                      ? const Color(0xFF122833)
                       : (isDarkMode ? Colors.white70 : const Color(0xFF6B7785)),
                   fontWeight: FontWeight.w600,
                   fontSize: 12,

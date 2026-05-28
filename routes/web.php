@@ -431,6 +431,54 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project_type/update/{id}', [App\Http\Controllers\ProjectTypeController::class, 'update'])->name('project_type.update');
     Route::post('/project_type/delete/{id}', [App\Http\Controllers\ProjectTypeController::class, 'destroy'])->name('project_type.delete');
 
+    // Landing CMS — Portfolio (mobile app "Our Portfolio" section)
+    Route::get('/landing/portfolio', [App\Http\Controllers\LandingProjectController::class, 'index'])->name('landing_portfolio');
+    Route::post('/landing/portfolio', [App\Http\Controllers\LandingProjectController::class, 'store'])->name('landing_portfolio.store');
+    Route::post('/landing/portfolio/{id}', [App\Http\Controllers\LandingProjectController::class, 'update'])->name('landing_portfolio.update');
+    Route::post('/landing/portfolio/{id}/delete', [App\Http\Controllers\LandingProjectController::class, 'destroy'])->name('landing_portfolio.delete');
+    Route::post('/landing/portfolio/image/{imageId}/delete', [App\Http\Controllers\LandingProjectController::class, 'deleteImage'])->name('landing_portfolio.image.delete');
+    Route::post('/landing/portfolio/image/{imageId}/primary', [App\Http\Controllers\LandingProjectController::class, 'setPrimaryImage'])->name('landing_portfolio.image.primary');
+
+    // Landing CMS — Awards
+    Route::get('/landing/awards', [App\Http\Controllers\LandingAwardController::class, 'index'])->name('landing_awards');
+    Route::post('/landing/awards', [App\Http\Controllers\LandingAwardController::class, 'store'])->name('landing_awards.store');
+    Route::post('/landing/awards/{id}', [App\Http\Controllers\LandingAwardController::class, 'update'])->name('landing_awards.update');
+    Route::post('/landing/awards/{id}/delete', [App\Http\Controllers\LandingAwardController::class, 'destroy'])->name('landing_awards.delete');
+
+    // Landing CMS — Services
+    Route::get('/landing/services', [App\Http\Controllers\LandingServiceController::class, 'index'])->name('landing_services');
+    Route::post('/landing/services', [App\Http\Controllers\LandingServiceController::class, 'store'])->name('landing_services.store');
+    Route::post('/landing/services/{id}', [App\Http\Controllers\LandingServiceController::class, 'update'])->name('landing_services.update');
+    Route::post('/landing/services/{id}/delete', [App\Http\Controllers\LandingServiceController::class, 'destroy'])->name('landing_services.delete');
+
+    // Landing CMS — About (singleton)
+    Route::get('/landing/about', [App\Http\Controllers\LandingAboutController::class, 'index'])->name('landing_about');
+    Route::post('/landing/about', [App\Http\Controllers\LandingAboutController::class, 'update'])->name('landing_about.update');
+
+    // Landing CMS — Core Values
+    Route::get('/landing/values', [App\Http\Controllers\LandingValueController::class, 'index'])->name('landing_values');
+    Route::post('/landing/values', [App\Http\Controllers\LandingValueController::class, 'store'])->name('landing_values.store');
+    Route::post('/landing/values/{id}', [App\Http\Controllers\LandingValueController::class, 'update'])->name('landing_values.update');
+    Route::post('/landing/values/{id}/delete', [App\Http\Controllers\LandingValueController::class, 'destroy'])->name('landing_values.delete');
+
+    // Landing CMS — Team
+    Route::get('/landing/team', [App\Http\Controllers\LandingTeamMemberController::class, 'index'])->name('landing_team');
+    Route::post('/landing/team', [App\Http\Controllers\LandingTeamMemberController::class, 'store'])->name('landing_team.store');
+    Route::post('/landing/team/{id}', [App\Http\Controllers\LandingTeamMemberController::class, 'update'])->name('landing_team.update');
+    Route::post('/landing/team/{id}/delete', [App\Http\Controllers\LandingTeamMemberController::class, 'destroy'])->name('landing_team.delete');
+
+    // Landing CMS — Posters (home banners)
+    Route::get('/landing/posters', [App\Http\Controllers\LandingPosterController::class, 'index'])->name('landing_posters');
+    Route::post('/landing/posters', [App\Http\Controllers\LandingPosterController::class, 'store'])->name('landing_posters.store');
+    Route::post('/landing/posters/{id}', [App\Http\Controllers\LandingPosterController::class, 'update'])->name('landing_posters.update');
+    Route::post('/landing/posters/{id}/delete', [App\Http\Controllers\LandingPosterController::class, 'destroy'])->name('landing_posters.delete');
+
+    // Landing CMS — Hero Stats
+    Route::get('/landing/stats', [App\Http\Controllers\LandingStatController::class, 'index'])->name('landing_stats');
+    Route::post('/landing/stats', [App\Http\Controllers\LandingStatController::class, 'store'])->name('landing_stats.store');
+    Route::post('/landing/stats/{id}', [App\Http\Controllers\LandingStatController::class, 'update'])->name('landing_stats.update');
+    Route::post('/landing/stats/{id}/delete', [App\Http\Controllers\LandingStatController::class, 'destroy'])->name('landing_stats.delete');
+
     // Project BOQ Routes
     Route::match(['get', 'post'], '/project_boqs', [App\Http\Controllers\ProjectBoqController::class, 'index'])->name('project_boqs');
     Route::match(['get', 'post'], '/project_boq/create', [App\Http\Controllers\ProjectBoqController::class, 'create'])->name('project_boq.create');
@@ -677,9 +725,11 @@ Route::middleware(['auth'])->group(function () {
     // Performance / KPI routes
     Route::get   ('performance',                  [App\Http\Controllers\KpiController::class, 'index'])      ->name('performance.index');
     Route::get   ('performance/templates',        [App\Http\Controllers\KpiController::class, 'templatesIndex'])->name('performance.templates');
+    Route::post  ('performance/templates',        [App\Http\Controllers\KpiController::class, 'templateStore'])->name('performance.templates.store');
     Route::get   ('performance/templates/{template}', [App\Http\Controllers\KpiController::class, 'templateShow'])->name('performance.templates.show');
+    Route::patch ('performance/templates/{template}', [App\Http\Controllers\KpiController::class, 'templateUpdate'])->name('performance.templates.update');
     Route::post  ('performance/templates/{template}/items', [App\Http\Controllers\KpiController::class, 'templateStoreItem'])->name('performance.templates.items.store');
-    Route::patch ('performance/templates/{template}/items/{item}', [App\Http\Controllers\KpiController::class, 'templateUpdateItem'])->name('performance.templates.items.update');
+    Route::patch ('performance/templates/{template}/items', [App\Http\Controllers\KpiController::class, 'templateUpdateItems'])->name('performance.templates.items.bulk');
     Route::delete('performance/templates/{template}/items/{item}', [App\Http\Controllers\KpiController::class, 'templateDeleteItem'])->name('performance.templates.items.destroy');
     Route::get   ('performance/create',           [App\Http\Controllers\KpiController::class, 'create'])     ->name('performance.create');
     Route::post  ('performance',                  [App\Http\Controllers\KpiController::class, 'store'])      ->name('performance.store');
@@ -797,6 +847,9 @@ Route::middleware(['auth'])->group(function () {
 
 // Procurement - Purchase Orders Routes
     Route::match(['get', 'post'], '/purchase_orders', [App\Http\Controllers\PurchaseController::class, 'purchaseOrders'])->name('purchase_orders');
+    // Site Cost Report — per-site material/labour/overhead/drawing rollup + CSV export
+    Route::get('/purchase_orders/site-report', [App\Http\Controllers\SiteReportController::class, 'index'])->name('purchase_orders.site_report');
+    Route::get('/purchase_orders/site-report/export', [App\Http\Controllers\SiteReportController::class, 'export'])->name('purchase_orders.site_report.export');
     // Specific routes must come before the wildcard {document_type_id} route
     Route::get('/purchase_order/{id}/record_delivery', [App\Http\Controllers\PurchaseController::class, 'recordDelivery'])->name('purchase_order.record_delivery');
     Route::post('/purchase_order/{id}/store_delivery', [App\Http\Controllers\PurchaseController::class, 'storeDelivery'])->name('purchase_order.store_delivery');

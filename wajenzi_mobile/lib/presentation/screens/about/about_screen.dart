@@ -1,6 +1,10 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/config/app_config.dart';
+import '../../../data/models/landing_about_model.dart';
+import '../../providers/about_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/curved_bottom_nav.dart';
 import '../../widgets/landing_top_bar.dart';
@@ -25,6 +29,23 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     if (_isFrench) return fr ?? en;
     if (_isArabic) return ar ?? en;
     return en;
+  }
+
+  // Live "About" content from the portal CMS. Null while loading / on error /
+  // if nothing has been published, in which case the bundled fallbacks below
+  // are used. See [aboutProvider].
+  LandingAboutModel? get _about => ref.watch(aboutProvider).valueOrNull;
+
+  // Count usable outside build (the auto-scroll timer) — uses read(), not watch().
+  int get _leadersCount {
+    final team = ref.read(aboutProvider).valueOrNull?.team ?? const [];
+    return team.isNotEmpty ? team.length : _fallbackLeaders.length;
+  }
+
+  /// Returns the CMS [value] when it is a non-empty string, else [fallback].
+  String _orFallback(String? value, String fallback) {
+    final v = value?.trim();
+    return (v == null || v.isEmpty) ? fallback : v;
   }
 
   // Mission/Vision carousel
@@ -68,7 +89,9 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     // Leadership auto-scroll every 4 seconds (offset timing)
     _leadershipTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (_leadershipController.hasClients) {
-        final nextPage = (_currentLeadershipPage + 1) % 3; // 3 leaders
+        final count = _leadersCount;
+        if (count <= 1) return;
+        final nextPage = (_currentLeadershipPage + 1) % count;
         _leadershipController.animateToPage(
           nextPage,
           duration: const Duration(milliseconds: 500),
@@ -133,7 +156,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                   const Text(
                     'WAJENZI PROFESSIONAL CO. LTD',
                     style: TextStyle(
-                      color: Color(0xFF1ABC9C),
+                      color: Color(0xFF193340),
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 2,
@@ -184,7 +207,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF1ABC9C), Color(0xFF3498DB)],
+                  colors: [Color(0xFF193340), Color(0xFF3BA154)],
                 ),
               ),
               child: const Center(
@@ -221,16 +244,27 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1ABC9C),
+                  color: const Color(0xFF193340),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  _tr(
-                    en: 'Founded in 2012',
-                    sw: 'Ilianzishwa 2012',
-                    fr: 'Fondee en 2012',
-                    ar: 'تأسست عام 2012',
-                  ),
+                  () {
+                    final year = _about?.foundedYear?.trim();
+                    if (year != null && year.isNotEmpty) {
+                      return _tr(
+                        en: 'Founded in $year',
+                        sw: 'Ilianzishwa $year',
+                        fr: 'Fondee en $year',
+                        ar: 'تأسست عام $year',
+                      );
+                    }
+                    return _tr(
+                      en: 'Founded in 2012',
+                      sw: 'Ilianzishwa 2012',
+                      fr: 'Fondee en 2012',
+                      ar: 'تأسست عام 2012',
+                    );
+                  }(),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -254,11 +288,14 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                _tr(
-                  en: 'Building Dreams, Creating Reality',
-                  sw: 'Kujenga Ndoto, Kuunda Uhalisia',
-                  fr: 'Construire les reves, creer la realite',
-                  ar: 'نبني الأحلام ونصنع الواقع',
+                _orFallback(
+                  _about?.tagline,
+                  _tr(
+                    en: 'Building Dreams, Creating Reality',
+                    sw: 'Kujenga Ndoto, Kuunda Uhalisia',
+                    fr: 'Construire les reves, creer la realite',
+                    ar: 'نبني الأحلام ونصنع الواقع',
+                  ),
                 ),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.9),
@@ -321,33 +358,55 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          // Story paragraphs
-          _buildParagraph(
-            _tr(
-              en: 'Wajenzi Professional Co. Ltd is recognized as one of the leading construction companies in East Africa. Founded in 2012 by Engineer Eliya N Kishaluli and officially registered as a company limited in 2020, we have steadily grown to become an award-winning construction firm.',
-              sw: 'Wajenzi Professional Co. Ltd inajulikana kama mojawapo ya makampuni yanayoongoza ya ujenzi Afrika Mashariki. Ilianzishwa mwaka 2012 na Mhandisi Eliya N Kishaluli na kusajiliwa rasmi kama kampuni yenye kikomo mwaka 2020, tumekua kuwa kampuni ya ujenzi yenye tuzo.',
-              fr: 'Wajenzi Professional Co. Ltd est reconnue comme l\'une des principales entreprises de construction en Afrique de l\'Est. Fondee en 2012 par l\'ingenieur Eliya N Kishaluli et officiellement enregistree comme societe en 2020, elle est devenue une entreprise de construction primee.',
-              ar: 'تُعرف شركة Wajenzi Professional Co. Ltd بأنها واحدة من الشركات الرائدة في مجال البناء في شرق أفريقيا. تأسست عام 2012 على يد المهندس Eliya N Kishaluli وسُجلت رسميًا كشركة محدودة عام 2020، ونمت لتصبح شركة إنشاءات حائزة على جوائز.',
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildParagraph(
-            _isSwahili
-                ? 'Tukiwa na miradi zaidi ya 120 iliyokamilika kuanzia nyumba za makazi hadi majengo ya kibiashara, dhamira yetu ya ubora na uthabiti imetupata kutambuliwa kote katika eneo hili. Mwaka 2024, Wajenzi Professional ilituzwa tuzo ya Mkandarasi Bora wa Nyumba wa Mwaka na Chama cha Ujenzi na Miundombinu cha Tanzania (CCIT).'
-                : 'With over 120 completed projects ranging from residential homes to commercial complexes, our commitment to quality and consistency has earned us recognition throughout the region. In 2024, Wajenzi Professional was honored with the Outstanding Residential Contractor of the Year award by the Chamber of Construction and Infrastructure of Tanzania (CCIT).',
-          ),
-          const SizedBox(height: 16),
-          _buildParagraph(
-            _tr(
-              en: 'Our company name "Wajenzi," which means "Builders" in Swahili, reflects our deep roots in the local culture and our commitment to building not just structures, but also relationships and communities.',
-              sw: 'Jina la kampuni yetu "Wajenzi," ambalo linamaanisha "Builders" kwa Kiingereza, linaonyesha mizizi yetu ya ndani katika utamaduni wa hapa na dhamira yetu ya kujenga si tu majengo, bali pia mahusiano na jamii.',
-              fr: 'Le nom de notre entreprise, "Wajenzi", qui signifie "constructeurs" en swahili, reflete nos racines profondes dans la culture locale et notre engagement a construire non seulement des structures, mais aussi des relations et des communautes.',
-              ar: 'اسم شركتنا "Wajenzi" الذي يعني "البناؤون" باللغة السواحيلية يعكس جذورنا العميقة في الثقافة المحلية والتزامنا ببناء ليس فقط المنشآت بل أيضًا العلاقات والمجتمعات.',
-            ),
-          ),
+          // Story paragraphs — from CMS when published, else bundled content.
+          ..._buildStoryParagraphs(),
         ],
       ),
     );
+  }
+
+  /// Story body: the CMS `story` (split on blank lines into paragraphs) when
+  /// available, otherwise the bundled multilingual paragraphs.
+  List<Widget> _buildStoryParagraphs() {
+    final cmsStory = _about?.story?.trim();
+    if (cmsStory != null && cmsStory.isNotEmpty) {
+      final paragraphs = cmsStory
+          .split(RegExp(r'\n\s*\n'))
+          .map((p) => p.trim())
+          .where((p) => p.isNotEmpty)
+          .toList();
+      final widgets = <Widget>[];
+      for (var i = 0; i < paragraphs.length; i++) {
+        if (i > 0) widgets.add(const SizedBox(height: 16));
+        widgets.add(_buildParagraph(paragraphs[i]));
+      }
+      return widgets;
+    }
+    return [
+      _buildParagraph(
+        _tr(
+          en: 'Wajenzi Professional Co. Ltd is recognized as one of the leading construction companies in East Africa. Founded in 2012 by Engineer Eliya N Kishaluli and officially registered as a company limited in 2020, we have steadily grown to become an award-winning construction firm.',
+          sw: 'Wajenzi Professional Co. Ltd inajulikana kama mojawapo ya makampuni yanayoongoza ya ujenzi Afrika Mashariki. Ilianzishwa mwaka 2012 na Mhandisi Eliya N Kishaluli na kusajiliwa rasmi kama kampuni yenye kikomo mwaka 2020, tumekua kuwa kampuni ya ujenzi yenye tuzo.',
+          fr: 'Wajenzi Professional Co. Ltd est reconnue comme l\'une des principales entreprises de construction en Afrique de l\'Est. Fondee en 2012 par l\'ingenieur Eliya N Kishaluli et officiellement enregistree comme societe en 2020, elle est devenue une entreprise de construction primee.',
+          ar: 'تُعرف شركة Wajenzi Professional Co. Ltd بأنها واحدة من الشركات الرائدة في مجال البناء في شرق أفريقيا. تأسست عام 2012 على يد المهندس Eliya N Kishaluli وسُجلت رسميًا كشركة محدودة عام 2020، ونمت لتصبح شركة إنشاءات حائزة على جوائز.',
+        ),
+      ),
+      const SizedBox(height: 16),
+      _buildParagraph(
+        _isSwahili
+            ? 'Tukiwa na miradi zaidi ya 120 iliyokamilika kuanzia nyumba za makazi hadi majengo ya kibiashara, dhamira yetu ya ubora na uthabiti imetupata kutambuliwa kote katika eneo hili. Mwaka 2024, Wajenzi Professional ilituzwa tuzo ya Mkandarasi Bora wa Nyumba wa Mwaka na Chama cha Ujenzi na Miundombinu cha Tanzania (CCIT).'
+            : 'With over 120 completed projects ranging from residential homes to commercial complexes, our commitment to quality and consistency has earned us recognition throughout the region. In 2024, Wajenzi Professional was honored with the Outstanding Residential Contractor of the Year award by the Chamber of Construction and Infrastructure of Tanzania (CCIT).',
+      ),
+      const SizedBox(height: 16),
+      _buildParagraph(
+        _tr(
+          en: 'Our company name "Wajenzi," which means "Builders" in Swahili, reflects our deep roots in the local culture and our commitment to building not just structures, but also relationships and communities.',
+          sw: 'Jina la kampuni yetu "Wajenzi," ambalo linamaanisha "Builders" kwa Kiingereza, linaonyesha mizizi yetu ya ndani katika utamaduni wa hapa na dhamira yetu ya kujenga si tu majengo, bali pia mahusiano na jamii.',
+          fr: 'Le nom de notre entreprise, "Wajenzi", qui signifie "constructeurs" en swahili, reflete nos racines profondes dans la culture locale et notre engagement a construire non seulement des structures, mais aussi des relations et des communautes.',
+          ar: 'اسم شركتنا "Wajenzi" الذي يعني "البناؤون" باللغة السواحيلية يعكس جذورنا العميقة في الثقافة المحلية والتزامنا ببناء ليس فقط المنشآت بل أيضًا العلاقات والمجتمعات.',
+        ),
+      ),
+    ];
   }
 
   Widget _buildParagraph(String text) {
@@ -365,12 +424,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
+          colors: [Color(0xFF193340), Color(0xFF122833)],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1ABC9C).withValues(alpha: 0.3),
+            color: const Color(0xFF193340).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -471,13 +530,16 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           fr: 'Notre Mission',
           ar: 'مهمتنا',
         ),
-        'content': _isSwahili
-            ? 'Kutoa suluhisho la ujenzi na usanifu bora, la bei nafuu, na endelevu ambalo linazidi matarajio ya wateja huku tukidumisha viwango vya juu vya uaminifu, taaluma, na uwajibikaji wa mazingira.'
-            : _tr(
-                en: 'To deliver affordable, sustainable, and high-quality construction and architectural solutions that exceed client expectations while maintaining the highest standards of integrity, professionalism, and environmental responsibility.',
-                fr: 'Fournir des solutions de construction et de conception architecturale abordables, durables et de haute qualité qui dépassent les attentes des clients tout en maintenant les plus hauts standards d\'intégrité, de professionnalisme et de responsabilité environnementale.',
-                ar: 'تقديم حلول إنشائية ومعمارية ميسورة التكلفة ومستدامة وعالية الجودة تتجاوز توقعات العملاء مع الحفاظ على أعلى معايير النزاهة والاحترافية والمسؤولية البيئية.',
-              ),
+        'content': _orFallback(
+          _about?.mission,
+          _isSwahili
+              ? 'Kutoa suluhisho la ujenzi na usanifu bora, la bei nafuu, na endelevu ambalo linazidi matarajio ya wateja huku tukidumisha viwango vya juu vya uaminifu, taaluma, na uwajibikaji wa mazingira.'
+              : _tr(
+                  en: 'To deliver affordable, sustainable, and high-quality construction and architectural solutions that exceed client expectations while maintaining the highest standards of integrity, professionalism, and environmental responsibility.',
+                  fr: 'Fournir des solutions de construction et de conception architecturale abordables, durables et de haute qualité qui dépassent les attentes des clients tout en maintenant les plus hauts standards d\'intégrité, de professionnalisme et de responsabilité environnementale.',
+                  ar: 'تقديم حلول إنشائية ومعمارية ميسورة التكلفة ومستدامة وعالية الجودة تتجاوز توقعات العملاء مع الحفاظ على أعلى معايير النزاهة والاحترافية والمسؤولية البيئية.',
+                ),
+        ),
         'subContent': _isSwahili
             ? 'Tumejitolea kutumia mbinu na vifaa vya ubunifu vinavyopunguza athari za mazingira huku tukiboresha utendaji, uimara, na mvuto wa kuvutia katika kila mradi tunaouchukua.'
             : _tr(
@@ -485,7 +547,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 fr: 'Nous nous engageons à utiliser des techniques et des matériaux innovants qui réduisent l\'impact environnemental tout en améliorant la fonctionnalité, la durabilité et l\'attrait esthétique de chaque projet.',
                 ar: 'نلتزم باستخدام تقنيات ومواد مبتكرة تقلل الأثر البيئي مع تعزيز الوظيفة والمتانة والجاذبية الجمالية في كل مشروع ننفذه.',
               ),
-        'gradientColors': const [Color(0xFF3498DB), Color(0xFF2980B9)],
+        'gradientColors': const [Color(0xFF3BA154), Color(0xFF2E8043)],
       },
       {
         'icon': Icons.visibility_rounded,
@@ -495,13 +557,16 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           fr: 'Notre Vision',
           ar: 'رؤيتنا',
         ),
-        'content': _isSwahili
-            ? 'Kuwa mtoa huduma wa kimataifa anayeongoza wa huduma za ujenzi na usanifu za ubunifu, zinazotambuliwa kwa ubora, uendelevu, na athari za mabadiliko katika mazingira yaliyojengwa.'
-            : _tr(
-                en: 'To become a leading global provider of innovative construction and design services, recognized for excellence, sustainability, and transformative impact on the built environment.',
-                fr: 'Devenir un fournisseur mondial de référence en services innovants de construction et de conception, reconnu pour l\'excellence, la durabilité et son impact transformateur sur l\'environnement bâti.',
-                ar: 'أن نصبح مزودًا عالميًا رائدًا لخدمات البناء والتصميم المبتكرة، معروفًا بالتميز والاستدامة والأثر التحويلي في البيئة العمرانية.',
-              ),
+        'content': _orFallback(
+          _about?.vision,
+          _isSwahili
+              ? 'Kuwa mtoa huduma wa kimataifa anayeongoza wa huduma za ujenzi na usanifu za ubunifu, zinazotambuliwa kwa ubora, uendelevu, na athari za mabadiliko katika mazingira yaliyojengwa.'
+              : _tr(
+                  en: 'To become a leading global provider of innovative construction and design services, recognized for excellence, sustainability, and transformative impact on the built environment.',
+                  fr: 'Devenir un fournisseur mondial de référence en services innovants de construction et de conception, reconnu pour l\'excellence, la durabilité et son impact transformateur sur l\'environnement bâti.',
+                  ar: 'أن نصبح مزودًا عالميًا رائدًا لخدمات البناء والتصميم المبتكرة، معروفًا بالتميز والاستدامة والأثر التحويلي في البيئة العمرانية.',
+                ),
+        ),
         'subContent': _isSwahili
             ? 'Tunataka kuweka viwango vipya katika sekta ya ujenzi kupitia ubunifu unaoendelea, maendeleo ya kitaaluma, na kujitolea bila kusita kwa ubora, kuunda majengo yanayosimama jaribio la wakati na kuchangia vyema kwa jamii zinazohudumia.'
             : _tr(
@@ -509,7 +574,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 fr: 'Nous aspirons à établir de nouvelles références dans le secteur de la construction grâce à l\'innovation continue, au développement professionnel et à un engagement constant envers la qualité, en créant des bâtiments durables qui apportent une contribution positive aux communautés servies.',
                 ar: 'نطمح إلى وضع معايير جديدة في قطاع البناء من خلال الابتكار المستمر والتطوير المهني والالتزام الثابت بالجودة، وإنشاء مبانٍ تصمد أمام الزمن وتسهم إيجابًا في المجتمعات التي نخدمها.',
               ),
-        'gradientColors': const [Color(0xFF9B59B6), Color(0xFF8E44AD)],
+        'gradientColors': const [Color(0xFF27505F), Color(0xFF8E44AD)],
       },
     ];
 
@@ -525,7 +590,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 width: 4,
                 height: 30,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1ABC9C),
+                  color: const Color(0xFF193340),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -541,7 +606,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                       ar: 'هدفنا',
                     ),
                     style: const TextStyle(
-                      color: Color(0xFF1ABC9C),
+                      color: Color(0xFF193340),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1,
@@ -616,7 +681,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 height: 8,
                 decoration: BoxDecoration(
                   color: _currentMissionVisionPage == index
-                      ? const Color(0xFF1ABC9C)
+                      ? const Color(0xFF193340)
                       : (_isDarkMode ? Colors.white24 : Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(4),
                 ),
@@ -711,8 +776,46 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     );
   }
 
-  Widget _buildCoreValuesSection() {
-    final values = [
+  // Icon/color palette used to decorate CMS-supplied core values (which carry
+  // only title + description), cycled by index.
+  static const List<Color> _valueAccents = [
+    Color(0xFF27505F),
+    Color(0xFFFECC04),
+    Color(0xFF193340),
+    Color(0xFF3BA154),
+    Color(0xFFE74C3C),
+    Color(0xFF2C3E50),
+  ];
+  static const List<IconData> _valueIcons = [
+    Icons.self_improvement_rounded,
+    Icons.lightbulb_rounded,
+    Icons.verified_rounded,
+    Icons.menu_book_rounded,
+    Icons.groups_rounded,
+    Icons.shield_rounded,
+  ];
+
+  // Core values from the portal CMS when published, else bundled content.
+  List<_CoreValue> get _coreValues {
+    final cms = _about?.values;
+    if (cms != null && cms.isNotEmpty) {
+      return cms
+          .asMap()
+          .entries
+          .map(
+            (e) => _CoreValue(
+              title: e.value.title.toUpperCase(),
+              icon: _valueIcons[e.key % _valueIcons.length],
+              color: _valueAccents[e.key % _valueAccents.length],
+              description: e.value.description ?? '',
+            ),
+          )
+          .toList();
+    }
+    return _fallbackCoreValues;
+  }
+
+  List<_CoreValue> get _fallbackCoreValues => [
       _CoreValue(
         title: _tr(
           en: 'PRAYERS',
@@ -721,7 +824,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           ar: 'الدعاء',
         ),
         icon: Icons.self_improvement_rounded,
-        color: const Color(0xFF9B59B6),
+        color: const Color(0xFF27505F),
         description: _isSwahili
             ? 'Tunaamini katika nguvu ya maombi na imani kuongoza matendo yetu, kuunganisha timu yetu, na kuhamasisha ubora katika juhudi zetu zote.'
             : _tr(
@@ -738,7 +841,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           ar: 'الابتكار',
         ),
         icon: Icons.lightbulb_rounded,
-        color: const Color(0xFFF39C12),
+        color: const Color(0xFFFECC04),
         description: _isSwahili
             ? 'Tunaendeleza na kuingiza teknolojia na mbinu mpya kutoa suluhisho za kisasa kwa mahitaji ya ujenzi na usanifu ya wateja wetu.'
             : _tr(
@@ -755,7 +858,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           ar: 'الجودة',
         ),
         icon: Icons.verified_rounded,
-        color: const Color(0xFF1ABC9C),
+        color: const Color(0xFF193340),
         description: _isSwahili
             ? 'Tunaamini ni jambo bora kufanya kitu kimoja vizuri sana. Kujitolea kwetu bila kusita kwa ubora kunaonyeshwa katika kila undani wa kazi yetu.'
             : _tr(
@@ -772,7 +875,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           ar: 'القراءة',
         ),
         icon: Icons.menu_book_rounded,
-        color: const Color(0xFF3498DB),
+        color: const Color(0xFF3BA154),
         description: _isSwahili
             ? 'Tunakumbatia kusoma kama chombo cha ukuaji, maarifa, na uboreshaji wa kuendelea. Timu yetu inahimizwa kujifunza daima.'
             : _tr(
@@ -816,6 +919,9 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
               ),
       ),
     ];
+
+  Widget _buildCoreValuesSection() {
+    final values = _coreValues;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -968,8 +1074,25 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     );
   }
 
-  Widget _buildLeadershipSection() {
-    final leaders = [
+  // Leadership team from the portal CMS when published, else bundled content.
+  List<_TeamMember> get _leaders {
+    final cms = _about?.team;
+    if (cms != null && cms.isNotEmpty) {
+      return cms
+          .map(
+            (m) => _TeamMember(
+              name: m.name,
+              role: m.role ?? '',
+              image: m.image ?? '',
+              description: m.bio ?? '',
+            ),
+          )
+          .toList();
+    }
+    return _fallbackLeaders;
+  }
+
+  List<_TeamMember> get _fallbackLeaders => [
       _TeamMember(
         name: 'Eng. ELIYA N. KISHALULI',
         role: _isSwahili
@@ -1025,6 +1148,9 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       ),
     ];
 
+  Widget _buildLeadershipSection() {
+    final leaders = _leaders;
+
     return Container(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -1037,7 +1163,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 width: 4,
                 height: 30,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3498DB),
+                  color: const Color(0xFF3BA154),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1053,7 +1179,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                       ar: 'قادة خبراء',
                     ),
                     style: const TextStyle(
-                      color: Color(0xFF3498DB),
+                      color: Color(0xFF3BA154),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1,
@@ -1119,7 +1245,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 height: 8,
                 decoration: BoxDecoration(
                   color: _currentLeadershipPage == index
-                      ? const Color(0xFF3498DB)
+                      ? const Color(0xFF3BA154)
                       : (_isDarkMode ? Colors.white24 : Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(4),
                 ),
@@ -1131,6 +1257,31 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     );
   }
 
+  /// Team-member photo — network (CMS, resolved to an absolute URL) when an
+  /// http URL, the bundled asset for fallback content, else a person icon.
+  Widget _leaderImage(String image) {
+    Widget placeholder() => Container(
+      color: const Color(0xFF193340).withValues(alpha: 0.2),
+      child: const Icon(Icons.person, size: 40, color: Color(0xFF193340)),
+    );
+    final resolved = AppConfig.resolvePortalMediaUrl(image) ?? image;
+    if (resolved.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: resolved,
+        fit: BoxFit.cover,
+        placeholder: (_, _) =>
+            Container(color: const Color(0xFF193340).withValues(alpha: 0.1)),
+        errorWidget: (_, _, _) => placeholder(),
+      );
+    }
+    if (resolved.isEmpty) return placeholder();
+    return Image.asset(
+      resolved,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => placeholder(),
+    );
+  }
+
   Widget _buildLeaderCard(_TeamMember leader) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1138,11 +1289,11 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
         color: _cardBgColor,
         borderRadius: BorderRadius.circular(16),
         border: _isDarkMode
-            ? Border.all(color: const Color(0xFF3498DB).withValues(alpha: 0.3))
+            ? Border.all(color: const Color(0xFF3BA154).withValues(alpha: 0.3))
             : null,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF3498DB).withValues(alpha: 0.1),
+            color: const Color(0xFF3BA154).withValues(alpha: 0.1),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -1158,24 +1309,13 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: const Color(0xFF1ABC9C).withValues(alpha: 0.5),
+                color: const Color(0xFF193340).withValues(alpha: 0.5),
                 width: 2,
               ),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.asset(
-                leader.image,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Container(
-                  color: const Color(0xFF1ABC9C).withValues(alpha: 0.2),
-                  child: const Icon(
-                    Icons.person,
-                    size: 40,
-                    color: Color(0xFF1ABC9C),
-                  ),
-                ),
-              ),
+              child: _leaderImage(leader.image),
             ),
           ),
           const SizedBox(width: 16),
@@ -1199,13 +1339,13 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1ABC9C).withValues(alpha: 0.15),
+                    color: const Color(0xFF193340).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     leader.role,
                     style: const TextStyle(
-                      color: Color(0xFF1ABC9C),
+                      color: Color(0xFF193340),
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1238,12 +1378,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           end: Alignment.bottomRight,
           colors: _isDarkMode
               ? [const Color(0xFF0F3460), const Color(0xFF16213E)]
-              : [const Color(0xFF2C3E50), const Color(0xFF1ABC9C)],
+              : [const Color(0xFF2C3E50), const Color(0xFF193340)],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1ABC9C).withValues(alpha: 0.3),
+            color: const Color(0xFF193340).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -1295,8 +1435,10 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
               fr: 'Adresse',
               ar: 'العنوان',
             ),
-            content:
-                'Ground-Floor (07), PSSSF Commercial Complex, Dar es Salaam',
+            content: _orFallback(
+              _about?.address,
+              'Ground-Floor (07), PSSSF Commercial Complex, Dar es Salaam',
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -1304,7 +1446,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           _buildContactItem(
             icon: Icons.phone_rounded,
             title: _tr(en: 'Phone', sw: 'Simu', fr: 'Telephone', ar: 'الهاتف'),
-            content: '+255 793 444 400',
+            content: _orFallback(_about?.phone, '+255 793 444 400'),
           ),
           const SizedBox(height: 16),
 
@@ -1317,7 +1459,10 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
               fr: 'E-mail',
               ar: 'البريد الإلكتروني',
             ),
-            content: 'info@wajenziprofessional.co.tz',
+            content: _orFallback(
+              _about?.email,
+              'info@wajenziprofessional.co.tz',
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -1330,11 +1475,14 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
               fr: 'Heures d\'ouverture',
               ar: 'ساعات العمل',
             ),
-            content: _tr(
-              en: 'Mon - Fri: 8:00 AM - 6:00 PM',
-              sw: 'Jumatatu - Ijumaa: 8:00 AM - 6:00 PM',
-              fr: 'Lun - Ven : 8h00 - 18h00',
-              ar: 'الاثنين - الجمعة: 8:00 ص - 6:00 م',
+            content: _orFallback(
+              _about?.workingHours,
+              _tr(
+                en: 'Mon - Fri: 8:00 AM - 6:00 PM',
+                sw: 'Jumatatu - Ijumaa: 8:00 AM - 6:00 PM',
+                fr: 'Lun - Ven : 8h00 - 18h00',
+                ar: 'الاثنين - الجمعة: 8:00 ص - 6:00 م',
+              ),
             ),
           ),
         ],

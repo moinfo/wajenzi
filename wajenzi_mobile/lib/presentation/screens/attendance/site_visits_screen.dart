@@ -534,9 +534,9 @@ Color getVisitStatusColor(String status) {
     case 'APPROVED':
       return const Color(0xFF27AE60);
     case 'SUBMITTED':
-      return const Color(0xFF3498DB);
+      return const Color(0xFF3BA154);
     case 'CREATED':
-      return const Color(0xFFF39C12);
+      return const Color(0xFFFECC04);
     case 'REJECTED':
       return const Color(0xFFE74C3C);
     case 'COMPLETED':

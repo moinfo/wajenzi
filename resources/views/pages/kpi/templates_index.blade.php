@@ -15,6 +15,14 @@
 .tpl-weight-warn { color:#dc2626 !important; }
 .tpl-inactive { opacity:.55; }
 .tpl-inactive-badge { background:#f1f5f9; color:#64748b; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; margin-left:8px; }
+.tpl-new-btn { background:#1BC5BD; color:#fff; padding:8px 16px; border-radius:8px; border:none; font-weight:600; font-size:13px; cursor:pointer; }
+.tpl-new-btn:hover { background:#159e97; }
+.tpl-new-panel { background:#fff; border:1px solid #eef0f3; border-radius:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); padding:18px 22px; margin-bottom:18px; }
+.tpl-new-panel form { display:grid; grid-template-columns:2fr 1.5fr 1fr auto; gap:12px; align-items:end; }
+.tpl-new-panel label { display:block; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
+.tpl-new-panel input, .tpl-new-panel select { width:100%; border:1.5px solid #cbd5e1; border-radius:6px; padding:7px 9px; font-size:13px; }
+.tpl-new-panel button[type=submit] { background:#1BC5BD; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:600; font-size:13px; cursor:pointer; }
+.tpl-new-empty { font-size:13px; color:#94a3b8; margin:0; }
 </style>
 
 <div class="container-fluid" style="padding:24px 28px;">
@@ -28,13 +36,72 @@
                 One template per role. Click into a template to edit its KPI items, targets, and weights.
             </p>
         </div>
-        <a href="{{ route('performance.index') }}"
-           style="background:#f3f4f6; color:#475569; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13px;">
-            <i class="fa fa-arrow-left"></i> Back
-        </a>
+        <div style="display:flex; gap:10px;">
+            <button type="button" class="tpl-new-btn" onclick="toggleNewTemplate()">
+                <i class="fa fa-plus"></i> New Template
+            </button>
+            <a href="{{ route('performance.index') }}"
+               style="background:#f3f4f6; color:#475569; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13px;">
+                <i class="fa fa-arrow-left"></i> Back
+            </a>
+        </div>
     </div>
 
     @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
+    @if($errors->any())
+        <div class="alert alert-danger">
+            <ul style="margin:0; padding-left:20px;">
+                @foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach
+            </ul>
+        </div>
+    @endif
+
+    <div class="tpl-new-panel" id="newTemplatePanel" style="display:{{ $errors->any() ? 'block' : 'none' }};">
+        @if($availableRoles->isEmpty())
+            <p class="tpl-new-empty">
+                <i class="fa fa-check-circle" style="color:#1BC5BD;"></i>
+                Every role already has a KPI template. Open an existing one to edit its items.
+            </p>
+        @else
+            <form method="POST" action="{{ route('performance.templates.store') }}">
+                @csrf
+                <div>
+                    <label>Template Name</label>
+                    <input type="text" name="name" value="{{ old('name') }}"
+                           placeholder="e.g. Site Supervisor Performance Review" required>
+                </div>
+                <div>
+                    <label>Department / Role</label>
+                    <select name="role_id" required>
+                        <option value="">— Select role —</option>
+                        @foreach($availableRoles as $role)
+                            <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>
+                                {{ $role->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label>Frequency</label>
+                    <select name="frequency" required>
+                        @foreach(['monthly','quarterly','biannual','annual'] as $freq)
+                            <option value="{{ $freq }}" {{ old('frequency', 'monthly') === $freq ? 'selected' : '' }}>
+                                {{ ucfirst($freq) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit"><i class="fa fa-check"></i> Create</button>
+            </form>
+        @endif
+    </div>
+
+    <script>
+        function toggleNewTemplate() {
+            var p = document.getElementById('newTemplatePanel');
+            p.style.display = p.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
 
     <div class="tpl-grid">
         @foreach($templates as $t)

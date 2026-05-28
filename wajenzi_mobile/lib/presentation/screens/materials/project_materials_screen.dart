@@ -601,12 +601,12 @@ class _MaterialCard extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3498db).withValues(alpha: 0.1),
+                      color: const Color(0xFF3BA154).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
                       Icons.inventory_2_rounded,
-                      color: Color(0xFF3498db),
+                      color: Color(0xFF3BA154),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -1024,14 +1024,14 @@ class _MaterialDetailSheet extends ConsumerWidget {
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: const Color(
-                                      0xFF3498DB,
+                                      0xFF3BA154,
                                     ).withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Icon(
                                     Icons.inventory,
                                     size: 20,
-                                    color: Color(0xFF3498DB),
+                                    color: Color(0xFF3BA154),
                                   ),
                                 ),
                                 const SizedBox(width: 12),

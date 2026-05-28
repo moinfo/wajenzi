@@ -484,7 +484,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF3498DB), Color(0xFF1ABC9C)],
+                  colors: [Color(0xFF3BA154), Color(0xFF193340)],
                 ),
               ),
               child: const Center(
@@ -523,7 +523,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1ABC9C),
+                  color: const Color(0xFF193340),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -714,7 +714,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                     errorBuilder: (_, _, _) => Container(
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Color(0xFFD4AF37), Color(0xFFF39C12)],
+                          colors: [Color(0xFFD4AF37), Color(0xFFFECC04)],
                         ),
                       ),
                       child: const Icon(
@@ -831,13 +831,13 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                       height: 32,
                                       decoration: BoxDecoration(
                                         color: const Color(
-                                          0xFF1ABC9C,
+                                          0xFF193340,
                                         ).withValues(alpha: 0.15),
                                         shape: BoxShape.circle,
                                       ),
                                       child: Icon(
                                         f['icon'] as IconData,
-                                        color: const Color(0xFF1ABC9C),
+                                        color: const Color(0xFF193340),
                                         size: 16,
                                       ),
                                     ),
@@ -864,12 +864,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF25D366),
+                            color: const Color(0xFF3BA154),
                             borderRadius: BorderRadius.circular(10),
                             boxShadow: [
                               BoxShadow(
                                 color: const Color(
-                                  0xFF25D366,
+                                  0xFF3BA154,
                                 ).withValues(alpha: 0.4),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
@@ -921,7 +921,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: const Color(0xFF1ABC9C)),
+            Icon(icon, size: 14, color: const Color(0xFF193340)),
             const SizedBox(width: 4),
             Flexible(
               child: Text(
@@ -946,7 +946,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             width: 4,
             height: 30,
             decoration: BoxDecoration(
-              color: const Color(0xFF3498DB),
+              color: const Color(0xFF3BA154),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -962,7 +962,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                   ar: 'المشاريع الرائدة',
                 ),
                 style: const TextStyle(
-                  color: Color(0xFF3498DB),
+                  color: Color(0xFF3BA154),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1,
@@ -1001,7 +1001,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   Widget _buildProjectCard(_Project project) {
     final statusColor = project.isCompleted
         ? const Color(0xFF27AE60)
-        : const Color(0xFFF39C12);
+        : const Color(0xFFFECC04);
     final priceText = _getFormattedPrice(project);
 
     return GestureDetector(
@@ -1103,7 +1103,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF1ABC9C),
+                                  color: const Color(0xFF193340),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -1227,12 +1227,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF25D366),
+                          color: const Color(0xFF3BA154),
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
                               color: const Color(
-                                0xFF25D366,
+                                0xFF3BA154,
                               ).withValues(alpha: 0.4),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
@@ -1273,7 +1273,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   void _showProjectDetails(_Project project) {
     final statusColor = project.isCompleted
         ? const Color(0xFF27AE60)
-        : const Color(0xFFF39C12);
+        : const Color(0xFFFECC04);
 
     showModalBottomSheet(
       context: context,
@@ -1362,14 +1362,14 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                           ),
                           decoration: BoxDecoration(
                             color: const Color(
-                              0xFF3498DB,
+                              0xFF3BA154,
                             ).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             project.type,
                             style: const TextStyle(
-                              color: Color(0xFF3498DB),
+                              color: Color(0xFF3BA154),
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1424,13 +1424,13 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
+                            colors: [Color(0xFF193340), Color(0xFF122833)],
                           ),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
                               color: const Color(
-                                0xFF1ABC9C,
+                                0xFF193340,
                               ).withValues(alpha: 0.3),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
@@ -1545,7 +1545,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF25D366),
+                        backgroundColor: const Color(0xFF3BA154),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -1553,7 +1553,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                         ),
                         elevation: 4,
                         shadowColor: const Color(
-                          0xFF25D366,
+                          0xFF3BA154,
                         ).withValues(alpha: 0.5),
                       ),
                     ),
@@ -1570,7 +1570,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   Widget _buildInfoItem(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: const Color(0xFF1ABC9C)),
+        Icon(icon, size: 18, color: const Color(0xFF193340)),
         const SizedBox(width: 6),
         Text(text, style: TextStyle(color: _textSecondaryColor, fontSize: 14)),
       ],
@@ -1596,7 +1596,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         'items': _isSwahili
             ? ['Uchambuzi wa Mahitaji', 'Ziara ya Eneo', 'Maoni ya Awali']
             : ['Requirement Analysis', 'Site Visit', 'Initial Feedback'],
-        'color': const Color(0xFF3498DB),
+        'color': const Color(0xFF3BA154),
       },
       {
         'number': '2',
@@ -1610,7 +1610,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         'items': _isSwahili
             ? ['Uundaji wa Dhana', 'Muundo wa Kina', 'Makadirio ya Gharama']
             : ['Concept Development', 'Detailed Design', 'Cost Estimation'],
-        'color': const Color(0xFF9B59B6),
+        'color': const Color(0xFF27505F),
       },
       {
         'number': '3',
@@ -1632,7 +1632,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 'Quality Control',
                 'Progress Reporting',
               ],
-        'color': const Color(0xFFF39C12),
+        'color': const Color(0xFFFECC04),
       },
       {
         'number': '4',
@@ -1650,7 +1650,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 'Msaada Unaoendelea',
               ]
             : ['Final Inspection', 'Handover Process', 'Ongoing Support'],
-        'color': const Color(0xFF1ABC9C),
+        'color': const Color(0xFF193340),
       },
     ];
 
@@ -1666,7 +1666,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 width: 4,
                 height: 30,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1ABC9C),
+                  color: const Color(0xFF193340),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1682,7 +1682,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                       ar: 'آلية تقديم خدماتنا',
                     ),
                     style: const TextStyle(
-                      color: Color(0xFF1ABC9C),
+                      color: Color(0xFF193340),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1,

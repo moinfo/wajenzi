@@ -14,11 +14,14 @@ class CustomErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Long error messages (e.g. server JSON) used to overflow the Column.
+    // Wrap in a SingleChildScrollView so the content scrolls within bounds
+    // while staying vertically centered when short.
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon ?? Icons.error_outline,

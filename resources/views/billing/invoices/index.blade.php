@@ -202,6 +202,19 @@
     <!-- Filters -->
     <div class="inv-filter-card no-print">
         <form method="GET" action="{{ route('billing.invoices.index') }}">
+            <div class="row mb-2">
+                <div class="col-md-12">
+                    <label>Search</label>
+                    <div class="d-flex" style="gap:8px;">
+                        <input type="text" name="search" class="form-control" value="{{ request('search') }}"
+                               placeholder="Search by invoice # or client name…">
+                        <button type="submit" class="btn btn-sm"
+                                style="background:#1BC5BD; color:#fff; border-radius:8px; font-weight:600; font-size:13px; height:38px; padding:0 18px; white-space:nowrap;">
+                            <i class="fa fa-search mr-1"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </div>
             <div class="row" style="row-gap:12px; align-items:flex-end;">
                 <div class="col-md-2 col-6">
                     <label>Status</label>

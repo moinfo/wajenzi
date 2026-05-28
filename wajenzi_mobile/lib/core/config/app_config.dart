@@ -12,6 +12,11 @@ class AppConfig {
     defaultValue: 'assets/prod_config.json',
   );
   static const String _defaultPortalBaseUrl = 'https://wajenziprosystem.co.tz';
+  // Local Laravel dev server. On Android emulator the host part is auto-rewritten
+  // to 10.0.2.2 by [_rewriteLocalhostForDevice]; iOS sim / web / macOS use it as-is.
+  // Physical devices on the same Wi-Fi still need an explicit override via
+  // --dart-define=API_BASE_URL=http://<LAN-IP>:8000/api/v1 (or local_config.json).
+  static const String _localDevPortalBaseUrl = 'http://localhost:8000';
   static const String _apiPath = '/api/v1';
   static const String _clientApiPath = '/api/client';
   static const String _defaultClientApiBaseUrl =
@@ -35,6 +40,15 @@ class AppConfig {
   static Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
+    // Debug builds skip the default prod_config.json so the local-dev
+    // fallback can take effect (`flutter run` → http://localhost:8000).
+    // A non-default config asset (e.g. staging_config.json via
+    // --dart-define=APP_CONFIG_ASSET=...) is still honoured in any build mode.
+    final useDefaultProdConfig = _configAssetPath == 'assets/prod_config.json';
+    if (isDebug && useDefaultProdConfig) {
+      _localConfig = {};
+      return;
+    }
     try {
       final jsonString = await rootBundle.loadString(_configAssetPath);
       final json = jsonDecode(jsonString) as Map<String, dynamic>;
@@ -70,14 +84,17 @@ class AppConfig {
     if (_explicitApiBaseUrl.isNotEmpty) return _explicitApiBaseUrl;
     final localUrl = _getLocalApiUrl();
     if (localUrl.isNotEmpty) return localUrl;
-    return apiBaseUrl;
+    // Auto-detect: debug builds default to the local Laravel dev server;
+    // release builds fall back to production.
+    return '$_localDevPortalBaseUrl$_apiPath';
   }
 
   static String get portalBaseUrl {
     if (_explicitPortalBaseUrl.isNotEmpty) return _explicitPortalBaseUrl;
     final localUrl = _getLocalPortalUrl();
     if (localUrl.isNotEmpty) return localUrl;
-    return _defaultPortalBaseUrl;
+    // Debug → local Laravel; release → production.
+    return isDebug ? _localDevPortalBaseUrl : _defaultPortalBaseUrl;
   }
 
   static String get clientApiBaseUrl {
@@ -87,7 +104,10 @@ class AppConfig {
     final localPortalUrl = _getLocalPortalUrl();
     if (localPortalUrl.isNotEmpty)
       return _ensureClientApiBaseUrl(localPortalUrl);
-    return _defaultClientApiBaseUrl;
+    // Debug → local Laravel; release → production.
+    return _ensureClientApiBaseUrl(
+      isDebug ? _localDevPortalBaseUrl : _defaultPortalBaseUrl,
+    );
   }
 
   static const String supportEmail = String.fromEnvironment(
