@@ -110,6 +110,13 @@ use App\Http\Controllers\Api\V1\SalarySlipApiController;
 use App\Http\Controllers\Api\V1\SiteApiController;
 use App\Http\Controllers\Api\V1\SiteSupervisorAssignmentApiController;
 use App\Http\Controllers\Api\V1\KpiApiController;
+use App\Http\Controllers\Api\V1\CurrencyApiController;
+use App\Http\Controllers\Api\V1\DesignServicePackageApiController;
+use App\Http\Controllers\Api\V1\DesignServiceAddonApiController;
+use App\Http\Controllers\Api\V1\DesignSpecialStructureApiController;
+use App\Http\Controllers\Api\V1\SiteVisitLocationApiController;
+use App\Http\Controllers\Api\V1\DesignPricingCalculatorApiController;
+use App\Http\Controllers\Api\V1\SiteVisitCalculatorApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -1083,6 +1090,51 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('purchases/{id}/deliveries', [PurchaseApiController::class, 'storeDelivery']);
         Route::get('inspections', [MaterialInspectionController::class, 'index']);
         Route::get('inspections/{id}', [MaterialInspectionController::class, 'show']);
+    });
+
+    // ───────────────────────────────────────────────────────────────────
+    // Cluster A: Calculators + Design / Site-visit catalog settings
+    // ───────────────────────────────────────────────────────────────────
+    Route::prefix('currencies')->group(function () {
+        Route::get('/', [CurrencyApiController::class, 'index']);
+        Route::post('/', [CurrencyApiController::class, 'store']);
+        Route::get('{id}', [CurrencyApiController::class, 'show']);
+        Route::put('{id}', [CurrencyApiController::class, 'update']);
+        Route::delete('{id}', [CurrencyApiController::class, 'destroy']);
+    });
+    Route::prefix('design-service-packages')->group(function () {
+        Route::get('/', [DesignServicePackageApiController::class, 'index']);
+        Route::post('/', [DesignServicePackageApiController::class, 'store']);
+        Route::get('{id}', [DesignServicePackageApiController::class, 'show']);
+        Route::put('{id}', [DesignServicePackageApiController::class, 'update']);
+        Route::delete('{id}', [DesignServicePackageApiController::class, 'destroy']);
+    });
+    Route::prefix('design-service-addons')->group(function () {
+        Route::get('/', [DesignServiceAddonApiController::class, 'index']);
+        Route::post('/', [DesignServiceAddonApiController::class, 'store']);
+        Route::get('{id}', [DesignServiceAddonApiController::class, 'show']);
+        Route::put('{id}', [DesignServiceAddonApiController::class, 'update']);
+        Route::delete('{id}', [DesignServiceAddonApiController::class, 'destroy']);
+    });
+    Route::prefix('design-special-structures')->group(function () {
+        Route::get('/', [DesignSpecialStructureApiController::class, 'index']);
+        Route::post('/', [DesignSpecialStructureApiController::class, 'store']);
+        Route::get('{id}', [DesignSpecialStructureApiController::class, 'show']);
+        Route::put('{id}', [DesignSpecialStructureApiController::class, 'update']);
+        Route::delete('{id}', [DesignSpecialStructureApiController::class, 'destroy']);
+    });
+    Route::prefix('site-visit-locations')->group(function () {
+        Route::get('/', [SiteVisitLocationApiController::class, 'index']);
+        Route::post('/', [SiteVisitLocationApiController::class, 'store']);
+        Route::get('{id}', [SiteVisitLocationApiController::class, 'show']);
+        Route::put('{id}', [SiteVisitLocationApiController::class, 'update']);
+        Route::delete('{id}', [SiteVisitLocationApiController::class, 'destroy']);
+    });
+    Route::prefix('calculators')->group(function () {
+        Route::get('design-pricing',           [DesignPricingCalculatorApiController::class, 'index']);
+        Route::post('design-pricing/compute',  [DesignPricingCalculatorApiController::class, 'compute']);
+        Route::get('site-visit',               [SiteVisitCalculatorApiController::class, 'index']);
+        Route::post('site-visit/compute',      [SiteVisitCalculatorApiController::class, 'compute']);
     });
 
     // Performance / KPI reviews (mirrors web KpiController)
