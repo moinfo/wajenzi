@@ -120,6 +120,8 @@ use App\Http\Controllers\Api\V1\SiteVisitCalculatorApiController;
 use App\Http\Controllers\Api\V1\FieldMarketingApiController;
 use App\Http\Controllers\Api\V1\WhatsAppMarketingApiController;
 use App\Http\Controllers\Api\V1\ContentCreatorApiController;
+use App\Http\Controllers\Api\V1\StructuralDesignApiController;
+use App\Http\Controllers\Api\V1\ServiceDesignApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -1198,5 +1200,31 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('tasks/{id}/approve', [ContentCreatorApiController::class, 'approveTask']);
         Route::post('tasks/{id}/comments', [ContentCreatorApiController::class, 'addComment']);
         Route::post('targets', [ContentCreatorApiController::class, 'setTarget']);
+    // Engineering Design — Structural Design (mirrors ProjectStructuralDesignController)
+    Route::prefix('structural-designs')->group(function () {
+        Route::get('reference-data', [StructuralDesignApiController::class, 'referenceData']);
+        Route::get('/', [StructuralDesignApiController::class, 'index']);
+        Route::post('/', [StructuralDesignApiController::class, 'store']);
+        Route::get('{id}', [StructuralDesignApiController::class, 'show']);
+        Route::put('{id}', [StructuralDesignApiController::class, 'update']);
+        Route::delete('{id}', [StructuralDesignApiController::class, 'destroy']);
+        Route::post('{id}/submit', [StructuralDesignApiController::class, 'submit']);
+        Route::post('{id}/schedule', [StructuralDesignApiController::class, 'submitSchedule']);
+        Route::post('{id}/stages/{stageId}', [StructuralDesignApiController::class, 'updateStage']);
+        Route::post('{id}/stages/{stageId}/submit', [StructuralDesignApiController::class, 'submitStage']);
+    });
+
+    // Engineering Design — Service Design (mirrors ProjectServiceDesignController)
+    Route::prefix('service-designs')->group(function () {
+        Route::get('reference-data', [ServiceDesignApiController::class, 'referenceData']);
+        Route::get('/', [ServiceDesignApiController::class, 'index']);
+        Route::post('/', [ServiceDesignApiController::class, 'store']);
+        Route::get('{id}', [ServiceDesignApiController::class, 'show']);
+        Route::put('{id}', [ServiceDesignApiController::class, 'update']);
+        Route::delete('{id}', [ServiceDesignApiController::class, 'destroy']);
+        Route::post('{id}/submit', [ServiceDesignApiController::class, 'submit']);
+        Route::post('{id}/schedule', [ServiceDesignApiController::class, 'submitSchedule']);
+        Route::post('{id}/stages/{stageId}', [ServiceDesignApiController::class, 'updateStage']);
+        Route::post('{id}/stages/{stageId}/submit', [ServiceDesignApiController::class, 'submitStage']);
     });
 });
