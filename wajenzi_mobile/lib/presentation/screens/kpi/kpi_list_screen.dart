@@ -16,8 +16,10 @@ class KpiListScreen extends ConsumerStatefulWidget {
   ConsumerState<KpiListScreen> createState() => _KpiListScreenState();
 }
 
+// TickerProviderStateMixin (not SingleTicker…) because the TabController is
+// re-created when `can_see_all` flips between 2 and 3 tabs.
 class _KpiListScreenState extends ConsumerState<KpiListScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   TabController? _tabController;
   List<KpiTab> _tabs = const [KpiTab.mine, KpiTab.awaiting];
 
@@ -65,8 +67,10 @@ class _KpiListScreenState extends ConsumerState<KpiListScreen>
     final counts = mineState.valueOrNull?.counts;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('My Performance', style: AppType.display(18)),
+      appBar: kpiAppBar(
+        context: context,
+        ref: ref,
+        title: 'My Performance',
         bottom: TabBar(
           controller: _tabController,
           isScrollable: false,

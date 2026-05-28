@@ -51,7 +51,7 @@ $refill_amount = $chart_of_accounts_variable - $balance;
                 </button>
             @else
                 <input type="hidden" name="document_id" value="{{$document_id}}">
-                <input type="hidden" name="created_by_id" value="{{Auth::user()->id}}">
+                <input type="hidden" name="create_by_id" value="{{Auth::user()->id}}">
                 <input type="hidden" name="document_number" value="PCRF/{{date('Y')}}/{{$document_id}}">
                 <input type="hidden" name="document_type_id" value="12">
                 <input type="hidden" name="link" value="finance/petty_cash_management/petty_cash_refill_requests/{{$document_id}}/12">
