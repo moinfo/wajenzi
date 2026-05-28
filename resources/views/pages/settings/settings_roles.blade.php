@@ -28,6 +28,7 @@
                             <tr>
                                 <th class="text-center" style="width: 100px;">#</th>
                                 <th>Name</th>
+                                <th>Assigned Users</th>
                                 <th>Created at</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
@@ -39,6 +40,7 @@
                                         {{$loop->index + 1}}
                                     </td>
                                     <td class="font-w600">{{ $role->name }}</td>
+                                    <td>{{ $role->assignedUsers->pluck('name')->implode(', ') }}</td>
                                     <td class="font-w600">{{ $role->created_at->diffForHumans() }}</td>
                                     <td class="text-center">
 

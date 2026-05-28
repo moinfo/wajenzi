@@ -864,7 +864,7 @@ class SettingsController extends Controller
             return back();
         }
         $data = [
-            'roles' => Role::all()
+            'roles' => Role::with(['assignedUsers:id,name'])->get()
         ];
         return view('pages.settings.settings_roles')->with($data);
     }
