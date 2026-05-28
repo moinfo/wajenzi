@@ -150,6 +150,10 @@ class FieldMarketingApiController extends Controller
         if (!$session) {
             return response()->json(['success' => false, 'message' => 'Session not found'], 404);
         }
+        // Field officers may only edit their own sessions.
+        if ($this->isFieldOfficer()) {
+            abort_unless($session->officer_id === Auth::id(), 403, 'You can only edit your own session.');
+        }
 
         $validated = $request->validate([
             'officer_id' => 'sometimes|required|exists:users,id',
@@ -158,6 +162,11 @@ class FieldMarketingApiController extends Controller
             'status'     => 'sometimes|required|in:open,closed',
             'notes'      => 'nullable|string',
         ]);
+
+        // Field officers cannot reassign sessions to other officers.
+        if ($this->isFieldOfficer()) {
+            unset($validated['officer_id']);
+        }
 
         $session->update($validated);
         $session->load(['officer:id,name']);
@@ -174,6 +183,10 @@ class FieldMarketingApiController extends Controller
         $session = FieldMarketingSession::find($id);
         if (!$session) {
             return response()->json(['success' => false, 'message' => 'Session not found'], 404);
+        }
+        // Field officers may only delete their own sessions.
+        if ($this->isFieldOfficer()) {
+            abort_unless($session->officer_id === Auth::id(), 403, 'You can only delete your own session.');
         }
         $session->delete();
         return response()->json(['success' => true, 'message' => 'Session deleted']);
@@ -260,6 +273,10 @@ class FieldMarketingApiController extends Controller
         if (!$visit) {
             return response()->json(['success' => false, 'message' => 'Visit not found'], 404);
         }
+        // Field officers may only delete their own visit records.
+        if ($this->isFieldOfficer()) {
+            abort_unless($visit->created_by === Auth::id(), 403, 'You can only delete visits you logged.');
+        }
         $visit->delete();
         return response()->json(['success' => true, 'message' => 'Visit deleted']);
     }
@@ -268,6 +285,10 @@ class FieldMarketingApiController extends Controller
 
     public function storeTarget(Request $request): JsonResponse
     {
+        // Only marketing managers may set targets — field officers shouldn't be
+        // able to set their own quotas.
+        abort_unless($this->isMarketingManager(), 403, 'Only marketing managers can set targets.');
+
         $validated = $request->validate([
             'officer_id'         => 'required|exists:users,id',
             'month'              => 'required|date_format:Y-m',
@@ -416,5 +437,14 @@ class FieldMarketingApiController extends Controller
         $managerRoleIds = [1, 2, 7, 9, 12, 14, 15, 16];
         $isManager = $user->roles()->whereIn('roles.id', $managerRoleIds)->exists();
         return !$isManager && $user->roles()->where('roles.id', 13)->exists();
+    }
+
+    /** Inverse of isFieldOfficer — true for everyone who isn't a pure field officer. */
+    private function isMarketingManager(): bool
+    {
+        $user = Auth::user();
+        if (!$user) return false;
+        $managerRoleIds = [1, 2, 7, 9, 12, 14, 15, 16];
+        return $user->roles()->whereIn('roles.id', $managerRoleIds)->exists();
     }
 }

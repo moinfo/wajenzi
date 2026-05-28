@@ -30,6 +30,41 @@ use Illuminate\Support\Facades\Log;
  */
 class WhatsAppMarketingApiController extends Controller
 {
+    /** Roles allowed to act on any contact/campaign. */
+    private const MANAGER_ROLES = [
+        'Managing Director', 'CEO', 'Chief Executive Officer',
+        'Marketing Manager',
+        'System Administrator', 'Admin',
+    ];
+
+    private function isManager(): bool
+    {
+        $user = Auth::user();
+        return $user !== null && $user->hasAnyRole(self::MANAGER_ROLES);
+    }
+
+    /** Owner = assignee or creator. Managers always pass. */
+    private function ensureCanEditContact(WhatsAppContact $contact): void
+    {
+        $uid = Auth::id();
+        abort_unless(
+            $this->isManager() || $contact->assigned_to === $uid || $contact->created_by === $uid,
+            403,
+            'You are not authorized to modify this contact.',
+        );
+    }
+
+    /** Campaigns: only the creator or a manager may close/delete. */
+    private function ensureCanEditCampaign(WhatsAppAdCampaign $campaign): void
+    {
+        $uid = Auth::id();
+        abort_unless(
+            $this->isManager() || $campaign->created_by === $uid,
+            403,
+            'You are not authorized to modify this campaign.',
+        );
+    }
+
     // ────────────────────────── Index / stats ──────────────────────────
 
     public function index(Request $request): JsonResponse
@@ -154,6 +189,7 @@ class WhatsAppMarketingApiController extends Controller
         if (!$contact) {
             return response()->json(['success' => false, 'message' => 'Contact not found'], 404);
         }
+        $this->ensureCanEditContact($contact);
 
         $rules = collect($this->contactRules())->map(function ($rule) {
             // make all rules "sometimes"
@@ -185,6 +221,7 @@ class WhatsAppMarketingApiController extends Controller
         if (!$contact) {
             return response()->json(['success' => false, 'message' => 'Contact not found'], 404);
         }
+        $this->ensureCanEditContact($contact);
         $contact->delete();
         return response()->json(['success' => true, 'message' => 'Contact deleted']);
     }
@@ -277,6 +314,7 @@ class WhatsAppMarketingApiController extends Controller
         if (!$campaign) {
             return response()->json(['success' => false, 'message' => 'Campaign not found'], 404);
         }
+        $this->ensureCanEditCampaign($campaign);
         $campaign->delete();
         return response()->json(['success' => true, 'message' => 'Campaign deleted']);
     }
@@ -287,6 +325,7 @@ class WhatsAppMarketingApiController extends Controller
         if (!$campaign) {
             return response()->json(['success' => false, 'message' => 'Campaign not found'], 404);
         }
+        $this->ensureCanEditCampaign($campaign);
         $campaign->update(['status' => 'closed']);
         return response()->json(['success' => true, 'message' => 'Campaign closed']);
     }

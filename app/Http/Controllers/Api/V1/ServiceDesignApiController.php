@@ -21,6 +21,35 @@ use Illuminate\Support\Facades\Storage;
  */
 class ServiceDesignApiController extends Controller
 {
+    /** Roles allowed to act on any design (CEO/MD/SysAdmin et al.). */
+    private const MANAGER_ROLES = [
+        'Managing Director',
+        'CEO',
+        'Chief Executive Officer',
+        'System Administrator',
+        'Admin',
+    ];
+
+    private function isManager(Request $request): bool
+    {
+        $user = $request->user();
+        return $user !== null && $user->hasAnyRole(self::MANAGER_ROLES);
+    }
+
+    /**
+     * Engineers may only act on their own designs; managers may act on any.
+     * Throws 403 otherwise.
+     */
+    private function ensureCanAccessDesign(Request $request, ProjectServiceDesign $design): void
+    {
+        $user = $request->user();
+        abort_unless(
+            $this->isManager($request) || $design->assigned_engineer_id === $user?->id,
+            403,
+            'You are not authorized to access this design.',
+        );
+    }
+
     /** GET /api/v1/service-designs */
     public function index(Request $request): JsonResponse
     {
@@ -110,7 +139,7 @@ class ServiceDesignApiController extends Controller
     }
 
     /** GET /api/v1/service-designs/{id} */
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
         try {
             $design = ProjectServiceDesign::with([
@@ -119,6 +148,7 @@ class ServiceDesignApiController extends Controller
                 'stages.completedByUser:id,name',
                 'creator:id,name',
             ])->findOrFail($id);
+            $this->ensureCanAccessDesign($request, $design);
 
             return response()->json([
                 'success' => true,
@@ -196,11 +226,17 @@ class ServiceDesignApiController extends Controller
     {
         try {
             $design = ProjectServiceDesign::findOrFail($id);
+            $this->ensureCanAccessDesign($request, $design);
 
             $validated = $request->validate([
                 'assigned_engineer_id' => 'nullable|exists:users,id',
                 'notes'                => 'nullable|string|max:1000',
             ]);
+
+            // Engineers cannot reassign themselves or others — managers only.
+            if (!$this->isManager($request)) {
+                unset($validated['assigned_engineer_id']);
+            }
 
             $design->update($validated);
             $design->load(['project:id,project_name', 'assignedEngineer:id,name', 'stages']);
@@ -220,10 +256,12 @@ class ServiceDesignApiController extends Controller
     }
 
     /** DELETE /api/v1/service-designs/{id} */
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
         try {
             $design = ProjectServiceDesign::findOrFail($id);
+            // Engineers should not delete designs — managers only.
+            abort_unless($this->isManager($request), 403, 'Only managers can delete designs.');
 
             if (in_array($design->status, ['submitted', 'approved'])) {
                 return response()->json([
@@ -341,6 +379,7 @@ class ServiceDesignApiController extends Controller
     {
         try {
             $design = ProjectServiceDesign::findOrFail($id);
+            $this->ensureCanAccessDesign($request, $design);
             $stage  = ProjectServiceDesignStage::where('service_design_id', $id)
                 ->findOrFail($stageId);
 
@@ -411,6 +450,7 @@ class ServiceDesignApiController extends Controller
     {
         try {
             $design = ProjectServiceDesign::findOrFail($id);
+            $this->ensureCanAccessDesign($request, $design);
             $stage  = ProjectServiceDesignStage::where('service_design_id', $id)
                 ->findOrFail($stageId);
 

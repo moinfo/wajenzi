@@ -39,8 +39,9 @@ class DesignSpecialStructureApiController extends Controller
                 'message' => 'Special structure created successfully',
             ], 201);
         } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) throw $e;
             Log::error('DesignSpecialStructure store error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed to create special structure: ' . $e->getMessage()], 422);
+            return response()->json(['success' => false, 'message' => 'Failed to create special structure.'], 422);
         }
     }
 
@@ -64,8 +65,9 @@ class DesignSpecialStructureApiController extends Controller
                 'message' => 'Special structure updated successfully',
             ]);
         } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) throw $e;
             Log::error('DesignSpecialStructure update error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed to update special structure: ' . $e->getMessage()], 422);
+            return response()->json(['success' => false, 'message' => 'Failed to update special structure.'], 422);
         }
     }
 

@@ -39,8 +39,9 @@ class SiteVisitLocationApiController extends Controller
                 'message' => 'Site visit location created successfully',
             ], 201);
         } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) throw $e;
             Log::error('SiteVisitLocation store error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed to create location: ' . $e->getMessage()], 422);
+            return response()->json(['success' => false, 'message' => 'Failed to create location.'], 422);
         }
     }
 
@@ -64,8 +65,9 @@ class SiteVisitLocationApiController extends Controller
                 'message' => 'Site visit location updated successfully',
             ]);
         } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) throw $e;
             Log::error('SiteVisitLocation update error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed to update location: ' . $e->getMessage()], 422);
+            return response()->json(['success' => false, 'message' => 'Failed to update location.'], 422);
         }
     }
 

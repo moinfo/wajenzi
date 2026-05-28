@@ -21,6 +21,35 @@ use Illuminate\Support\Facades\Storage;
  */
 class StructuralDesignApiController extends Controller
 {
+    /** Roles allowed to act on any design (CEO/MD/SysAdmin et al.). */
+    private const MANAGER_ROLES = [
+        'Managing Director',
+        'CEO',
+        'Chief Executive Officer',
+        'System Administrator',
+        'Admin',
+    ];
+
+    private function isManager(Request $request): bool
+    {
+        $user = $request->user();
+        return $user !== null && $user->hasAnyRole(self::MANAGER_ROLES);
+    }
+
+    /**
+     * Engineers may only act on their own designs; managers may act on any.
+     * Throws 403 otherwise.
+     */
+    private function ensureCanAccessDesign(Request $request, ProjectStructuralDesign $design): void
+    {
+        $user = $request->user();
+        abort_unless(
+            $this->isManager($request) || $design->assigned_engineer_id === $user?->id,
+            403,
+            'You are not authorized to access this design.',
+        );
+    }
+
     /**
      * GET /api/v1/structural-designs
      * Optional filters: project_id, status, assigned_to_me=1.
@@ -122,7 +151,7 @@ class StructuralDesignApiController extends Controller
     /**
      * GET /api/v1/structural-designs/{id}
      */
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
         try {
             $design = ProjectStructuralDesign::with([
@@ -131,6 +160,7 @@ class StructuralDesignApiController extends Controller
                 'stages.completedByUser:id,name',
                 'creator:id,name',
             ])->findOrFail($id);
+            $this->ensureCanAccessDesign($request, $design);
 
             return response()->json([
                 'success' => true,
@@ -214,11 +244,17 @@ class StructuralDesignApiController extends Controller
     {
         try {
             $design = ProjectStructuralDesign::findOrFail($id);
+            $this->ensureCanAccessDesign($request, $design);
 
             $validated = $request->validate([
                 'assigned_engineer_id' => 'nullable|exists:users,id',
                 'notes'                => 'nullable|string|max:1000',
             ]);
+
+            // Engineers cannot reassign themselves or others — managers only.
+            if (!$this->isManager($request)) {
+                unset($validated['assigned_engineer_id']);
+            }
 
             $design->update($validated);
             $design->load(['project:id,project_name', 'assignedEngineer:id,name', 'stages']);
@@ -240,10 +276,12 @@ class StructuralDesignApiController extends Controller
     /**
      * DELETE /api/v1/structural-designs/{id}
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
         try {
             $design = ProjectStructuralDesign::findOrFail($id);
+            // Engineers should not delete designs — managers only.
+            abort_unless($this->isManager($request), 403, 'Only managers can delete designs.');
 
             if (in_array($design->status, ['submitted', 'approved'])) {
                 return response()->json([
@@ -370,6 +408,7 @@ class StructuralDesignApiController extends Controller
     {
         try {
             $design = ProjectStructuralDesign::findOrFail($id);
+            $this->ensureCanAccessDesign($request, $design);
             $stage  = ProjectStructuralDesignStage::where('structural_design_id', $id)
                 ->findOrFail($stageId);
 
@@ -443,6 +482,7 @@ class StructuralDesignApiController extends Controller
     {
         try {
             $design = ProjectStructuralDesign::findOrFail($id);
+            $this->ensureCanAccessDesign($request, $design);
             $stage  = ProjectStructuralDesignStage::where('structural_design_id', $id)
                 ->findOrFail($stageId);
 

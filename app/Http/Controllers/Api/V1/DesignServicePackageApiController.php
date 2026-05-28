@@ -45,8 +45,9 @@ class DesignServicePackageApiController extends Controller
                 'message' => 'Design package created successfully',
             ], 201);
         } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) throw $e;
             Log::error('DesignServicePackage store error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed to create package: ' . $e->getMessage()], 422);
+            return response()->json(['success' => false, 'message' => 'Failed to create package.'], 422);
         }
     }
 
@@ -71,8 +72,9 @@ class DesignServicePackageApiController extends Controller
                 'message' => 'Design package updated successfully',
             ]);
         } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) throw $e;
             Log::error('DesignServicePackage update error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed to update package: ' . $e->getMessage()], 422);
+            return response()->json(['success' => false, 'message' => 'Failed to update package.'], 422);
         }
     }
 

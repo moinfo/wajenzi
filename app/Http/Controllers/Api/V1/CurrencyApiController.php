@@ -53,10 +53,11 @@ class CurrencyApiController extends Controller
                 'message' => 'Currency created successfully',
             ], 201);
         } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) throw $e;
             Log::error('Currency store error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create currency: ' . $e->getMessage(),
+                'message' => 'Failed to create currency.',
             ], 422);
         }
     }
@@ -94,10 +95,11 @@ class CurrencyApiController extends Controller
                 'message' => 'Currency updated successfully',
             ]);
         } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) throw $e;
             Log::error('Currency update error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update currency: ' . $e->getMessage(),
+                'message' => 'Failed to update currency.',
             ], 422);
         }
     }

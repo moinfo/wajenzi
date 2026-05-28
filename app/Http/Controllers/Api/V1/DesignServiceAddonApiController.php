@@ -39,8 +39,9 @@ class DesignServiceAddonApiController extends Controller
                 'message' => 'Design add-on created successfully',
             ], 201);
         } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) throw $e;
             Log::error('DesignServiceAddon store error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed to create add-on: ' . $e->getMessage()], 422);
+            return response()->json(['success' => false, 'message' => 'Failed to create add-on.'], 422);
         }
     }
 
@@ -64,8 +65,9 @@ class DesignServiceAddonApiController extends Controller
                 'message' => 'Design add-on updated successfully',
             ]);
         } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) throw $e;
             Log::error('DesignServiceAddon update error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed to update add-on: ' . $e->getMessage()], 422);
+            return response()->json(['success' => false, 'message' => 'Failed to update add-on.'], 422);
         }
     }
 

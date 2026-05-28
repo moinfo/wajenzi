@@ -34,6 +34,30 @@ class ContentCreatorApiController extends Controller
     private const TASK_TYPES = ['video_shoot', 'post_publish', 'design_task', 'review_approval', 'other'];
     private const PRIORITIES = ['high', 'medium', 'low'];
 
+    /** Roles allowed to act on any content task. */
+    private const MANAGER_ROLES = [
+        'Managing Director', 'CEO', 'Chief Executive Officer',
+        'Content Manager', 'Marketing Manager',
+        'System Administrator', 'Admin',
+    ];
+
+    private function isManager(): bool
+    {
+        $user = Auth::user();
+        return $user !== null && $user->hasAnyRole(self::MANAGER_ROLES);
+    }
+
+    /** Owner = assignee or creator. Managers always pass. */
+    private function ensureCanEditTask(ContentCreatorTask $task): void
+    {
+        $uid = Auth::id();
+        abort_unless(
+            $this->isManager() || $task->assigned_to === $uid || $task->created_by === $uid,
+            403,
+            'You are not authorized to modify this task.',
+        );
+    }
+
     // ────────────────────────── Index ──────────────────────────
 
     public function index(Request $request): JsonResponse
@@ -148,6 +172,7 @@ class ContentCreatorApiController extends Controller
         if (!$task) {
             return response()->json(['success' => false, 'message' => 'Task not found'], 404);
         }
+        $this->ensureCanEditTask($task);
 
         $validated = $request->validate([
             'title'        => 'sometimes|required|string|max:255',
@@ -176,6 +201,7 @@ class ContentCreatorApiController extends Controller
         if (!$task) {
             return response()->json(['success' => false, 'message' => 'Task not found'], 404);
         }
+        $this->ensureCanEditTask($task);
         $task->delete();
         return response()->json(['success' => true, 'message' => 'Task deleted']);
     }
@@ -220,6 +246,8 @@ class ContentCreatorApiController extends Controller
         if (!$task) {
             return response()->json(['success' => false, 'message' => 'Task not found'], 404);
         }
+        // Approval is a manager-only action.
+        abort_unless($this->isManager(), 403, 'Only managers can approve tasks.');
 
         $task->update([
             'status'      => 'published',
