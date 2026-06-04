@@ -25,6 +25,14 @@
 
     @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
     @if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
+    @if($errors->any())
+        <div class="alert alert-danger" style="border-radius:10px;">
+            <strong>Please fix the following:</strong>
+            <ul style="margin:6px 0 0 18px;">
+                @foreach($errors->all() as $err)<li>{{ $err }}</li>@endforeach
+            </ul>
+        </div>
+    @endif
 
     @php
         $stageLabel = ['supervisor' => 'Supervisor', 'md' => 'Managing Director', 'ceo' => 'CEO'][$stage] ?? ucfirst($stage);
@@ -70,9 +78,9 @@
                             <th>KPA</th>
                             <th>Measure</th>
                             <th style="width:60px; text-align:center;">Wt</th>
-                            <th style="width:60px; text-align:center;">Self<br><small style="font-weight:400; text-transform:none; color:#94a3b8;">0–100</small></th>
-                            <th style="width:95px; text-align:center;">Supervisor<br><small style="font-weight:400; text-transform:none; color:#94a3b8;">0–100</small></th>
-                            <th style="width:90px; text-align:center;">Overall<br><small style="font-weight:400; text-transform:none; color:#94a3b8;">0–100</small></th>
+                            <th style="width:60px; text-align:center;">Self</th>
+                            <th style="width:95px; text-align:center;">Supervisor</th>
+                            <th style="width:90px; text-align:center;">Overall</th>
                             <th>Comment</th>
                         </tr>
                     </thead>
@@ -85,15 +93,18 @@
                                         <br><small style="color:#94a3b8;">Target: {{ $rating->target_snapshot }}</small>
                                     @endif
                                 </td>
-                                <td style="text-align:center; font-weight:700;">{{ rtrim(rtrim(number_format($rating->weight_snapshot, 2), '0'), '.') }}%</td>
+                                @php $wt = (float) $rating->weight_snapshot; $wtFmt = rtrim(rtrim(number_format($wt, 2), '0'), '.'); @endphp
+                                <td style="text-align:center; font-weight:700;">{{ $wtFmt }}%</td>
                                 <td style="text-align:center;" class="self-shown">{{ $rating->self_rate !== null ? rtrim(rtrim(number_format($rating->self_rate, 1), '0'), '.') . '%' : '—' }}</td>
                                 <td style="text-align:center;">
                                     <input type="number"
                                            class="sup-rate"
                                            data-rating-id="{{ $rating->id }}"
+                                           data-max="{{ $wt }}"
                                            name="ratings[{{ $rating->id }}][supervisor_rate]"
-                                           min="0" max="100" step="0.1"
-                                           placeholder="0–100"
+                                           min="0" max="{{ $wt }}" step="0.1"
+                                           placeholder="0–{{ $wtFmt }}"
+                                           aria-label="Supervisor rate for {{ $rating->kpa_snapshot }} (max {{ $wtFmt }})"
                                            value="{{ old('ratings.' . $rating->id . '.supervisor_rate', $rating->supervisor_rate) }}"
                                            {{ $editSupervisorRate ? '' : 'disabled' }}>
                                 </td>
@@ -101,14 +112,17 @@
                                     <input type="number"
                                            class="overall ovr-rate"
                                            data-rating-id="{{ $rating->id }}"
+                                           data-max="{{ $wt }}"
                                            name="ratings[{{ $rating->id }}][overall_rate]"
-                                           min="0" max="100" step="0.1"
-                                           placeholder="0–100"
+                                           min="0" max="{{ $wt }}" step="0.1"
+                                           placeholder="0–{{ $wtFmt }}"
+                                           aria-label="Overall rate for {{ $rating->kpa_snapshot }} (max {{ $wtFmt }})"
                                            value="{{ old('ratings.' . $rating->id . '.overall_rate', $rating->overall_rate ?? $rating->supervisor_rate) }}"
                                            {{ $editOverallRate ? '' : 'disabled' }}>
                                 </td>
                                 <td>
                                     <textarea name="ratings[{{ $rating->id }}][comment]" rows="1"
+                                              aria-label="Comment for {{ $rating->kpa_snapshot }}"
                                               placeholder="Optional notes…">{{ old('ratings.' . $rating->id . '.comment', $rating->comment) }}</textarea>
                                 </td>
                             </tr>
@@ -183,8 +197,7 @@
                 <i class="fa fa-times"></i> Reject
             </button>
             <button type="submit" name="action" value="approve"
-                    style="background:{{ $stageColor }}; color:#fff; padding:10px 24px; border-radius:8px; font-weight:700; font-size:13px; border:none;"
-                    onclick="return confirm('Approve and forward to the next stage?')">
+                    style="background:{{ $stageColor }}; color:#fff; padding:10px 24px; border-radius:8px; font-weight:700; font-size:13px; border:none;">
                 <i class="fa fa-check"></i>
                 Approve &amp; Forward
             </button>
@@ -193,6 +206,22 @@
 </div>
 
 <script>
+// Clamp any rate input to its row's Wt — the rate IS the weighted contribution
+// (max possible score for that row equals its weight). Server enforces this too.
+function clampToMax(el) {
+    const max = parseFloat(el.dataset.max);
+    if (isNaN(max) || el.value === '') return;
+    const v = parseFloat(el.value);
+    if (!isNaN(v) && v > max) {
+        el.value = max;
+    } else if (!isNaN(v) && v < 0) {
+        el.value = 0;
+    }
+}
+document.querySelectorAll('.sup-rate, .ovr-rate').forEach(function (el) {
+    el.addEventListener('blur', function () { clampToMax(el); });
+});
+
 // When supervisor types in their rate, mirror it to the Overall column so they
 // don't need to type the same number twice. The supervisor (or MD/CEO) can
 // still override Overall manually after the auto-fill.
@@ -213,18 +242,28 @@ document.querySelectorAll('.ovr-rate').forEach(function (el) {
     el.addEventListener('input', function () { el.dataset.autofilled = '0'; });
 });
 
-// Before forwarding to the next stage, require Supervisor rate on every row
-// (Approve button only). Save Draft is exempt so reviewers can leave mid-flight.
+// Before forwarding to the next stage, require a rate on every row at the
+// stage's owning column (Supervisor at the supervisor stage, Overall at MD/CEO).
+// Mirrors the server-side guard in KpiController::updateReviewer.
+// Save Draft is exempt so reviewers can leave mid-flight.
 document.getElementById('kpiReviewForm').addEventListener('submit', function (e) {
     const action = e.submitter && e.submitter.value;
     if (action !== 'approve') return;
-    const blanks = Array.from(document.querySelectorAll('.sup-rate'))
+    const stage = @json($stage);
+    const selector = stage === 'supervisor' ? '.sup-rate' : '.ovr-rate';
+    const columnLabel = stage === 'supervisor' ? 'Supervisor' : 'Overall';
+    const blanks = Array.from(document.querySelectorAll(selector))
         .filter(el => !el.disabled && (el.value === '' || el.value === null));
-    if (blanks.length === 0) return;
-    e.preventDefault();
-    blanks.forEach(el => el.style.background = '#fee2e2');
-    blanks[0].focus();
-    alert('Please fill the Supervisor rate on every KPI before approving. ' + blanks.length + ' row(s) are blank.');
+    if (blanks.length > 0) {
+        e.preventDefault();
+        blanks.forEach(el => el.style.background = '#fee2e2');
+        blanks[0].focus();
+        alert('Please fill the ' + columnLabel + ' rate on every KPI before approving. ' + blanks.length + ' row(s) are blank.');
+        return;
+    }
+    if (!confirm('Approve and forward to the next stage?')) {
+        e.preventDefault();
+    }
 });
 
 function promptAction(act) {

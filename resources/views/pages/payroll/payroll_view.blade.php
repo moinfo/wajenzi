@@ -425,6 +425,7 @@
                                     <th>Employer Health</th>
                                     <th>Employee Health</th>
                                     <th>Advance Salary</th>
+                                    <th>Advance Salary Balance</th>
                                     <th>Total Loan</th>
                                     <th>Loan Deduction</th>
                                     <th>Loan Balance</th>
@@ -438,6 +439,7 @@
                                     $end_date = date('Y-m-d',strtotime($payroll->year.'-'.$payroll->month.'-'.'31'));
                                     $sum_total_basic_salary = 0;
                                     $sum_total_advance_salary = 0;
+                                    $sum_total_advance_salary_balance = 0;
                                     $sum_total_allowance = 0;
                                     $sum_total_gross_pay = 0;
                                     $sum_total_employee_deducted_amount_pension = 0;
@@ -489,6 +491,7 @@
                                     @php
                                         $total_basic_salary = 0;
                                         $total_advance_salary = 0;
+                                        $total_advance_salary_balance = 0;
                                         $total_allowance = 0;
                                         $total_gross_pay = 0;
                                         $total_employee_deducted_amount_pension = 0;
@@ -520,6 +523,8 @@
                                             $staff_salary_id = \App\Models\Staff::getStaffSalaryId($staff_id) ?? 0;
                                             $advance_salary = \App\Models\Staff::getStaffAdvanceSalaryPaid($staff_id,$payroll_id) ?? 0;
                                             $total_advance_salary += $advance_salary;
+                                            $advance_salary_balance = \App\Models\Staff::getStaffAdvanceSalaryBalance($staff_id,$payroll_id) ?? 0;
+                                            $total_advance_salary_balance += $advance_salary_balance;
                                             $adjustment = \App\Models\Staff::getStaffAdjustmentPaid($staff_id,$payroll_id) ?? 0;
                                             $total_adjustment += $adjustment;
                                             $allowance = \App\Models\Staff::getStaffAllowancePaid($staff_id,$payroll_id) ?? 0;
@@ -577,6 +582,7 @@
                                             <td class="text-right">{{number_format($employer_deducted_amount_health)}}</td>
                                             <td class="text-right">{{number_format($employee_deducted_amount_health)}}</td>
                                             <td class="text-right">{{number_format($advance_salary)}}</td>
+                                            <td class="text-right">{{number_format($advance_salary_balance)}}</td>
                                             <td class="text-right">{{number_format($current_loan)}}</td>
                                             <td class="text-right">{{number_format($loan_deduction)}}</td>
                                             <td class="text-right">{{number_format($loan_balance)}}</td>
@@ -587,6 +593,7 @@
                                     @php
                                         $sum_total_basic_salary += $total_basic_salary;
                                         $sum_total_advance_salary += $total_advance_salary;
+                                        $sum_total_advance_salary_balance += $total_advance_salary_balance;
                                         $sum_total_allowance += $total_allowance;
                                         $sum_total_gross_pay += $total_gross_pay;
                                         $sum_total_employee_deducted_amount_pension += $total_employee_deducted_amount_pension;
@@ -624,6 +631,7 @@
                                         <th class="text-right">{{number_format($total_employer_deducted_amount_health)}}</th>
                                         <th class="text-right">{{number_format($total_employee_deducted_amount_health)}}</th>
                                         <th class="text-right">{{number_format($total_advance_salary)}}</th>
+                                        <th class="text-right">{{number_format($total_advance_salary_balance)}}</th>
                                         <th class="text-right">{{number_format($total_current_loan)}}</th>
                                         <th class="text-right">{{number_format($total_loan_deduction)}}</th>
                                         <th class="text-right">{{number_format($total_loan_balance)}}</th>
@@ -649,6 +657,7 @@
                                     <th class="text-right">{{number_format($sum_total_employer_deducted_amount_health)}}</th>
                                     <th class="text-right">{{number_format($sum_total_employee_deducted_amount_health)}}</th>
                                     <th class="text-right">{{number_format($sum_total_advance_salary)}}</th>
+                                    <th class="text-right">{{number_format($sum_total_advance_salary_balance)}}</th>
                                     <th class="text-right">{{number_format($sum_total_current_loan)}}</th>
                                     <th class="text-right">{{number_format($sum_total_loan_deduction)}}</th>
                                     <th class="text-right">{{number_format($sum_total_loan_balance)}}</th>

@@ -127,6 +127,11 @@
                         </a>
                     @endif
                 @endif
+                @if($canAddActivity ?? false)
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addActivityModal">
+                        <i class="fa fa-plus"></i> Add Activity
+                    </button>
+                @endif
                 @php
                     $canSubmitForApproval = auth()->user()->hasAnyRole(['System Administrator', 'Managing Director'])
                         || $projectSchedule->assigned_architect_id === auth()->id();
@@ -840,6 +845,115 @@
     </div>
 </div>
 @endcan
+
+{{-- Add Activity Modal --}}
+@if($canAddActivity ?? false)
+<div class="modal fade" id="addActivityModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form action="{{ route('project-schedules.activity.add', $projectSchedule) }}" method="POST">
+                @csrf
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fa fa-plus mr-2"></i>Add Activity</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <small class="text-muted d-block mb-3">
+                        New activities are appended to the end of the schedule and get an auto-generated code (X1, X2, …).
+                        Dates are computed from the predecessor's end date (or the schedule start if none).
+                    </small>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label class="required">Activity Name</label>
+                                <input type="text" name="name" class="form-control" required maxlength="255"
+                                       placeholder="e.g. Additional Site Visit">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="required">Duration (working days)</label>
+                                <input type="number" name="duration_days" class="form-control" min="1" max="60" value="1" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="required">Phase</label>
+                                @php $existingPhases = $projectSchedule->activities->pluck('phase')->filter()->unique()->values(); @endphp
+                                <input type="text" name="phase" class="form-control" list="phasesList" required
+                                       placeholder="Select or type a phase">
+                                <datalist id="phasesList">
+                                    @foreach($existingPhases as $p)
+                                        <option value="{{ $p }}">
+                                    @endforeach
+                                </datalist>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Discipline</label>
+                                @php $existingDisciplines = $projectSchedule->activities->pluck('discipline')->filter()->unique()->values(); @endphp
+                                <input type="text" name="discipline" class="form-control" list="disciplinesList"
+                                       placeholder="Optional (e.g. Architectural)">
+                                <datalist id="disciplinesList">
+                                    @foreach($existingDisciplines as $d)
+                                        <option value="{{ $d }}">
+                                    @endforeach
+                                </datalist>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Predecessor</label>
+                                <select name="predecessor_code" class="form-control">
+                                    <option value="">-- None (start from schedule start) --</option>
+                                    @foreach($projectSchedule->activities()->orderBy('sort_order')->get() as $existing)
+                                        <option value="{{ $existing->activity_code }}">
+                                            {{ $existing->activity_code }} — {{ \Illuminate\Support\Str::limit($existing->name, 50) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Role</label>
+                                <select name="role_id" class="form-control">
+                                    <option value="">-- Not set --</option>
+                                    @foreach($roles as $role)
+                                        <option value="{{ $role->id }}">{{ $role->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label>Assign To (optional)</label>
+                        <select name="assigned_to" class="form-control">
+                            <option value="">-- Default Architect ({{ $projectSchedule->assignedArchitect->name ?? 'Unassigned' }}) --</option>
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}">{{ $user->name }} – {{ $user->roles->pluck('name')->implode(', ') ?: 'No Role' }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa fa-plus mr-1"></i>Add Activity</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
 
 {{-- Reassign Activity Modals --}}
 @can('Assign Project Activities')

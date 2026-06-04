@@ -95,12 +95,17 @@
         ['name' => 'Basic Salary', 'value' => $basic_salary],
     ];
 
+    $advance_salary_balance = $payroll_id ? \App\Models\Staff::getStaffAdvanceSalaryBalance($staff_id, $payroll_id) : 0;
+
     $right_side = [
         ['name' => 'Advance Salary', 'value' => $advance_salary],
-        ['name' => 'Loan', 'value' => $loan_balance],
-        ['name' => 'Loan Deduction', 'value' => $loan_deduction],
-        ['name' => 'Loan Balance', 'value' => ($current_loan - $loan_deduction)],
     ];
+    if ($advance_salary > 0 || $advance_salary_balance > 0) {
+        $right_side[] = ['name' => 'Advance Salary Balance', 'value' => $advance_salary_balance];
+    }
+    $right_side[] = ['name' => 'Loan', 'value' => $loan_balance];
+    $right_side[] = ['name' => 'Loan Deduction', 'value' => $loan_deduction];
+    $right_side[] = ['name' => 'Loan Balance', 'value' => ($current_loan - $loan_deduction)];
 
     foreach ($allowances as $allowance) {
         $allowance_amount = \App\Models\Allowance::getAllowanceAmountPerType(

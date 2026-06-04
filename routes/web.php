@@ -585,7 +585,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/sales_daily_report/create', [App\Http\Controllers\SalesDailyReportController::class, 'create'])->name('sales_daily_report.create');
     Route::match(['get', 'post'], '/sales_daily_report/edit/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'edit'])->name('sales_daily_report.edit');
     Route::match(['get', 'post'], '/sales_daily_report/show/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'show'])->name('sales_daily_report.show');
-    Route::match(['get', 'post'], '/sales_daily_report/{id}/{document_type_id}', [App\Http\Controllers\SalesDailyReportController::class, 'show'])->name('sales_daily_report');
+    Route::match(['get', 'post'], '/sales_daily_report/{id}/{document_type_id}', [App\Http\Controllers\SalesDailyReportController::class, 'show'])->name('sales_daily_report')->where(['id' => '[0-9]+', 'document_type_id' => '[0-9]+']);
     Route::match(['get', 'post'], '/site_daily_report/{id}/{document_type_id}', [App\Http\Controllers\SiteDailyReportController::class, 'show'])->name('site_daily_report');
     Route::post('/sales_daily_report/store', [App\Http\Controllers\SalesDailyReportController::class, 'store'])->name('sales_daily_report.store');
     Route::post('/sales_daily_report/update/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'update'])->name('sales_daily_report.update');
@@ -621,6 +621,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('project-schedules/activity/{activity}/days', [App\Http\Controllers\ProjectScheduleController::class, 'updateActivityDays'])->name('project-schedules.activity.update-days');
     Route::delete('project-schedules/activity/{activity}', [App\Http\Controllers\ProjectScheduleController::class, 'removeActivity'])->name('project-schedules.activity.remove');
     Route::patch('project-schedules/activity/{activity}/assign', [App\Http\Controllers\ProjectScheduleController::class, 'assignActivity'])->name('project-schedules.activity.assign');
+    Route::post('project-schedules/{projectSchedule}/activities', [App\Http\Controllers\ProjectScheduleController::class, 'addActivity'])->name('project-schedules.activity.add');
     Route::post('project-schedules/{projectSchedule}/activities/bulk-assign', [App\Http\Controllers\ProjectScheduleController::class, 'bulkAssignActivities'])->name('project-schedules.activities.bulk-assign');
     Route::patch('project-schedules/{projectSchedule}/change-architect', [App\Http\Controllers\ProjectScheduleController::class, 'changeArchitect'])->name('project-schedules.change-architect');
     Route::get('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'showForLead'])->name('leads.schedule');

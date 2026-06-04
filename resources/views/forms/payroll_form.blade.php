@@ -360,7 +360,7 @@ $payroll_id = $payroll['id'] ?? null;
                         $staff_id = $staff->id;
                         $staff_loan_status = $staff->loan_status;
                         $basic_salary = \App\Models\Staff::getStaffSalary($staff_id);
-                        $advance_salary = \App\Models\Staff::getStaffAdvanceSalary($staff_id,$start_date,$end_date);
+                        $advance_salary = \App\Models\Staff::getStaffAdvanceSalaryInstallment($staff_id,$year,$month)['total'];
                         $adjustment = \App\Models\Staff::getStaffAdjustment($staff_id,$start_date,$end_date);
                         $allowance = \App\Models\Staff::getStaffAllowance($staff_id,$month);
                         $gross_pay = \App\Models\Staff::getStaffGrossPay($staff_id,$month);
@@ -541,7 +541,12 @@ $payroll_id = $payroll['id'] ?? null;
                         <td class="text-right">{{number_format($current_loan_deduction)}}</td>
                         <td class="text-right">{{number_format($current_loan - $current_loan_deduction)}}</td>
                         <td class="text-right">{{number_format($adjustment)}}</td>
-                        <td class="text-right">{{number_format($net)}}</td>
+                        <td class="text-right {{ $net < 0 ? 'text-danger font-w700' : '' }}">
+                            {{number_format($net)}}
+                            @if($net < 0)
+                                <i class="fa fa-exclamation-triangle text-danger" title="Net pay is negative — advance/loan deductions exceed earnings this month"></i>
+                            @endif
+                        </td>
                     </tr>
                 @endforeach
                     <tr>
@@ -638,7 +643,7 @@ $payroll_id = $payroll['id'] ?? null;
                 $staff_loan_status = $staff->loan_status;
                                 $basic_salary = \App\Models\Staff::getStaffSalary($staff_id);
                                 $staff_salary_id = \App\Models\Staff::getStaffSalaryId($staff_id) ?? 0;
-                                $advance_salary = \App\Models\Staff::getStaffAdvanceSalary($staff_id,$start_date,$end_date) ?? 0;
+                                $advance_salary = \App\Models\Staff::getStaffAdvanceSalaryInstallment($staff_id,$year,$month)['total'] ?? 0;
                                 $adjustment = \App\Models\Staff::getStaffAdjustment($staff_id,$start_date,$end_date) ?? 0;
                                 $allowance = \App\Models\Staff::getStaffAllowance($staff_id,$month) ?? 0;
                                 $gross_pay = \App\Models\Staff::getStaffGrossPay($staff_id,$month) ?? 0;

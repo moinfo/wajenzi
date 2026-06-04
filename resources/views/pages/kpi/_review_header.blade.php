@@ -30,10 +30,10 @@
         <div>
             <h2 class="kpi-h-title">
                 {{ $review->review_number }}
-                <small style="font-size:13px; font-weight:600; color:#8a92a6;">— {{ $review->template->name }}</small>
+                <small style="font-size:13px; font-weight:600; color:#8a92a6;">— {{ optional($review->template)->name ?? '—' }}</small>
             </h2>
             <div class="kpi-h-sub">
-                <i class="fa fa-user"></i> {{ $review->employee->name }}
+                <i class="fa fa-user"></i> {{ optional($review->employee)->name ?? '—' }}
                 &nbsp;&middot;&nbsp;
                 <i class="fa fa-calendar-alt"></i> {{ $review->period_label }}
                 &nbsp;&middot;&nbsp;

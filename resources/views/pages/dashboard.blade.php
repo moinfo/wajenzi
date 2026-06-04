@@ -852,8 +852,8 @@
                         @endphp
                         <a href="{{ route('leads.show', $followup->lead->id) }}" class="followup-item {{ $isCompleted ? 'completed' : ($isCancelled ? 'cancelled' : ($isOverdue ? 'overdue' : ($isToday ? 'today' : ($isTomorrow ? 'tomorrow' : '')))) }}">
                             <div class="followup-date-badge {{ $isCompleted ? 'completed' : '' }}">
-                                <span class="day">{{ $followup->followup_date->format('d') }}</span>
-                                <span class="month">{{ $followup->followup_date->format('M') }}</span>
+                                <span class="day">{{ $followup->followup_date?->format('d') ?? '--' }}</span>
+                                <span class="month">{{ $followup->followup_date?->format('M') ?? '' }}</span>
                             </div>
                             <div class="followup-content {{ $isCompleted ? 'completed' : '' }}">
                                 <span class="followup-lead-name">{{ $followup->lead->name }}</span>
@@ -876,7 +876,7 @@
                                 @elseif($isTomorrow)
                                     <span class="status-label tomorrow"><i class="fa fa-calendar"></i> Tomorrow</span>
                                 @else
-                                    <span class="status-label upcoming">{{ $followup->followup_date->format('D') }}</span>
+                                    <span class="status-label upcoming">{{ $followup->followup_date?->format('D') ?? 'Unscheduled' }}</span>
                                 @endif
                             </div>
                         </a>

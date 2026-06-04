@@ -76,11 +76,11 @@ var Utility = /*#__PURE__*/function () {
   }, {
     key: "callClassMethod",
     value: function callClassMethod(className, id, method, params, callback, errorCallback) {
-      // var url = {!! route('admin_ajax') !!}
       var url = '/ajax/class';
       $.ajax({
         type: 'POST',
         url: url,
+        dataType: 'json',
         data: {
           _token: csrf_token,
           className: className,
@@ -91,8 +91,9 @@ var Utility = /*#__PURE__*/function () {
         success: function success(result) {
           callback(result);
         },
-        onFailure: function onFailure(er) {
-          errorCallback(er);
+        error: function error(xhr) {
+          var payload = xhr.responseJSON || {success: false, message: xhr.statusText || 'Request failed'};
+          errorCallback(payload);
         }
       });
     }
@@ -101,17 +102,17 @@ var Utility = /*#__PURE__*/function () {
     value: function deleteModelObject(className, id, callback, error_callback) {
       var verbose = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
       this.callClassMethod(className, id, 'delete', null, function (res) {
+        var ok = res && res.success === true;
         if (verbose) {
-          Swal.fire('Deleted', 'Deleted', 'success');
+          if (ok) { Swal.fire('Deleted', 'Deleted', 'success'); }
+          else { Swal.fire('Failed to delete', (res && res.message) || 'Failed', 'error'); }
         }
-
-        callback(true);
+        callback(ok);
       }, function (err) {
         if (verbose) {
-          Swal.fire('Failed to delete', 'Failed', 'error');
+          Swal.fire('Failed to delete', (err && err.message) || 'Failed', 'error');
         }
-
-        error_callback(err);
+        if (error_callback) { error_callback(err); }
         callback(false);
       });
     }

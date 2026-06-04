@@ -197,16 +197,16 @@ class SalesDailyReportController extends Controller
             // Save lead followups
             if ($request->lead_followups) {
                 foreach ($request->lead_followups as $followup) {
-                    if (!empty($followup['lead_name'])) {
+                    if (!empty($followup['lead_id']) || !empty($followup['details_discussion'])) {
                         // Convert followup date if provided
                         $followupDate = null;
                         if (!empty($followup['followup_date'])) {
                             $followupDate = \Carbon\Carbon::parse($followup['followup_date'])->format('Y-m-d');
                         }
-                        
+
                         SalesLeadFollowup::create([
                             'sales_daily_report_id' => $report->id,
-                            'lead_name' => $followup['lead_name'],
+                            'lead_name' => $followup['lead_name'] ?? '',
                             'client_id' => $followup['client_id'] ?? null,
                             'lead_id' => $followup['lead_id'] ?? null,
                             'client_source_id' => $followup['client_source_id'] ?? null,

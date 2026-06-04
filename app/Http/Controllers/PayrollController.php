@@ -251,12 +251,25 @@ class PayrollController extends Controller
             $grossObj->amount = $gross_pay;
             $grossObj->save();
 
-            // Save advance salary
-            $advanceObj = new PayrollAdvanceSalary();
-            $advanceObj->payroll_id = $last_payroll_id;
-            $advanceObj->staff_id = $request->staff_id[$i];
-            $advanceObj->amount = $advance_salary;
-            $advanceObj->save();
+            // Save advance salary — recompute installments server-side so each
+            // deduction is tied to its originating advance and balances track
+            // correctly across payrolls (don't trust the posted total).
+            $advanceBreakdown = \App\Models\Staff::getStaffAdvanceSalaryInstallment($request->staff_id[$i], $year, $month);
+            foreach ($advanceBreakdown['breakdown'] as $advanceId => $installmentAmount) {
+                PayrollAdvanceSalary::create([
+                    'payroll_id'        => $last_payroll_id,
+                    'staff_id'          => $request->staff_id[$i],
+                    'advance_salary_id' => $advanceId,
+                    'amount'            => $installmentAmount,
+                ]);
+
+                // Mark the advance COMPLETED once it has been fully recovered.
+                $advance = \App\Models\AdvanceSalary::find($advanceId);
+                if ($advance && $advance->amountRecovered() >= $advance->amount) {
+                    $advance->status = 'COMPLETED';
+                    $advance->save();
+                }
+            }
 
             // Save loan
             $loanObj = new PayrollLoan();

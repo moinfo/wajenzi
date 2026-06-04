@@ -150,13 +150,13 @@
                             @else
                                 {{-- Pass source stock items to JS --}}
                                 <script>
-                                    var sourceStockItems = @json($sourceStockItems->map(fn($s) => [
+                                    var sourceStockItems = {!! json_encode($sourceStockItems->map(fn($s) => [
                                         'id'          => $s->id,
                                         'item_code'   => $s->item_code,
                                         'description' => $s->description,
                                         'unit'        => $s->unit,
-                                        'available'   => (float)$s->quantity_on_hand,
-                                    ]));
+                                        'available'   => (float) $s->quantity_on_hand,
+                                    ])->values(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!};
                                 </script>
 
                                 <div class="table-responsive">

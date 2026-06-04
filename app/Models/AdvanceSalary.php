@@ -11,7 +11,40 @@ use RingleSoft\LaravelProcessApproval\Traits\Approvable;
 class AdvanceSalary extends Model implements ApprovableModel
 {
     use HasFactory,Approvable;
-    public $fillable = ['id', 'staff_id', 'amount', 'date', 'description', 'status', 'create_by_id','document_number'];
+    public $fillable = ['id', 'staff_id', 'amount', 'date', 'description', 'status', 'create_by_id','document_number', 'monthly_deduction', 'start_month', 'start_year'];
+
+    /**
+     * Whether this advance is recovered via a fixed monthly payment plan.
+     */
+    public function hasPlan(): bool
+    {
+        return !is_null($this->monthly_deduction) && $this->monthly_deduction > 0;
+    }
+
+    /**
+     * Total amount already recovered through payroll deductions for this advance.
+     */
+    public function amountRecovered()
+    {
+        return PayrollAdvanceSalary::where('advance_salary_id', $this->id)->sum('amount');
+    }
+
+    /**
+     * Outstanding balance still to be deducted.
+     */
+    public function remainingBalance()
+    {
+        return max(0, $this->amount - $this->amountRecovered());
+    }
+
+    /**
+     * Whether the plan has started by the given payroll year/month.
+     */
+    public function planStarted($year, $month): bool
+    {
+        return ($this->start_year < $year)
+            || ($this->start_year == $year && $this->start_month <= $month);
+    }
 
 
     /**

@@ -27,13 +27,18 @@
                         ['name' => 'Basic Salary', 'value' => $basic_salary ]
                     ];
 
+                    $advance_salary_balance = \App\Models\Staff::getStaffAdvanceSalaryBalance($staff_id, $payroll_id);
+
                     $right_side = [
                         ['name' => 'Pay As You Earn (PAYE)', 'value' => $employee_deducted_amount_payee ],
                         ['name' => 'Advance Salary', 'value' => $advance_salary ],
-                        ['name' => 'Loan', 'value' => $loan_balance ],
-                        ['name' => 'Loan Deduction', 'value' => $loan_deduction ],
-                        ['name' => 'Loan Balance', 'value' => ($current_loan - $loan_deduction) ],
                     ];
+                    if ($advance_salary > 0 || $advance_salary_balance > 0) {
+                        $right_side[] = ['name' => 'Advance Salary Balance', 'value' => $advance_salary_balance ];
+                    }
+                    $right_side[] = ['name' => 'Loan', 'value' => $loan_balance ];
+                    $right_side[] = ['name' => 'Loan Deduction', 'value' => $loan_deduction ];
+                    $right_side[] = ['name' => 'Loan Balance', 'value' => ($current_loan - $loan_deduction) ];
 
                     foreach ($allowances as $allowance) {
                         $allowance_type = $allowance->allowance_type;

@@ -26,7 +26,7 @@ class ProjectScheduleController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Sales and Marketing']);
+        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Sales and Marketing', 'Sales Manager']);
         $canSeeAll = $isAdmin || $user->can('View All Schedule Activities');
 
         // Schedule visibility is per-person, not per-role: only show schedules where the user is the
@@ -65,7 +65,7 @@ class ProjectScheduleController extends Controller
     public function show(ProjectSchedule $projectSchedule)
     {
         $user = auth()->user();
-        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Chief Executive Officer', 'General Manager']);
+        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Chief Executive Officer', 'General Manager', 'Sales Manager']);
 
         $projectSchedule->load(['lead.client', 'assignedArchitect', 'activities.assignedUser', 'activities.role', 'activities.attachments.uploader', 'assignments.user']);
 
@@ -85,8 +85,12 @@ class ProjectScheduleController extends Controller
 
         // Users available for assignment (with roles)
         $users = User::with('roles')->orderBy('name')->get();
+        $roles = Role::orderBy('name')->get();
 
-        return view('project-schedules.show', compact('projectSchedule', 'activitiesByPhase', 'users', 'isAdmin', 'canSeeAll'));
+        $canAddActivity = ($isAdmin || $projectSchedule->assigned_architect_id === $user->id)
+            && $projectSchedule->status !== 'completed';
+
+        return view('project-schedules.show', compact('projectSchedule', 'activitiesByPhase', 'users', 'roles', 'isAdmin', 'canSeeAll', 'canAddActivity'));
     }
 
     /**
@@ -435,6 +439,99 @@ class ProjectScheduleController extends Controller
         }
 
         return back()->with('success', "Activity {$activity->activity_code} reset to default architect.");
+    }
+
+    /**
+     * Add a new (ad-hoc) activity to an existing schedule.
+     * Allowed for admins and the assigned architect, any state except completed.
+     */
+    public function addActivity(Request $request, ProjectSchedule $projectSchedule)
+    {
+        $user = auth()->user();
+        $isAdmin = $user->hasAnyRole([
+            'System Administrator', 'Managing Director',
+            'Chief Executive Officer', 'CEO', 'General Manager',
+        ]);
+        $isAssignedArchitect = $projectSchedule->assigned_architect_id === $user->id;
+
+        if (!$isAdmin && !$isAssignedArchitect) {
+            return back()->with('error', 'You do not have permission to add activities to this schedule.');
+        }
+
+        if ($projectSchedule->status === 'completed') {
+            return back()->with('error', 'Cannot add activities to a completed schedule.');
+        }
+
+        $request->validate([
+            'name'             => 'required|string|max:255',
+            'phase'            => 'required|string|max:120',
+            'discipline'       => 'nullable|string|max:120',
+            'duration_days'    => 'required|integer|min:1|max:60',
+            'role_id'          => 'nullable|exists:roles,id',
+            'assigned_to'      => 'nullable|exists:users,id',
+            'predecessor_code' => 'nullable|string|max:20',
+        ]);
+
+        // Predecessor must belong to this schedule
+        $predecessor = null;
+        if ($request->predecessor_code) {
+            $predecessor = $projectSchedule->activities()
+                ->where('activity_code', $request->predecessor_code)
+                ->first();
+            if (!$predecessor) {
+                return back()->with('error', 'Selected predecessor activity does not belong to this schedule.');
+            }
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Auto-generate a non-colliding code: X1, X2, X3 ... (X = eXtra/ad-hoc)
+            $maxCustom = $projectSchedule->activities()
+                ->where('activity_code', 'like', 'X%')
+                ->get()
+                ->map(fn($a) => (int) preg_replace('/\D/', '', $a->activity_code))
+                ->max() ?? 0;
+            $activityCode = 'X' . ($maxCustom + 1);
+
+            // Start = day after predecessor's end_date (next working day), else schedule start
+            $startBase = $predecessor
+                ? $predecessor->end_date->copy()->addDay()
+                : $projectSchedule->start_date->copy();
+            $startDate = ProjectScheduleService::getNextWorkingDay($startBase);
+            $endDate   = ProjectScheduleService::addWorkingDays($startDate, (int) $request->duration_days);
+
+            $sortOrder = ((int) $projectSchedule->activities()->max('sort_order')) + 1;
+
+            $activity = ProjectScheduleActivity::create([
+                'project_schedule_id' => $projectSchedule->id,
+                'activity_code'       => $activityCode,
+                'name'                => $request->name,
+                'phase'                => $request->phase,
+                'discipline'           => $request->discipline,
+                'start_date'           => $startDate,
+                'duration_days'        => (int) $request->duration_days,
+                'end_date'             => $endDate,
+                'predecessor_code'     => $request->predecessor_code ?: null,
+                'role_id'              => $request->role_id,
+                'assigned_to'          => $request->assigned_to,
+                'status'               => 'pending',
+                'sort_order'           => $sortOrder,
+            ]);
+
+            // Extend schedule end_date if this activity now finishes later
+            if (!$projectSchedule->end_date || $endDate->gt($projectSchedule->end_date)) {
+                $projectSchedule->update(['end_date' => $endDate]);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to add project schedule activity: ' . $e->getMessage());
+            return back()->with('error', 'Failed to add activity. Please try again.');
+        }
+
+        return back()->with('success', "Added activity {$activity->activity_code}: {$activity->name}.");
     }
 
     /**

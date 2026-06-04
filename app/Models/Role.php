@@ -27,6 +27,12 @@ class Role extends Model
         return $this->belongsToMany(User::class, 'users_roles');
     }
 
+    public function assignedUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'model_has_roles', 'role_id', 'model_id')
+            ->where('model_type', User::class);
+    }
+
     // New method for project-specific permissions
     public function projectPermissions(): BelongsToMany
     {

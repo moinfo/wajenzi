@@ -26,7 +26,7 @@ class ProjectMaterialRequestController extends Controller
         }
 
         $requests = ProjectMaterialRequest::with(['project', 'items.boqItem', 'requester', 'approvalStatus'])->get();
-        $projects = Project::all();
+        $projects = Project::with('client')->get();
 
         $data = [
             'requests' => $requests,

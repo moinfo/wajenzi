@@ -29,6 +29,7 @@ class KpiMenuSeeder extends Seeder
             'Sales Manager', 'Digital Marketing and Content Creator', 'Architect',
             'Civil Engineer', 'Sales and Marketing', 'Quantity Surveyor (QS)',
             'Project Manager', 'Service Engineer', 'General Manager',
+            'Content creator and IT', 'Project Schedule',
         ];
         $employeeRoleIds = DB::table('roles')->whereIn('name', $employeeRoleNames)->pluck('id')->toArray();
 

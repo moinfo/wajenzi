@@ -23,10 +23,13 @@ class KpiReview extends Model implements ApprovableModel
 {
     use HasFactory, Approvable;
 
+    // 'status' is intentionally NOT fillable — the state machine in
+    // KpiController (approve/reject/return + submit) owns transitions and writes
+    // via direct attribute assignment so a stray mass-assignment elsewhere can't
+    // bypass it.
     protected $fillable = [
         'review_number', 'kpi_template_id', 'employee_id', 'supervisor_id',
         'period_label', 'period_start', 'period_end',
-        'status',
         'achievements', 'areas_of_improvement', 'training_needs',
         'employee_comments', 'supervisor_comments', 'md_comments', 'ceo_comments',
         'total_self_score', 'total_supervisor_score', 'total_overall_score', 'grade_label',

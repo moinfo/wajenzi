@@ -721,6 +721,25 @@ class SettingsController extends Controller
 
 
     public function advance_salaries(Request $request){
+        // Validate the payment plan on create. The monthly deduction cannot exceed
+        // the advance amount, and a start month/year must be chosen.
+        if($request->has('addItem')) {
+            $request->validate([
+                'monthly_deduction' => 'required|numeric|min:1',
+                'start_month'       => 'required|integer|between:1,12',
+                'start_year'        => 'required|integer|min:2020',
+            ]);
+
+            // amount may carry thousands separators from the form's formatter.
+            $amount  = (float) \App\Classes\Utility::strip_commas($request->input('amount'));
+            $monthly = (float) $request->input('monthly_deduction');
+            if ($monthly > $amount) {
+                return back()->withInput()->withErrors([
+                    'monthly_deduction' => 'The monthly deduction cannot be greater than the advance amount.',
+                ]);
+            }
+        }
+
         if($this->handleCrud($request, 'AdvanceSalary')) {
             return back();
         }
@@ -864,7 +883,7 @@ class SettingsController extends Controller
             return back();
         }
         $data = [
-            'roles' => Role::all()
+            'roles' => Role::with(['assignedUsers:id,name'])->get()
         ];
         return view('pages.settings.settings_roles')->with($data);
     }

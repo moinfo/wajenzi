@@ -103,7 +103,10 @@ class KpiController extends Controller
     public function pdf(KpiReview $performance)
     {
         $this->authorizeView($performance);
-        $performance->load(['template.sections.items', 'employee.department', 'supervisor', 'ratings']);
+        $performance->load([
+            'template.sections.items', 'employee.department', 'supervisor', 'ratings',
+            'approvals.user', 'approvals.processApprovalFlowStep',
+        ]);
 
         $grouped = $this->groupRatingsBySection($performance);
 
@@ -182,9 +185,10 @@ class KpiController extends Controller
                 'period_label'    => $data['period_label'],
                 'period_start'    => $data['period_start'],
                 'period_end'      => $data['period_end'],
-                'status'          => 'draft',
                 'created_by'      => $user->id,
             ]);
+            // status is intentionally not mass-assigned — see KpiReview::$fillable.
+            // DB default is 'draft'.
 
             // Clone every template item into a rating row (snapshot)
             $rows  = [];
@@ -251,6 +255,11 @@ class KpiController extends Controller
             'employee_comments'    => 'nullable|string|max:5000',
         ]);
 
+        // Per-row cap: the rate is the weighted contribution, so it can't exceed the row's weight.
+        if ($err = $this->enforceRateCap($performance, $data['ratings'], ['self_rate'])) {
+            return back()->withInput()->with('error', $err);
+        }
+
         // Block submitting a blank self-assessment — every KPI must be rated.
         // Save Draft is exempt, so partial work can still be kept.
         if ($request->input('action') === 'submit') {
@@ -263,7 +272,7 @@ class KpiController extends Controller
             }
             if (!empty($missing)) {
                 return back()->withInput()->with('error',
-                    'Please rate every KPI (0–100) before submitting. ' . count($missing) . ' row(s) are still blank. You can Save Draft instead.');
+                    'Please rate every KPI before submitting. ' . count($missing) . ' row(s) are still blank. You can Save Draft instead.');
             }
         }
 
@@ -305,11 +314,12 @@ class KpiController extends Controller
 
         try {
             // RingleSoft signature: submit(?Authenticatable $user = null) — NOT a comment string
-            $performance->submit($request->user());
-            $performance->update([
-                'status'            => 'self_submitted',
-                'self_submitted_at' => now(),
-            ]);
+            DB::transaction(function () use ($performance, $request) {
+                $performance->submit($request->user());
+                $performance->status            = 'self_submitted';
+                $performance->self_submitted_at = now();
+                $performance->save();
+            });
         } catch (\Throwable $e) {
             \Log::error("KPI submit() failed for review {$performance->id}: " . $e->getMessage());
             return back()->with('error', 'Failed to submit for review: ' . $e->getMessage());
@@ -338,7 +348,6 @@ class KpiController extends Controller
     public function updateReviewer(Request $request, KpiReview $performance)
     {
         $this->authorizeReviewer($performance);
-        $stage = $this->reviewerStageFor($performance);
 
         $data = $request->validate([
             'ratings'                  => 'required|array',
@@ -352,12 +361,18 @@ class KpiController extends Controller
             'rejection_reason'         => 'required_if:action,reject,return|nullable|string|max:2000',
         ]);
 
+        // Per-row cap: the rate is the weighted contribution, so it can't exceed the row's weight.
+        if ($err = $this->enforceRateCap($performance, $data['ratings'], ['supervisor_rate', 'overall_rate'])) {
+            return back()->withInput()->with('error', $err);
+        }
+
         // When forwarding, require a rate on every row at the stage's owning column.
         // Save Draft is exempt — the reviewer might leave and come back.
         if ($data['action'] === 'approve') {
-            $missing = [];
-            $columnName = $stage === 'supervisor' ? 'supervisor_rate' : 'overall_rate';
+            $stage = $this->reviewerStageFor($performance);
+            $columnName  = $stage === 'supervisor' ? 'supervisor_rate' : 'overall_rate';
             $columnLabel = $stage === 'supervisor' ? 'Supervisor' : 'Overall';
+            $missing = [];
             foreach ($performance->ratings as $rating) {
                 $value = $data['ratings'][$rating->id][$columnName] ?? null;
                 if ($value === null || $value === '') {
@@ -371,47 +386,59 @@ class KpiController extends Controller
             }
         }
 
-        DB::transaction(function () use ($performance, $data, $stage) {
-            foreach ($data['ratings'] as $ratingId => $values) {
-                KpiReviewRating::where('id', $ratingId)
-                    ->where('kpi_review_id', $performance->id)
-                    ->update([
-                        'supervisor_rate' => $values['supervisor_rate'] ?? null,
-                        'overall_rate'    => $values['overall_rate']    ?? null,
-                        'comment'         => $values['comment']         ?? null,
-                    ]);
-            }
-            $performance->fill(array_filter([
-                'supervisor_comments' => $data['supervisor_comments'] ?? null,
-                'md_comments'         => $data['md_comments']         ?? null,
-                'ceo_comments'        => $data['ceo_comments']        ?? null,
-            ], fn ($v) => $v !== null))->save();
-            $this->recalculateScores($performance->refresh());
-        });
+        try {
+            $result = DB::transaction(function () use ($performance, $data) {
+                // Row-level lock: prevents double-approve race when two reviewers
+                // (or one impatient double-clicker) hit Approve concurrently.
+                $locked = KpiReview::whereKey($performance->id)->lockForUpdate()->firstOrFail();
+                $this->authorizeReviewer($locked);
+                $stage = $this->reviewerStageFor($locked);
 
-        // Advance the workflow if requested
-        switch ($data['action']) {
-            case 'approve':
-                return $this->approveStage($performance->refresh(), $stage);
-            case 'reject':
-                return $this->rejectReview($performance->refresh(), $data['rejection_reason']);
-            case 'return':
-                return $this->returnReview($performance->refresh(), $data['rejection_reason']);
-            default:
-                return back()->with('success', 'Review saved.');
+                foreach ($data['ratings'] as $ratingId => $values) {
+                    KpiReviewRating::where('id', $ratingId)
+                        ->where('kpi_review_id', $locked->id)
+                        ->update([
+                            'supervisor_rate' => $values['supervisor_rate'] ?? null,
+                            'overall_rate'    => $values['overall_rate']    ?? null,
+                            'comment'         => $values['comment']         ?? null,
+                        ]);
+                }
+                $locked->fill(array_filter([
+                    'supervisor_comments' => $data['supervisor_comments'] ?? null,
+                    'md_comments'         => $data['md_comments']         ?? null,
+                    'ceo_comments'        => $data['ceo_comments']        ?? null,
+                ], fn ($v) => $v !== null))->save();
+
+                // Only finalise totals when the review actually advances. A draft
+                // save with half-blank rows would otherwise persist artificially
+                // low totals + a misleading grade onto the index/Top Performers.
+                if ($data['action'] !== 'save') {
+                    $this->recalculateScores($locked->refresh());
+                }
+
+                return match ($data['action']) {
+                    'approve' => $this->approveStage($locked->refresh(), $stage),
+                    'reject'  => $this->rejectReview($locked->refresh(), $data['rejection_reason']),
+                    'return'  => $this->returnReview($locked->refresh(), $data['rejection_reason']),
+                    default   => null,
+                };
+            });
+        } catch (\Throwable $e) {
+            \Log::error("KPI updateReviewer failed for review {$performance->id}: " . $e->getMessage());
+            return back()->withInput()->with('error', 'Save failed: ' . $e->getMessage());
         }
+
+        return $result ?? back()->with('success', 'Review saved.');
     }
 
     /**
      * Approve current stage — advances RingleSoft and updates the convenience status.
+     * Must be called inside a DB::transaction so the RingleSoft write and the
+     * status/timestamp stamp commit (or roll back) together.
      */
     protected function approveStage(KpiReview $performance, string $stage)
     {
-        try {
-            $performance->approve("Approved at {$stage} stage.", auth()->user());
-        } catch (\Throwable $e) {
-            return back()->with('error', 'Approval failed: ' . $e->getMessage());
-        }
+        $performance->approve("Approved at {$stage} stage.", auth()->user());
 
         $stamps = [
             'supervisor' => ['status' => 'supervisor_reviewed', 'col' => 'supervisor_reviewed_at'],
@@ -419,10 +446,9 @@ class KpiController extends Controller
             'ceo'        => ['status' => 'completed',           'col' => 'completed_at'],
         ];
         if (isset($stamps[$stage])) {
-            $performance->update([
-                'status'           => $stamps[$stage]['status'],
-                $stamps[$stage]['col'] => now(),
-            ]);
+            $performance->status                   = $stamps[$stage]['status'];
+            $performance->{$stamps[$stage]['col']} = now();
+            $performance->save();
         }
         return redirect()->route('performance.show', $performance)
             ->with('success', 'Approved.');
@@ -430,41 +456,37 @@ class KpiController extends Controller
 
     protected function rejectReview(KpiReview $performance, ?string $reason)
     {
-        try {
-            $performance->reject($reason ?? 'Rejected.', auth()->user());
-        } catch (\Throwable $e) {
-            return back()->with('error', 'Reject failed: ' . $e->getMessage());
-        }
-        $performance->update(['status' => 'rejected']);
+        $performance->reject($reason ?? 'Rejected.', auth()->user());
+        $performance->status = 'rejected';
+        $performance->save();
         return redirect()->route('performance.show', $performance)
             ->with('success', 'Review rejected.');
     }
 
     protected function returnReview(KpiReview $performance, ?string $reason)
     {
-        try {
-            $performance->return($reason ?? 'Returned for changes.', auth()->user());
-        } catch (\Throwable $e) {
-            return back()->with('error', 'Return failed: ' . $e->getMessage());
-        }
-        $performance->update(['status' => 'returned']);
+        $performance->return($reason ?? 'Returned for changes.', auth()->user());
+        $performance->status = 'returned';
+        $performance->save();
         return redirect()->route('performance.show', $performance)
             ->with('success', 'Returned to employee for changes.');
     }
 
     /**
-     * Calculate weighted totals across all ratings and write them back to the review.
-     * Each rating contributes (rate/100) × weight, summed across all items. Possible
-     * total range is 0..(sum of weights) which equals 0..100 by template construction.
+     * Calculate totals across all ratings and write them back to the review.
+     *
+     * Each rate is the row's *weighted contribution* — capped at the row's
+     * weight_snapshot — so totals are a straight sum and naturally land on a
+     * 0..(sum of weights) scale (≈ 0..100 when the template weights sum to 100).
+     * Grade bands are looked up against that same 0..100 scale.
      */
     protected function recalculateScores(KpiReview $performance): void
     {
         $totals = ['self' => 0, 'supervisor' => 0, 'overall' => 0];
         foreach ($performance->ratings as $r) {
-            $w = (float) $r->weight_snapshot;
-            $totals['self']       += $r->self_rate       !== null ? ((float) $r->self_rate / 100)       * $w : 0;
-            $totals['supervisor'] += $r->supervisor_rate !== null ? ((float) $r->supervisor_rate / 100) * $w : 0;
-            $totals['overall']    += $r->overall_rate    !== null ? ((float) $r->overall_rate / 100)    * $w : 0;
+            $totals['self']       += (float) ($r->self_rate       ?? 0);
+            $totals['supervisor'] += (float) ($r->supervisor_rate ?? 0);
+            $totals['overall']    += (float) ($r->overall_rate    ?? 0);
         }
 
         $grade = null;
@@ -475,12 +497,34 @@ class KpiController extends Controller
             }
         }
 
-        $performance->update([
-            'total_self_score'       => round($totals['self'], 2),
-            'total_supervisor_score' => round($totals['supervisor'], 2),
-            'total_overall_score'    => round($totals['overall'], 2),
-            'grade_label'            => $grade,
-        ]);
+        $performance->total_self_score       = round($totals['self'], 2);
+        $performance->total_supervisor_score = round($totals['supervisor'], 2);
+        $performance->total_overall_score    = round($totals['overall'], 2);
+        $performance->grade_label            = $grade;
+        $performance->save();
+    }
+
+    /**
+     * Verify every submitted rate is within its row's weight_snapshot. Returns
+     * a human-readable error string when something exceeds the cap, otherwise null.
+     */
+    protected function enforceRateCap(KpiReview $performance, array $ratings, array $columns): ?string
+    {
+        $caps = $performance->ratings->keyBy('id');
+        foreach ($ratings as $ratingId => $values) {
+            $rating = $caps[$ratingId] ?? null;
+            if (!$rating) continue;
+            $max = (float) $rating->weight_snapshot;
+            foreach ($columns as $col) {
+                $val = $values[$col] ?? null;
+                if ($val === null || $val === '') continue;
+                if ((float) $val > $max + 0.0001) {
+                    $maxFmt = rtrim(rtrim(number_format($max, 2), '0'), '.');
+                    return "Rate for \"{$rating->kpa_snapshot}\" is {$val} but cannot exceed its weight ({$maxFmt}).";
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -513,21 +557,34 @@ class KpiController extends Controller
 
     /**
      * Scope to "awaiting MY action" depending on which role the user has.
+     *
+     * Separation of duties: a user never sees their own review in this list, and
+     * an MD/CEO who happened to act as the supervisor on a given review can't
+     * approve it again at the next stage.
      */
     protected function scopeAwaitingFor($query, $user): void
     {
         $query->where(function ($q) use ($user) {
-            // Supervisor step
+            // Supervisor step — assigned supervisor only
             $q->where(function ($q2) use ($user) {
-                $q2->where('status', 'self_submitted')->where('supervisor_id', $user->id);
+                $q2->where('status', 'self_submitted')
+                   ->where('supervisor_id', $user->id);
             });
             // MD step
             if ($user->hasRole('Managing Director')) {
-                $q->orWhere('status', 'supervisor_reviewed');
+                $q->orWhere(function ($q2) use ($user) {
+                    $q2->where('status', 'supervisor_reviewed')
+                       ->where('supervisor_id', '!=', $user->id)
+                       ->where('employee_id',   '!=', $user->id);
+                });
             }
             // CEO step
             if ($user->hasAnyRole(['CEO', 'Chief Executive Officer'])) {
-                $q->orWhere('status', 'md_reviewed');
+                $q->orWhere(function ($q2) use ($user) {
+                    $q2->where('status', 'md_reviewed')
+                       ->where('supervisor_id', '!=', $user->id)
+                       ->where('employee_id',   '!=', $user->id);
+                });
             }
         });
     }
@@ -575,7 +632,9 @@ class KpiController extends Controller
         if ($performance->employee_id !== auth()->id()) {
             abort(403);
         }
-        if (!in_array($performance->status, ['draft', 'returned'], true)) {
+        // 'rejected' is editable too — without this, a rejected review is a dead
+        // end and the employee has no path back into the flow short of HR cloning.
+        if (!in_array($performance->status, ['draft', 'returned', 'rejected'], true)) {
             abort(403, 'Self-assessment is locked at this stage.');
         }
     }
@@ -842,24 +901,43 @@ class KpiController extends Controller
 
     protected function authorizeTemplates(): void
     {
-        if (!auth()->user()->hasRole('System Administrator')) {
-            abort(403, 'Only System Administrators can manage KPI templates.');
+        // Mirror canSeeAllReviews() — HR/MD/CEO are pointed at templates by the
+        // create-review error message, so they need write access too.
+        if (!auth()->user()->hasAnyRole([
+            'System Administrator', 'HR Generalist', 'Managing Director', 'CEO', 'Chief Executive Officer',
+        ])) {
+            abort(403, 'You do not have permission to manage KPI templates.');
         }
     }
 
+    /**
+     * Separation of duties at each reviewer stage:
+     *   - Nobody approves their own review (employee_id check).
+     *   - An MD/CEO who already acted as the personal supervisor of a review
+     *     cannot also approve it at the later MD/CEO stage.
+     */
     protected function authorizeReviewer(KpiReview $performance): void
     {
         $user = auth()->user();
         $stage = $this->reviewerStageFor($performance);
+        if ($performance->employee_id === $user->id) {
+            abort(403, 'You cannot review your own performance.');
+        }
         switch ($stage) {
             case 'supervisor':
                 if ($performance->supervisor_id !== $user->id) abort(403);
                 break;
             case 'md':
                 if (!$user->hasRole('Managing Director')) abort(403);
+                if ($performance->supervisor_id === $user->id) {
+                    abort(403, 'You already acted as supervisor on this review; another MD must approve at this stage.');
+                }
                 break;
             case 'ceo':
                 if (!$user->hasAnyRole(['CEO', 'Chief Executive Officer'])) abort(403);
+                if ($performance->supervisor_id === $user->id) {
+                    abort(403, 'You already acted as supervisor on this review; another CEO must approve.');
+                }
                 break;
             default:
                 abort(403, 'No reviewer action available at this stage.');

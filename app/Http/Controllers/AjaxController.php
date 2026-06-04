@@ -222,7 +222,7 @@ class AjaxController
                     $start_date = date('Y-m-d');
                     $todayTargets = SupplierTarget::getTodayTargets($start_date);
                     $project_clients = ProjectClient::where('status','APPROVED')->get();
-                    $projects = Project::where('status','APPROVED')->get();
+                    $projects = Project::with('client')->orderBy('project_name')->get();
                     $project_types = ProjectType::all();
 
                     // Procurement workflow data
@@ -433,11 +433,20 @@ class AjaxController
                     $method = $request->input('method');
                     $params = $request->input('params') ?? [];
                     $id = $request->input('id');
-                    if ($id) { // instance
-                        $obj = $fullObject::find($id);
-                        return $obj->$method(...$params);
-                    } else {
-                        return $fullObject::$method(...$params);
+                    try {
+                        if ($id) { // instance
+                            $obj = $fullObject::find($id);
+                            if (!$obj) {
+                                return response()->json(['success' => false, 'message' => $object . ' #' . $id . ' not found'], 404);
+                            }
+                            $result = $obj->$method(...$params);
+                        } else {
+                            $result = $fullObject::$method(...$params);
+                        }
+                        return response()->json(['success' => $result !== false, 'result' => $result]);
+                    } catch (\Throwable $e) {
+                        \Log::error("AjaxController class call failed ({$object}::{$method} id={$id}): " . $e->getMessage());
+                        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
                     }
                     break;
 

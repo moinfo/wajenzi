@@ -77,6 +77,9 @@ trait BuildsApprovalLinks
             case 'SalesDailyReport':       return "sales_daily_report/{$documentId}/{$documentTypeId}";
             case 'SiteDailyReport':        return "site_daily_report/{$documentId}/{$documentTypeId}";
 
+            // HR / Performance
+            case 'KpiReview':              return "performance/{$documentId}";
+
             default:
                 return Str::snake($documentType) . "/{$documentId}/{$documentTypeId}";
         }

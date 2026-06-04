@@ -26,8 +26,8 @@
 
     <div class="alert" style="background:#dbeafe; color:#1d4ed8; border-radius:10px; padding:12px 16px; border:none; margin-bottom:18px;">
         <i class="fa fa-info-circle"></i>
-        Rate yourself on each KPI between <strong>0 and 100</strong>
-        (where 100 = perfect, 50 = average, 0 = not met).
+        Rate yourself on each KPI between <strong>0 and that KPI's weight (Wt)</strong>.
+        The rate is your weighted score for that row — the maximum equals the weight.
         Save as draft any time; if you submit by mistake you can recall it from the show page <em>before</em> your supervisor starts reviewing.
     </div>
 
@@ -36,7 +36,7 @@
          style="position:sticky; top:10px; z-index:10; background:#fff; border:2px solid #1BC5BD; border-radius:12px; padding:12px 18px; margin-bottom:16px; box-shadow:0 2px 8px rgba(0,0,0,.06); display:flex; justify-content:space-between; align-items:center;">
         <div>
             <div style="font-size:11px; color:#8a92a6; font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Your Live Self Score</div>
-            <div style="font-size:11.5px; color:#475569; margin-top:2px;">Updates as you type. Final score = Σ (your rate ÷ 100) × weight</div>
+            <div style="font-size:11.5px; color:#475569; margin-top:2px;">Updates as you type. Final score = sum of your rates across all rows.</div>
         </div>
         <div style="text-align:right;">
             <div id="kpi-total-score" style="font-size:26px; font-weight:800; color:#1BC5BD; line-height:1; font-variant-numeric:tabular-nums;">0.0%</div>
@@ -65,26 +65,27 @@
                             <th>Measure</th>
                             <th>Target</th>
                             <th style="width:55px; text-align:center;">Wt</th>
-                            <th style="width:100px; text-align:center;">Self Rate (%)</th>
+                            <th style="width:100px; text-align:center;">Self Rate</th>
                             <th style="width:240px;">Your Comment</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($ratings as $rating)
+                            @php $wt = (float) $rating->weight_snapshot; $wtFmt = rtrim(rtrim(number_format($wt, 2), '0'), '.'); @endphp
                             <tr>
                                 <td class="col-kpa">{{ $rating->kpa_snapshot }}</td>
                                 <td>{{ $rating->measure_snapshot }}</td>
                                 <td class="col-target">{{ $rating->target_snapshot ?? '—' }}</td>
-                                <td style="text-align:center; font-weight:700;">
-                                    {{ rtrim(rtrim(number_format($rating->weight_snapshot, 2), '0'), '.') }}%
-                                </td>
+                                <td style="text-align:center; font-weight:700;">{{ $wtFmt }}%</td>
                                 <td style="text-align:center;">
                                     <input type="number"
-                                           class="kpi-self-input"
-                                           data-weight="{{ $rating->weight_snapshot }}"
+                                           class="kpi-self-input self-rate-input"
+                                           data-weight="{{ $wt }}"
+                                           data-max="{{ $wt }}"
                                            name="ratings[{{ $rating->id }}][self_rate]"
-                                           min="0" max="100" step="0.1"
-                                           placeholder="0–100"
+                                           min="0" max="{{ $wt }}" step="0.1"
+                                           placeholder="0–{{ $wtFmt }}"
+                                           aria-label="Self rate for {{ $rating->kpa_snapshot }} (max {{ $wtFmt }})"
                                            value="{{ old('ratings.' . $rating->id . '.self_rate', $rating->self_rate) }}">
                                     <div class="kpi-weighted-hint" style="font-size:10px; color:#1BC5BD; font-weight:700; margin-top:3px; height:12px;">—</div>
                                 </td>
@@ -139,21 +140,9 @@
 
 <script>
 (function () {
-    const inputs   = document.querySelectorAll('.kpi-self-input');
-    const totalEl  = document.getElementById('kpi-total-score');
-    const gradeEl  = document.getElementById('kpi-total-grade');
-
-    /**
-     * Format the per-row hint based on the user's input.
-     * Silently clamps rate to 0..100; treats 0 as a deliberate rating (still shown);
-     * shows "—" only when the field is blank or non-numeric.
-     */
-    function formatHint(rate, weight) {
-        if (!Number.isFinite(rate)) return '—';
-        const clamped = Math.max(0, Math.min(100, rate));
-        const contribution = (clamped / 100) * (weight || 0);
-        return '→ ' + contribution.toFixed(1) + '% (out of ' + weight + '%)';
-    }
+    const inputs  = document.querySelectorAll('.kpi-self-input');
+    const totalEl = document.getElementById('kpi-total-score');
+    const gradeEl = document.getElementById('kpi-total-grade');
 
     function gradeFor(score) {
         if (score >= 90) return 'Excellent';
@@ -164,6 +153,22 @@
         return 'Ungraded';
     }
 
+    // Per-row hint: rate IS the weighted contribution now, so just show "x of Wt%".
+    function formatHint(rate, weight) {
+        if (!Number.isFinite(rate)) return '—';
+        const clamped = Math.max(0, Math.min(weight, rate));
+        return clamped.toFixed(1) + ' of ' + weight + '%';
+    }
+
+    // Clamp to 0..weight on blur — server enforces this too.
+    function clampToMax(el) {
+        const max = parseFloat(el.dataset.max);
+        if (isNaN(max) || el.value === '') return;
+        const v = parseFloat(el.value);
+        if (!isNaN(v) && v > max) el.value = max;
+        else if (!isNaN(v) && v < 0) el.value = 0;
+    }
+
     function recalc() {
         let total = 0;
         inputs.forEach(el => {
@@ -171,16 +176,19 @@
             const rate   = parseFloat(el.value);
             const hintEl = el.parentElement.querySelector('.kpi-weighted-hint');
             if (hintEl) hintEl.textContent = formatHint(rate, weight);
-            if (!isNaN(rate) && rate >= 0 && rate <= 100) {
-                total += (rate / 100) * weight;
+            if (!isNaN(rate) && rate >= 0 && rate <= weight) {
+                total += rate;
             }
         });
         totalEl.textContent = total.toFixed(1) + '%';
         gradeEl.textContent = gradeFor(total) + ' (out of 100)';
     }
 
-    inputs.forEach(el => el.addEventListener('input', recalc));
-    recalc(); // initial render of any pre-filled values
+    inputs.forEach(el => {
+        el.addEventListener('input', recalc);
+        el.addEventListener('blur',  function () { clampToMax(el); recalc(); });
+    });
+    recalc();
 }());
 
 /**
