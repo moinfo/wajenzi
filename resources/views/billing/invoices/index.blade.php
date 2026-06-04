@@ -339,9 +339,9 @@
                                 </select>
                             </td>
                             <td>
-                                <div class="inv-client-name">{{ $invoice->client->first_name }} {{ $invoice->client->last_name }}</div>
-                                @if($invoice->client->email)
-                                    <div class="inv-client-email">{{ $invoice->client->email }}</div>
+                                <div class="inv-client-name">{{ $invoice->recipient_name }}@if(!$invoice->client && $invoice->lead) <small class="text-muted">(Lead)</small>@endif</div>
+                                @if($invoice->recipient_email)
+                                    <div class="inv-client-email">{{ $invoice->recipient_email }}</div>
                                 @endif
                             </td>
                             <td style="font-size:13px; color:#4a5568;">{{ $invoice->issue_date->format('d/m/Y') }}</td>

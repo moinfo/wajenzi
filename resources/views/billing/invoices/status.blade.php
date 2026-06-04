@@ -144,8 +144,8 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <strong>{{ $invoice->client->company_name }}</strong>
-                                        @if($invoice->client->contact_person)
+                                        <strong>{{ $invoice->recipient_name }}</strong>
+                                        @if($invoice->client?->contact_person)
                                             <br><small class="text-muted">{{ $invoice->client->contact_person }}</small>
                                         @endif
                                     </td>

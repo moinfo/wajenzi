@@ -95,7 +95,8 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'client_id' => 'required|exists:project_clients,id',
+            'client_id' => 'nullable|required_without:lead_id|exists:project_clients,id',
+            'lead_id' => 'nullable|required_without:client_id|exists:leads,id',
             'issue_date' => 'required|date',
             'due_date' => 'nullable|date|after_or_equal:issue_date',
             'payment_terms' => 'required|in:immediate,net_7,net_15,net_30,net_45,net_60,net_90,custom',
@@ -227,7 +228,8 @@ class InvoiceController extends Controller
         }
         
         $request->validate([
-            'client_id' => 'required|exists:project_clients,id',
+            'client_id' => 'nullable|required_without:lead_id|exists:project_clients,id',
+            'lead_id' => 'nullable|required_without:client_id|exists:leads,id',
             'issue_date' => 'required|date',
             'due_date' => 'nullable|date|after_or_equal:issue_date',
             'items' => 'required|array|min:1',
@@ -466,8 +468,11 @@ class InvoiceController extends Controller
                 'received_by' => auth()->id()
             ]);
 
-            // Auto-approve client workflow on first payment
-            ClientApprovalService::autoApproveOnFirstPayment($invoice->client_id, $payment);
+            // Auto-approve client workflow on first payment (only when the
+            // invoice is tied to a client, not a lead-only invoice)
+            if ($invoice->client_id) {
+                ClientApprovalService::autoApproveOnFirstPayment($invoice->client_id, $payment);
+            }
 
             DB::commit();
 

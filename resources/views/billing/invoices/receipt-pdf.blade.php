@@ -204,17 +204,17 @@
             <td width="50%">
                 <div class="client-details">
                     <div class="client-title">RECEIVED FROM:</div>
-                    <strong>{{ $invoice->client->first_name }} {{ $invoice->client->last_name }}</strong><br>
-                    @if($invoice->client->address)
-                        {{ $invoice->client->address }}<br>
+                    <strong>{{ $invoice->recipient_name }}</strong><br>
+                    @if($invoice->recipient_address)
+                        {{ $invoice->recipient_address }}<br>
                     @endif
-                    @if($invoice->client->phone_number)
-                        <strong>Phone:</strong> {{ $invoice->client->phone_number }}<br>
+                    @if($invoice->recipient_phone)
+                        <strong>Phone:</strong> {{ $invoice->recipient_phone }}<br>
                     @endif
-                    @if($invoice->client->email)
-                        <strong>Email:</strong> {{ $invoice->client->email }}<br>
+                    @if($invoice->recipient_email)
+                        <strong>Email:</strong> {{ $invoice->recipient_email }}<br>
                     @endif
-                    @if($invoice->client->identification_number)
+                    @if($invoice->client?->identification_number)
                         <strong>ID:</strong> {{ $invoice->client->identification_number }}
                     @endif
                 </div>

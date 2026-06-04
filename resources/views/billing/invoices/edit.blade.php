@@ -201,8 +201,8 @@
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>Client <span class="text-danger">*</span></label>
-                                        <select name="client_id" class="form-control" required>
+                                        <label>Client</label>
+                                        <select name="client_id" class="form-control">
                                             <option value="">Select Client</option>
                                             @foreach($clients as $client)
                                                 <option value="{{ $client->id }}"
@@ -212,8 +212,9 @@
                                                 </option>
                                             @endforeach
                                         </select>
+                                        <small class="text-muted">Optional — select a Lead instead if this invoice is for a lead.</small>
                                         @error('client_id')
-                                            <small class="text-danger">{{ $message }}</small>
+                                            <br><small class="text-danger">{{ $message }}</small>
                                         @enderror
                                     </div>
                                 </div>

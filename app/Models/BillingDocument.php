@@ -117,6 +117,37 @@ class BillingDocument extends Model
         return $this->belongsTo(Lead::class, 'lead_id');
     }
 
+    /**
+     * Recipient display helpers.
+     *
+     * A billing document may be raised against a client OR a lead (when no
+     * client exists yet). These accessors return the client's details when a
+     * client is present, otherwise they fall back to the lead's details.
+     */
+    public function getRecipientNameAttribute()
+    {
+        if ($this->client) {
+            return trim($this->client->first_name . ' ' . $this->client->last_name);
+        }
+
+        return $this->lead?->name;
+    }
+
+    public function getRecipientEmailAttribute()
+    {
+        return $this->client?->email ?? $this->lead?->email;
+    }
+
+    public function getRecipientPhoneAttribute()
+    {
+        return $this->client?->phone_number ?? $this->lead?->phone;
+    }
+
+    public function getRecipientAddressAttribute()
+    {
+        return $this->client?->address ?? $this->lead?->address;
+    }
+
     public function payments()
     {
         return $this->hasMany(BillingPayment::class, 'document_id');

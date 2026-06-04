@@ -226,12 +226,12 @@
             <td style="width: 40%; vertical-align: top; padding-right: 16px;">
                 <div class="section-label">Bill To</div>
                 <div class="bill-to-box">
-                    <div class="client-name">{{ $invoice->client->first_name }} {{ $invoice->client->last_name }}</div>
+                    <div class="client-name">{{ $invoice->recipient_name }}</div>
                     <div class="client-detail">
-                        @if($invoice->client->address){{ $invoice->client->address }}<br>@endif
-                        @if($invoice->client->phone_number)<strong>Phone:</strong> {{ $invoice->client->phone_number }}<br>@endif
-                        @if($invoice->client->email)<strong>Email:</strong> {{ $invoice->client->email }}<br>@endif
-                        @if($invoice->client->identification_number)<strong>ID:</strong> {{ $invoice->client->identification_number }}@endif
+                        @if($invoice->recipient_address){{ $invoice->recipient_address }}<br>@endif
+                        @if($invoice->recipient_phone)<strong>Phone:</strong> {{ $invoice->recipient_phone }}<br>@endif
+                        @if($invoice->recipient_email)<strong>Email:</strong> {{ $invoice->recipient_email }}<br>@endif
+                        @if($invoice->client?->identification_number)<strong>ID:</strong> {{ $invoice->client->identification_number }}@endif
                     </div>
                 </div>
             </td>

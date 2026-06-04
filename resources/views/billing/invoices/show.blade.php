@@ -101,7 +101,7 @@
         <button class="inv-action-btn" style="background:#0ea5e9;color:#fff;" onclick="sendEmailModal()">
             <i class="fa fa-envelope"></i> Email
         </button>
-        @if($invoice->client->phone_number)
+        @if($invoice->recipient_phone)
             <button class="inv-action-btn" style="background:#128c7e;color:#fff;" onclick="sendWhatsAppModal()">
                 <i class="fa fa-whatsapp"></i> WhatsApp
             </button>
@@ -271,21 +271,21 @@
                 {{-- Bill To + Invoice For --}}
                 <div class="row mb-4" style="row-gap:16px;">
                     <div class="col-sm-5">
-                        <div style="font-size:9px; text-transform:uppercase; letter-spacing:1px; color:#9ca3af; font-weight:700; margin-bottom:6px;">Bill To</div>
+                        <div style="font-size:9px; text-transform:uppercase; letter-spacing:1px; color:#9ca3af; font-weight:700; margin-bottom:6px;">Bill To @if(!$invoice->client && $invoice->lead)<span style="color:#9ca3af;">(Lead)</span>@endif</div>
                         <div style="font-size:14px; font-weight:800; color:#111; margin-bottom:4px;">
-                            {{ $invoice->client->first_name }} {{ $invoice->client->last_name }}
+                            {{ $invoice->recipient_name }}
                         </div>
-                        @if($invoice->client->address)
-                            <div style="font-size:12px; color:#6b7280; margin-bottom:2px;">{{ $invoice->client->address }}</div>
+                        @if($invoice->recipient_address)
+                            <div style="font-size:12px; color:#6b7280; margin-bottom:2px;">{{ $invoice->recipient_address }}</div>
                         @endif
-                        @if($invoice->client->phone_number)
+                        @if($invoice->recipient_phone)
                             <div style="font-size:12px; color:#6b7280; margin-bottom:2px;">
-                                <i class="fa fa-phone mr-1" style="color:#d1d5db;font-size:10px;"></i>{{ $invoice->client->phone_number }}
+                                <i class="fa fa-phone mr-1" style="color:#d1d5db;font-size:10px;"></i>{{ $invoice->recipient_phone }}
                             </div>
                         @endif
-                        @if($invoice->client->email)
+                        @if($invoice->recipient_email)
                             <div style="font-size:12px; color:#6b7280;">
-                                <i class="fa fa-envelope mr-1" style="color:#d1d5db;font-size:10px;"></i>{{ $invoice->client->email }}
+                                <i class="fa fa-envelope mr-1" style="color:#d1d5db;font-size:10px;"></i>{{ $invoice->recipient_email }}
                             </div>
                         @endif
                     </div>
@@ -600,7 +600,7 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label>To</label>
-                        <input type="email" name="email" class="form-control" value="{{ $invoice->client->email }}" required>
+                        <input type="email" name="email" class="form-control" value="{{ $invoice->recipient_email }}" required>
                     </div>
                     <div class="form-group">
                         <label>CC <small class="text-muted">(comma-separated)</small></label>
@@ -612,7 +612,7 @@
                     </div>
                     <div class="form-group">
                         <label>Message</label>
-                        <textarea name="message" class="form-control" rows="6" required>Dear {{ $invoice->client->first_name }} {{ $invoice->client->last_name }},
+                        <textarea name="message" class="form-control" rows="6" required>Dear {{ $invoice->recipient_name }},
 
 Please find attached invoice {{ $invoice->document_number }} for {{ $invoice->currency_code }} {{ number_format($invoice->total_amount, 2) }}.
 @if($invoice->due_date)
@@ -693,7 +693,7 @@ Best regards</textarea>
                 <div class="modal-body">
                     <div class="form-group">
                         <label>To</label>
-                        <input type="email" name="email" class="form-control" value="{{ $invoice->client->email }}" required>
+                        <input type="email" name="email" class="form-control" value="{{ $invoice->recipient_email }}" required>
                     </div>
                     <div class="form-group">
                         <label>CC <small class="text-muted">(comma-separated)</small></label>
@@ -715,7 +715,7 @@ Best regards</textarea>
                     </div>
                     <div class="form-group">
                         <label>Message</label>
-                        <textarea name="message" class="form-control" rows="6" id="reminderMessage" required>Dear {{ $invoice->client->first_name }} {{ $invoice->client->last_name }},
+                        <textarea name="message" class="form-control" rows="6" id="reminderMessage" required>Dear {{ $invoice->recipient_name }},
 
 This is a friendly reminder regarding your outstanding invoice payment.
 
@@ -794,7 +794,7 @@ Best regards,
                 </div>
                 <div class="form-group">
                     <label>Phone Number</label>
-                    <input type="text" id="whatsappPhone" class="form-control" value="{{ $invoice->client->phone_number }}">
+                    <input type="text" id="whatsappPhone" class="form-control" value="{{ $invoice->recipient_phone }}">
                     <small class="text-muted">Country code + number (no +, spaces or dashes)</small>
                 </div>
                 <div class="form-group">
@@ -803,7 +803,7 @@ Best regards,
                         $shareToken   = \App\Http\Controllers\Billing\InvoiceController::generateShareToken($invoice);
                         $publicPdfUrl = route('invoice.public', ['token' => $shareToken]);
                     @endphp
-                    <textarea id="whatsappMessage" class="form-control" rows="8">Hello {{ $invoice->client->first_name }} {{ $invoice->client->last_name }},
+                    <textarea id="whatsappMessage" class="form-control" rows="8">Hello {{ $invoice->recipient_name }},
 
 Please find your invoice details below:
 
