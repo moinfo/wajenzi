@@ -9,7 +9,11 @@ class PayrollAdvanceSalary extends Model
 {
     use HasFactory;
 
-    public $fillable = ['staff_id','payroll_id','amount'];
+    public $fillable = ['staff_id','payroll_id','advance_salary_id','amount'];
+
+    public function advanceSalary(){
+        return $this->belongsTo(AdvanceSalary::class);
+    }
 
     public function staff(){
         return $this->belongsTo(User::class);

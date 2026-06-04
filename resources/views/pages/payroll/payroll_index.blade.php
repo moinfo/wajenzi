@@ -211,7 +211,7 @@
                                     $month = date('m');
                                     $staff_id = $staff->id;
                                     $basic_salary = \App\Models\Staff::getStaffSalary($staff_id);
-                                    $advance_salary = \App\Models\Staff::getStaffAdvanceSalary($staff_id,$start_date,$end_date);
+                                    $advance_salary = \App\Models\Staff::getStaffAdvanceSalaryInstallment($staff_id,date('Y'),$month)['total'];
                                     //$advance_salary = \App\Models\Staff::getStaffAdvanceSalary($staff_id,$start_date,$end_date);
                                     $allowance = \App\Models\Staff::getStaffAllowance($staff_id,$month);
                                     //$gross_pay = $basic_salary + $allowance;

@@ -585,7 +585,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/sales_daily_report/create', [App\Http\Controllers\SalesDailyReportController::class, 'create'])->name('sales_daily_report.create');
     Route::match(['get', 'post'], '/sales_daily_report/edit/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'edit'])->name('sales_daily_report.edit');
     Route::match(['get', 'post'], '/sales_daily_report/show/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'show'])->name('sales_daily_report.show');
-    Route::match(['get', 'post'], '/sales_daily_report/{id}/{document_type_id}', [App\Http\Controllers\SalesDailyReportController::class, 'show'])->name('sales_daily_report');
+    Route::match(['get', 'post'], '/sales_daily_report/{id}/{document_type_id}', [App\Http\Controllers\SalesDailyReportController::class, 'show'])->name('sales_daily_report')->where(['id' => '[0-9]+', 'document_type_id' => '[0-9]+']);
     Route::match(['get', 'post'], '/site_daily_report/{id}/{document_type_id}', [App\Http\Controllers\SiteDailyReportController::class, 'show'])->name('site_daily_report');
     Route::post('/sales_daily_report/store', [App\Http\Controllers\SalesDailyReportController::class, 'store'])->name('sales_daily_report.store');
     Route::post('/sales_daily_report/update/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'update'])->name('sales_daily_report.update');

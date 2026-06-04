@@ -132,6 +132,7 @@ class EmployeeProfileController extends Controller
                 $nssf = Staff::getStaffDeductionPaid($staffId, $pid, 2, 'employee_deduction_amount');
                 $paye = Staff::getStaffDeductionPaid($staffId, $pid, 1, 'employee_deduction_amount');
                 $advance = Staff::getStaffAdvanceSalaryPaid($staffId, $pid);
+                $advanceBalance = Staff::getStaffAdvanceSalaryBalance($staffId, $pid);
                 $loan = Staff::getStaffLoanPaid($staffId, $pid);
                 $loanDeduction = Staff::getStaffLoanDeductionPaid($staffId, $pid);
                 $loanBalance = Staff::getStaffLoanBalancePaid($staffId, $pid);
@@ -148,6 +149,7 @@ class EmployeeProfileController extends Controller
                     'nssf' => (float) $nssf,
                     'paye' => (float) $paye,
                     'advance' => (float) $advance,
+                    'advance_balance' => (float) $advanceBalance,
                     'loan' => (float) $loan,
                     'loan_deduction' => (float) $loanDeduction,
                     'loan_balance' => (float) $loanBalance,

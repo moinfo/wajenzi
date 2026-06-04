@@ -291,6 +291,84 @@ class Staff extends User
         return AdvanceSalary::Where('status', 'APPROVED')->Where('staff_id', $staff_id)->WhereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
     }
 
+    /**
+     * Advance-salary deduction due in a given payroll month for a staff member.
+     *
+     * Planned advances (monthly_deduction set) are recovered as a fixed monthly
+     * installment from their start month until the balance is cleared. Legacy
+     * advances (no plan) keep the original behaviour: the full amount is deducted
+     * in the single payroll whose month matches the advance date.
+     *
+     * @return array{total: float, breakdown: array<int, float>}
+     *         breakdown maps advance_salary_id => amount to deduct this payroll.
+     */
+    public static function getStaffAdvanceSalaryInstallment($staff_id, $year, $month)
+    {
+        $total = 0;
+        $breakdown = [];
+
+        $advances = AdvanceSalary::where('status', 'APPROVED')
+            ->where('staff_id', $staff_id)
+            ->get();
+
+        foreach ($advances as $advance) {
+            if ($advance->hasPlan()) {
+                // Fixed monthly installment, only once the plan has started.
+                if (!$advance->planStarted($year, $month)) {
+                    continue;
+                }
+                $remaining = $advance->remainingBalance();
+                if ($remaining <= 0) {
+                    continue;
+                }
+                $installment = min($advance->monthly_deduction, $remaining);
+            } else {
+                // Legacy advances: full amount in the payroll month matching the date.
+                $start_date = date("$year-$month-01");
+                $end_date = date("$year-$month-t");
+                if ($advance->date < $start_date || $advance->date > $end_date) {
+                    continue;
+                }
+                $installment = $advance->amount;
+            }
+
+            $total += $installment;
+            $breakdown[$advance->id] = $installment;
+        }
+
+        return ['total' => $total, 'breakdown' => $breakdown];
+    }
+
+    /**
+     * Outstanding advance-salary balance for a staff member as of a given payroll,
+     * i.e. the planned advance amount(s) minus everything recovered up to and
+     * including that payroll's month. Used to show the remaining balance on payslips.
+     */
+    public static function getStaffAdvanceSalaryBalance($staff_id, $payroll_id)
+    {
+        $payroll = \App\Models\Payroll::find($payroll_id);
+        if (!$payroll) {
+            return 0;
+        }
+
+        $balance = 0;
+        $advances = AdvanceSalary::where('staff_id', $staff_id)
+            ->whereIn('status', ['APPROVED', 'COMPLETED'])
+            ->whereNotNull('monthly_deduction')
+            ->get();
+
+        foreach ($advances as $advance) {
+            $recovered = PayrollAdvanceSalary::where('advance_salary_id', $advance->id)
+                ->whereHas('payroll', function ($q) use ($payroll) {
+                    $q->whereRaw('(year < ? OR (year = ? AND month <= ?))', [$payroll->year, $payroll->year, $payroll->month]);
+                })
+                ->sum('amount');
+            $balance += max(0, $advance->amount - $recovered);
+        }
+
+        return $balance;
+    }
+
     public static function getStaffAdjustment($staff_id, $start_date, $end_date)
     {
         return Adjustment::Where('staff_id', $staff_id)->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;

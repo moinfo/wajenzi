@@ -18,6 +18,42 @@ $document_id = \App\Classes\Utility::getLastId('AdvanceSalary')+1;
             <label for="example-nf-email">Amount</label>
             <input type="text" class="form-control amount" id="input-amount" name="amount" value="{{ $object->amount ?? '' }}" placeholder="Amount" required>
         </div>
+        @php $isNewAdvance = !($object->id ?? null); @endphp
+        <div class="form-group">
+            <label for="input-monthly-deduction" class="control-label {{ $isNewAdvance ? 'required' : '' }}">Monthly Deduction Amount</label>
+            <input type="number" step="0.01" min="1" class="form-control" id="input-monthly-deduction" name="monthly_deduction"
+                   value="{{ old('monthly_deduction', $object->monthly_deduction ?? '') }}"
+                   placeholder="Amount to deduct each payroll" {{ $isNewAdvance ? 'required' : '' }}>
+            <small class="text-muted">How much to recover from payroll each month until the advance is fully repaid.</small>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="input-start-month" class="control-label {{ $isNewAdvance ? 'required' : '' }}">Start Month</label>
+                    <select name="start_month" id="input-start-month" class="form-control" {{ $isNewAdvance ? 'required' : '' }}>
+                        <option value="">Select Month</option>
+                        @foreach(range(1,12) as $m)
+                            <option value="{{ $m }}" {{ (old('start_month', $object->start_month ?? date('n')) == $m) ? 'selected' : '' }}>
+                                {{ date('F', mktime(0,0,0,$m,1)) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="input-start-year" class="control-label {{ $isNewAdvance ? 'required' : '' }}">Start Year</label>
+                    <select name="start_year" id="input-start-year" class="form-control" {{ $isNewAdvance ? 'required' : '' }}>
+                        <option value="">Select Year</option>
+                        @foreach(range(date('Y')-1, date('Y')+2) as $y)
+                            <option value="{{ $y }}" {{ (old('start_year', $object->start_year ?? date('Y')) == $y) ? 'selected' : '' }}>
+                                {{ $y }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+        </div>
         <div class="form-group">
             <label for="example-nf-email">Description</label>
             <textarea type="text" class="form-control" id="input-description" name="description">{{ $object->description ?? '' }}</textarea>

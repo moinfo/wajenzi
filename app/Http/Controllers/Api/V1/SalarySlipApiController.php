@@ -103,6 +103,7 @@ class SalarySlipApiController extends Controller
         $grossSalary = Staff::getStaffGrossPayPaid($staffId, $payrollId) ?? 0;
         $netSalary = Staff::getStaffNetPaid($staffId, $payrollId) ?? 0;
         $advanceSalary = Staff::getStaffAdvanceSalaryPaid($staffId, $payrollId) ?? 0;
+        $advanceSalaryBalance = Staff::getStaffAdvanceSalaryBalance($staffId, $payrollId) ?? 0;
         $loanBalance = Staff::getStaffLoanBalancePaid($staffId, $payrollId) ?? 0;
         $loanDeduction = Staff::getStaffLoanDeductionPaid($staffId, $payrollId) ?? 0;
         $currentLoan = Staff::getStaffLoanPaid($staffId, $payrollId) ?? 0;
@@ -174,6 +175,7 @@ class SalarySlipApiController extends Controller
                     'amount' => $payeeAmount,
                 ],
                 'advance_salary' => $advanceSalary,
+                'advance_salary_balance' => $advanceSalaryBalance,
                 'loan_deduction' => $loanDeduction,
                 'current_loan' => $currentLoan,
                 'loan_balance' => $loanBalance,
