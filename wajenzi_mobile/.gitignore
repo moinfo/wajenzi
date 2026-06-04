@@ -86,3 +86,5 @@ assets/local_config.json
 # Release signing - never commit these
 android/key.properties
 android/upload-keystore.jks
+.claude/
+

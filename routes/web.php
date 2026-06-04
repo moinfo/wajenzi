@@ -889,6 +889,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/stock_register/{project_id}/adjust/{inventory_id}', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'storeAdjustment'])->name('stock_register.adjust.store');
     Route::post('/stock_register/{project_id}/movements/{movement_id}/verify', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'verifyMovement'])->name('stock_register.movement.verify');
 
+// Procurement - Site Paylog (daily payments: material + labour)
+    Route::match(['get', 'post'], '/site-paylog', [App\Http\Controllers\SitePaylogController::class, 'index'])->name('site_paylog');
+    Route::post('/site-paylog/bulk/{site_id}', [App\Http\Controllers\SitePaylogController::class, 'storeBulk'])->name('site_paylog.bulk');
+    Route::get('/site-paylog/daily-report', [App\Http\Controllers\SitePaylogController::class, 'dailyReport'])->name('site_paylog.daily_report');
+    Route::get('/site-paylog/monthly-report', [App\Http\Controllers\SitePaylogController::class, 'monthlyReport'])->name('site_paylog.monthly_report');
+    Route::match(['get', 'post'], '/site-paylog/channels', [App\Http\Controllers\SitePaylogController::class, 'channels'])->name('site_paylog.channels');
+
 // Procurement Dashboard Routes
     Route::get('/procurement_dashboard', [App\Http\Controllers\ProcurementDashboardController::class, 'index'])->name('procurement_dashboard');
     Route::get('/procurement_dashboard/project/{id}', [App\Http\Controllers\ProcurementDashboardController::class, 'project'])->name('procurement_dashboard.project');
