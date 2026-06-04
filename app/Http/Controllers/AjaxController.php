@@ -225,6 +225,11 @@ class AjaxController
                     $projects = Project::with('client')->orderBy('project_name')->get();
                     $project_types = ProjectType::all();
 
+                    // Site Paylog form data (active sites + editable payment channels)
+                    $paylog_sites = \App\Models\Site::active()->orderBy('name')->get();
+                    $payment_channels = \App\Models\PaymentChannel::active()->ordered()->get();
+                    $paylog_categories = \App\Models\SitePaylog::categories();
+
                     // Procurement workflow data
                     $approved_material_requests = \App\Models\ProjectMaterialRequest::whereRaw('UPPER(status) = ?', ['APPROVED'])
                         ->with(['project', 'items.boqItem'])
