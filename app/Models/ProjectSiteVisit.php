@@ -9,9 +9,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
+use App\Models\Concerns\CascadesApprovalRecords;
 class ProjectSiteVisit extends Model implements ApprovableModel
 {
-    use HasFactory,Approvable;
+    use HasFactory,Approvable, CascadesApprovalRecords;
 
     protected $table = 'project_site_visits';
 

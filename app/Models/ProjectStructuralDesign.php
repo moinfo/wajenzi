@@ -9,10 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\Models\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
+use App\Models\Concerns\CascadesApprovalRecords;
 
 class ProjectStructuralDesign extends Model implements ApprovableModel
 {
-    use HasFactory, Approvable;
+    use HasFactory, Approvable, CascadesApprovalRecords;
 
     protected $table = 'project_structural_designs';
 

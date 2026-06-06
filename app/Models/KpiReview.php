@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\Models\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
+use App\Models\Concerns\CascadesApprovalRecords;
 
 /**
  * A performance review for one employee for one period (month/quarter/...).
@@ -21,7 +22,7 @@ use RingleSoft\LaravelProcessApproval\Traits\Approvable;
  */
 class KpiReview extends Model implements ApprovableModel
 {
-    use HasFactory, Approvable;
+    use HasFactory, Approvable, CascadesApprovalRecords;
 
     // 'status' is intentionally NOT fillable — the state machine in
     // KpiController (approve/reject/return + submit) owns transitions and writes

@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\Models\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
+use App\Models\Concerns\CascadesApprovalRecords;
 
 class ProjectBoqPlan extends Model implements ApprovableModel
 {
-    use HasFactory, Approvable;
+    use HasFactory, Approvable, CascadesApprovalRecords;
 
     protected $table = 'project_boq_plans';
 

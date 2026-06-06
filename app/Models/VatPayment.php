@@ -8,9 +8,10 @@ use Illuminate\Support\Facades\DB;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
+use App\Models\Concerns\CascadesApprovalRecords;
 class VatPayment extends Model implements ApprovableModel
 {
-    use HasFactory,Approvable;
+    use HasFactory,Approvable, CascadesApprovalRecords;
     public $fillable = ['id', 'bank_id', 'amount', 'date', 'description', 'file', 'status', 'create_by_id','document_number'];
 
     /**

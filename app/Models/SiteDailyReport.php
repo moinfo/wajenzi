@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
+use App\Models\Concerns\CascadesApprovalRecords;
 
 class SiteDailyReport extends Model implements ApprovableModel
 {
-    use HasFactory, Approvable;
+    use HasFactory, Approvable, CascadesApprovalRecords;
 
     public const STATUS_DRAFT = 'DRAFT';
     public const STATUS_PENDING = 'PENDING';

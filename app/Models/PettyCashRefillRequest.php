@@ -8,10 +8,11 @@ use Illuminate\Support\Facades\Auth;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
+use App\Models\Concerns\CascadesApprovalRecords;
 
 class PettyCashRefillRequest extends Model implements ApprovableModel
 {
-    use HasFactory, Approvable;
+    use HasFactory, Approvable, CascadesApprovalRecords;
 
     protected $table = 'petty_cash_refill_requests';
 

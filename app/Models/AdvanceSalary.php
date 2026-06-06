@@ -8,9 +8,10 @@ use Illuminate\Support\Facades\DB;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
+use App\Models\Concerns\CascadesApprovalRecords;
 class AdvanceSalary extends Model implements ApprovableModel
 {
-    use HasFactory,Approvable;
+    use HasFactory,Approvable, CascadesApprovalRecords;
     public $fillable = ['id', 'staff_id', 'amount', 'date', 'description', 'status', 'create_by_id','document_number', 'monthly_deduction', 'start_month', 'start_year'];
 
     /**

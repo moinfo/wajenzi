@@ -8,9 +8,10 @@ use Illuminate\Support\Facades\DB;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
+use App\Models\Concerns\CascadesApprovalRecords;
 class Expense extends Model implements ApprovableModel
 {
-    use HasFactory,Approvable;
+    use HasFactory,Approvable, CascadesApprovalRecords;
     public $fillable = ['id', 'project_id', 'expenses_sub_category_id', 'amount', 'description', 'date', 'file', 'status', 'document_number'];
 
 

@@ -9,9 +9,10 @@ use Illuminate\Support\Str;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
+use App\Models\Concerns\CascadesApprovalRecords;
 class Sale extends Model implements ApprovableModel
 {
-    use HasFactory,Approvable;
+    use HasFactory,Approvable, CascadesApprovalRecords;
     public $fillable = ['efd_id', 'amount', 'date', 'net', 'tax', 'turn_over', 'file', 'status', 'create_by_id', 'document_number'];
 
 

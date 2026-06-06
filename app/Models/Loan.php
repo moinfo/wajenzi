@@ -8,9 +8,10 @@ use Illuminate\Support\Facades\DB;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
+use App\Models\Concerns\CascadesApprovalRecords;
 class Loan extends Model implements ApprovableModel
 {
-    use HasFactory,Approvable;
+    use HasFactory,Approvable, CascadesApprovalRecords;
     public $fillable = ['id', 'staff_id', 'amount', 'date', 'deduction','payment_type_id','create_by_id','document_number'];
 
     /**

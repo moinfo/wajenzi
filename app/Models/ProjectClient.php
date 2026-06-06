@@ -10,11 +10,12 @@ use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
+use App\Models\Concerns\CascadesApprovalRecords;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 
 class ProjectClient extends Authenticatable implements ApprovableModel
 {
-    use HasFactory, HasApiTokens, Approvable {
+    use HasFactory, HasApiTokens, Approvable, CascadesApprovalRecords {
         Approvable::submit as protected traitSubmit;
     }
 
