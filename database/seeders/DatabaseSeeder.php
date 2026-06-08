@@ -33,6 +33,7 @@ class DatabaseSeeder extends Seeder
             LandingStatsSeeder::class,
             LandingPostersSeeder::class,
             LandingAboutSeeder::class,
+            SitePaylogMenuSeeder::class,
         ]);
     }
 }
