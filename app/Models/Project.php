@@ -248,6 +248,14 @@ class Project extends Model implements ApprovableModel
         return $this->hasMany(ProjectSiteVisit::class);
     }
 
+    /**
+     * Construction sites belonging to this project (a project can have many).
+     */
+    public function sites(): HasMany
+    {
+        return $this->hasMany(Site::class);
+    }
+
     public function projectDesigns(): HasMany
     {
         return $this->hasMany(ProjectDesign::class);

@@ -24,7 +24,9 @@ return [
      * The middlewares that will be applied to the routes pointing to the approval controller
      * 'web' is already applied by default
      */
-    'approval_controller_middlewares' => [],
+    'approval_controller_middlewares' => [
+        \App\Http\Middleware\EnsureApprovalStepRole::class,
+    ],
 
     /**
      * The name of the css library to use

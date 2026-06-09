@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Project;
 use App\Models\Site;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ class SiteController extends Controller
 
     public function index(Request $request)
     {
-        $query = Site::with(['createdBy', 'currentSupervisor']);
+        $query = Site::with(['createdBy', 'currentSupervisor', 'project']);
 
         // Apply filters
         if ($request->filled('search')) {
@@ -41,12 +42,14 @@ class SiteController extends Controller
 
     public function create()
     {
-        return view('pages.sites.create');
+        $projects = Project::orderBy('project_name')->get();
+        return view('pages.sites.create', compact('projects'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'project_id' => 'nullable|exists:projects,id',
             'name' => 'required|string|max:255|unique:sites,name',
             'location' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -86,12 +89,14 @@ class SiteController extends Controller
 
     public function edit(Site $site)
     {
-        return view('pages.sites.edit', compact('site'));
+        $projects = Project::orderBy('project_name')->get();
+        return view('pages.sites.edit', compact('site', 'projects'));
     }
 
     public function update(Request $request, Site $site)
     {
         $validated = $request->validate([
+            'project_id' => 'nullable|exists:projects,id',
             'name' => 'required|string|max:255|unique:sites,name,' . $site->id,
             'location' => 'required|string|max:255',
             'description' => 'nullable|string',

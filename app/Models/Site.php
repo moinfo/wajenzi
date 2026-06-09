@@ -10,6 +10,7 @@ class Site extends Model
     use HasFactory;
 
     protected $fillable = [
+        'project_id',
         'name',
         'location',
         'description',
@@ -29,6 +30,11 @@ class Site extends Model
     /**
      * Relationships
      */
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
+
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');

@@ -354,6 +354,10 @@ class AjaxController
                             'supervisors' => $supervisors,
                             'expenses_categories' => $expenses_categories,
                             'financial_charge_categories' => $financial_charge_categories,
+                            // Site Paylog form data
+                            'paylog_sites' => $paylog_sites,
+                            'payment_channels' => $payment_channels,
+                            'paylog_categories' => $paylog_categories,
                             // Procurement workflow data
                             'approved_material_requests' => $approved_material_requests,
                             'project_boq_items' => $project_boq_items,

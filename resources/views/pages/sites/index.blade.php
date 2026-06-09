@@ -73,6 +73,7 @@
                     <thead>
                         <tr>
                             <th>Name</th>
+                            <th>Project</th>
                             <th>Location</th>
                             <th>Status</th>
                             <th>Current Supervisor</th>
@@ -88,6 +89,13 @@
                                     <strong>{{ $site->name }}</strong>
                                     @if($site->description)
                                         <br><small class="text-muted">{{ Str::limit($site->description, 50) }}</small>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($site->project)
+                                        {{ $site->project->project_name }}
+                                    @else
+                                        <span class="text-muted">—</span>
                                     @endif
                                 </td>
                                 <td>{{ $site->location }}</td>
@@ -150,7 +158,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center">No sites found</td>
+                                <td colspan="8" class="text-center">No sites found</td>
                             </tr>
                         @endforelse
                     </tbody>

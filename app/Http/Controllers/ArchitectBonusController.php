@@ -361,6 +361,37 @@ class ArchitectBonusController extends Controller
     }
 
     /**
+     * Update a task's project budget and recompute its max_units from the tier
+     * table (admin only). Only allowed before scoring — once scored/paid/no_bonus
+     * the bonus is locked and changing the budget would invalidate it.
+     */
+    public function updateBudget(Request $request, $id)
+    {
+        if (!$this->isAdmin()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'project_budget' => 'required|numeric|min:0',
+        ]);
+
+        $task = ArchitectBonusTask::findOrFail($id);
+
+        if (in_array($task->status, ['scored', 'paid', 'no_bonus'], true)) {
+            return back()->with('error', "Cannot change the budget of a {$task->status} task — it has already been finalised.");
+        }
+
+        $maxUnits = BonusUnitTier::getMaxUnits((float) $request->project_budget);
+
+        $task->update([
+            'project_budget' => $request->project_budget,
+            'max_units'      => $maxUnits,
+        ]);
+
+        return back()->with('success', "Budget for {$task->task_number} updated to TZS " . number_format($request->project_budget) . " (max units: {$maxUnits}).");
+    }
+
+    /**
      * Monthly report (admin only).
      */
     public function report(Request $request)

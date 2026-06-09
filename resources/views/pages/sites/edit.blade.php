@@ -31,6 +31,23 @@
                 <div class="row">
                     <div class="col-lg-8">
                         <div class="form-group">
+                            <label for="project_id">Project</label>
+                            <select class="form-control @error('project_id') is-invalid @enderror"
+                                    id="project_id" name="project_id">
+                                <option value="">— No project (standalone site) —</option>
+                                @foreach($projects as $project)
+                                    <option value="{{ $project->id }}" {{ old('project_id', $site->project_id) == $project->id ? 'selected' : '' }}>
+                                        {{ $project->project_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">A project can have more than one site.</small>
+                            @error('project_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
                             <label for="name">Site Name <span class="text-danger">*</span></label>
                             <input type="text" 
                                    class="form-control @error('name') is-invalid @enderror" 

@@ -149,7 +149,20 @@
                                 <td>{{ $task->project_name }}</td>
                                 @if($isAdmin)<td>{{ $task->architect->name ?? '-' }}</td>@endif
                                 <td>{{ $task->scheduled_completion_date->format('d-M-Y') }}</td>
-                                @if($isAdmin)<td class="text-right">{{ number_format($task->project_budget) }}</td>@endif
+                                @if($isAdmin)
+                                <td class="text-right">
+                                    {{ number_format($task->project_budget) }}
+                                    @if(!in_array($task->status, ['scored', 'paid', 'no_bonus']))
+                                        <button type="button" class="btn btn-sm btn-link p-0 ml-1 edit-budget-btn"
+                                                data-id="{{ $task->id }}"
+                                                data-task="{{ $task->task_number }}"
+                                                data-budget="{{ $task->project_budget }}"
+                                                title="Edit budget">
+                                            <i class="fa fa-pencil-alt"></i>
+                                        </button>
+                                    @endif
+                                </td>
+                                @endif
                                 <td class="text-center">{{ $isAdmin ? $task->max_units : '-' }}</td>
                                 <td class="text-center">
                                     @if($task->final_units !== null)
@@ -246,4 +259,48 @@
         </div>
     </div>
 </div>
+
+@if($isAdmin)
+<!-- Edit Budget Modal -->
+<div class="modal fade" id="editBudgetModal" tabindex="-1" role="dialog" aria-labelledby="editBudgetModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form method="POST" id="editBudgetForm">
+                @csrf
+                <div class="modal-header">
+                    <h3 class="block-title" id="editBudgetModalTitle">Edit Project Budget</h3>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">Task <strong id="eb-task"></strong> — updating the budget recomputes the maximum bonus units from the tier table.</p>
+                    <div class="form-group">
+                        <label class="control-label" for="eb-budget">Project Budget (TZS)</label>
+                        <input type="number" step="0.01" min="0" class="form-control" id="eb-budget" name="project_budget" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-alt-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa fa-save mr-1"></i> Save Budget</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
+@endsection
+
+@section('js_after')
+@if($isAdmin)
+<script>
+    $(function () {
+        $('.edit-budget-btn').on('click', function () {
+            var $btn = $(this);
+            $('#eb-task').text($btn.data('task'));
+            $('#eb-budget').val($btn.data('budget'));
+            $('#editBudgetForm').attr('action', '{{ url('architect-bonus') }}/' + $btn.data('id') + '/budget');
+            $('#editBudgetModal').modal('show');
+        });
+    });
+</script>
+@endif
 @endsection

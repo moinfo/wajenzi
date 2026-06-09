@@ -27,6 +27,23 @@
             <form method="POST" action="{{ route('sites.store') }}">
                 @csrf
                 
+                <div class="form-group">
+                    <label for="project_id">Project</label>
+                    <select class="form-control @error('project_id') is-invalid @enderror"
+                            id="project_id" name="project_id">
+                        <option value="">— No project (standalone site) —</option>
+                        @foreach($projects as $project)
+                            <option value="{{ $project->id }}" {{ old('project_id') == $project->id ? 'selected' : '' }}>
+                                {{ $project->project_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <small class="text-muted">A project can have more than one site.</small>
+                    @error('project_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">

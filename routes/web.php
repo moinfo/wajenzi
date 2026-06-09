@@ -758,6 +758,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('architect-bonus/{id}/accept', [App\Http\Controllers\ArchitectBonusController::class, 'accept'])->name('architect-bonus.accept');
     Route::post('architect-bonus/{id}/start', [App\Http\Controllers\ArchitectBonusController::class, 'start'])->name('architect-bonus.start');
     Route::post('architect-bonus/{id}/paid', [App\Http\Controllers\ArchitectBonusController::class, 'markPaid'])->name('architect-bonus.paid');
+    Route::post('architect-bonus/{id}/budget', [App\Http\Controllers\ArchitectBonusController::class, 'updateBudget'])->name('architect-bonus.budget.update');
     Route::post('architect-bonus/max-units', [App\Http\Controllers\ArchitectBonusController::class, 'getMaxUnits'])->name('architect-bonus.max-units');
     Route::delete('architect-bonus/{id}', [App\Http\Controllers\ArchitectBonusController::class, 'destroy'])->name('architect-bonus.destroy');
 

@@ -166,7 +166,7 @@ class LeadController extends Controller
             'leadFollowups',
             'quotations',
             'proformas',
-            'invoices'
+            'invoices.creator'
         ])->findOrFail($id);
 
         $data = [

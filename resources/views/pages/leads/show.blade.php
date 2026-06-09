@@ -1056,11 +1056,13 @@
                                 <div class="card-body p-3">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>
-                                            <a href="{{ route('billing.invoices.show', $doc) }}" class="font-weight-bold">
+                                            <a href="{{ route('billing.invoices.show', $doc) }}" class="font-weight-bold stretched-link" title="View invoice {{ $doc->document_number }}">
                                                 {{ $doc->document_number }}
                                             </a>
                                             <br>
                                             <small class="text-muted">{{ $doc->issue_date?->format('d M Y') }}</small>
+                                            <br>
+                                            <small class="text-muted"><i class="fa fa-user mr-1"></i>{{ $doc->creator->name ?? 'Unknown' }}</small>
                                         </div>
                                         <div class="text-right">
                                             <span class="badge badge-{{ $paymentBadge }}">{{ $paymentText }}</span>
