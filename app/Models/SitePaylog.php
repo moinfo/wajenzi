@@ -22,6 +22,7 @@ class SitePaylog extends Model
 
     protected $fillable = [
         'site_id',
+        'site_payment_request_id',
         'project_id',
         'payment_date',
         'category',
@@ -45,6 +46,11 @@ class SitePaylog extends Model
     public function site()
     {
         return $this->belongsTo(Site::class);
+    }
+
+    public function request()
+    {
+        return $this->belongsTo(SitePaymentRequest::class, 'site_payment_request_id');
     }
 
     public function project()

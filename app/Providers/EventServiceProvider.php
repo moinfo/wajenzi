@@ -8,6 +8,7 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use Illuminate\Support\Facades\Event;
 use App\Listeners\ApprovalNotificationListener;
 use App\Listeners\ApprovalOutcomeListener;
+use App\Listeners\NotifyFinanceOnSitePaymentApproval;
 use RingleSoft\LaravelProcessApproval\Events\ApprovalNotificationEvent;
 use RingleSoft\LaravelProcessApproval\Events\ProcessSubmittedEvent;
 use RingleSoft\LaravelProcessApproval\Events\ProcessApprovedEvent;
@@ -43,6 +44,9 @@ class EventServiceProvider extends ServiceProvider
         // Events for notifying the document creator/submitter of their request's outcome
         ProcessApprovalCompletedEvent::class => [
             ApprovalOutcomeListener::class . '@handleCompleted',
+            // Site Payment Requests: Finance isn't a RingleSoft step, so ping the
+            // users who can process the (now approved) payment.
+            NotifyFinanceOnSitePaymentApproval::class,
         ],
         ProcessRejectedEvent::class => [
             ApprovalOutcomeListener::class . '@handleRejected',

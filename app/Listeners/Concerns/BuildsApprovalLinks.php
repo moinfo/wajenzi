@@ -68,6 +68,7 @@ trait BuildsApprovalLinks
             case 'QuotationComparison':    return "quotation_comparison/{$documentId}/{$documentTypeId}";
             case 'MaterialInspection':     return "material_inspection/{$documentId}/{$documentTypeId}";
             case 'MaterialTransfer':       return "material_transfer/{$documentId}/{$documentTypeId}";
+            case 'SitePaymentRequest':     return "site-paylog/requests/{$documentId}";
 
             // Labor
             case 'LaborRequest':           return "labor/requests/{$documentId}/{$documentTypeId}";

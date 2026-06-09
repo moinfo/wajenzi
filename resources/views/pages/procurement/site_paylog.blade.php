@@ -6,6 +6,9 @@
         <div class="content-heading">
             Site Paylog — Daily Payments
             <div class="float-right">
+                <a href="{{ route('site_paylog.requests', request()->only('site_id')) }}" class="btn btn-rounded btn-outline-dark min-width-100 mb-10">
+                    <i class="si si-list"></i> All Requests
+                </a>
                 <a href="{{ route('site_paylog.daily_report', request()->only('site_id', 'date')) }}" class="btn btn-rounded btn-outline-info min-width-100 mb-10">
                     <i class="si si-doc"></i> Daily Report
                 </a>
@@ -18,7 +21,7 @@
             </div>
         </div>
 
-        {{-- Step 1 + 2: Select Site / View site --}}
+        {{-- Select Site / Date --}}
         <div class="block">
             <div class="block-content">
                 <form method="GET" action="{{ route('site_paylog') }}" class="row mb-2">
@@ -44,9 +47,9 @@
                     @if($siteId)
                     <div class="col-md-4 text-right">
                         <button type="button"
-                            onclick="loadFormModal('site_paylog_form', {className: 'SitePaylog', site_id: '{{ $siteId }}', date: '{{ $date }}'}, 'Record Site Payments', 'modal-xl');"
+                            onclick="loadFormModal('site_paylog_form', {className: 'SitePaymentRequest', site_id: '{{ $siteId }}', date: '{{ $date }}'}, 'New Payment Request', 'modal-xl');"
                             class="btn btn-rounded btn-success min-width-125">
-                            <i class="si si-plus"></i> Add Payments
+                            <i class="si si-plus"></i> New Payment Request
                         </button>
                     </div>
                     @endif
@@ -64,7 +67,7 @@
         </div>
 
         @if($siteId)
-        {{-- Step 5: Pull daily payments --}}
+        {{-- Daily totals across the day's requests --}}
         <div class="row">
             <div class="col-md-4">
                 <div class="block block-rounded text-center">
@@ -94,7 +97,7 @@
 
         <div class="block">
             <div class="block-header block-header-default">
-                <h3 class="block-title">Payments on {{ \Carbon\Carbon::parse($date)->format('d M Y') }}</h3>
+                <h3 class="block-title">Payment Requests — {{ \Carbon\Carbon::parse($date)->format('d M Y') }}</h3>
             </div>
             <div class="block-content">
                 <div class="table-responsive">
@@ -102,40 +105,45 @@
                         <thead>
                             <tr>
                                 <th style="width:40px;">#</th>
-                                <th>Payee</th>
-                                <th>Reason</th>
-                                <th>Category</th>
-                                <th>Bank/Mobile</th>
-                                <th>Account Name</th>
-                                <th class="text-right">Amount</th>
-                                <th>Logged By</th>
-                                <th style="width:50px;"></th>
+                                <th>Request No</th>
+                                <th class="text-center">Lines</th>
+                                <th class="text-right">Material</th>
+                                <th class="text-right">Labour</th>
+                                <th class="text-right">Total</th>
+                                <th>Status</th>
+                                <th>Initiated By</th>
+                                <th style="width:120px;"></th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($payments as $i => $p)
+                            @forelse($requests as $i => $req)
+                                @php
+                                    $material = $req->lines->where('category', 'material')->sum('amount');
+                                    $labour   = $req->lines->where('category', 'labour')->sum('amount');
+                                    $canDelete = $req->created_by === auth()->id() && !$req->isApprovalStarted() && !$req->isFullyApproved();
+                                @endphp
                                 <tr>
                                     <td>{{ $i + 1 }}</td>
-                                    <td>{{ $p->payee_name }}</td>
-                                    <td>{{ $p->reason }}</td>
-                                    <td>
-                                        <span class="badge badge-{{ $p->category === 'labour' ? 'info' : 'secondary' }}">{{ ucfirst($p->category) }}</span>
-                                    </td>
-                                    <td>{{ $p->channel->name ?? '—' }}</td>
-                                    <td>{{ $p->account_name ?? '—' }}</td>
-                                    <td class="text-right">{{ number_format((float)$p->amount) }}</td>
-                                    <td>{{ $p->creator->name ?? '—' }}</td>
+                                    <td><a href="{{ route('site_paylog.requests.show', $req->id) }}"><strong>{{ $req->request_number }}</strong></a></td>
+                                    <td class="text-center">{{ $req->lines->count() }}</td>
+                                    <td class="text-right">{{ number_format((float)$material) }}</td>
+                                    <td class="text-right">{{ number_format((float)$labour) }}</td>
+                                    <td class="text-right">{{ number_format((float)$req->total_amount) }}</td>
+                                    <td><span class="badge badge-{{ $req->statusBadgeClass() }}">{{ $req->displayStatus() }}</span></td>
+                                    <td>{{ $req->creator->name ?? '—' }}</td>
                                     <td class="text-center">
-                                        <form method="POST" action="{{ route('site_paylog') }}" onsubmit="return confirm('Delete this payment?');" class="d-inline">
+                                        <a href="{{ route('site_paylog.requests.show', $req->id) }}" class="btn btn-sm btn-outline-primary" title="View / Approve"><i class="fa fa-eye"></i></a>
+                                        @if($canDelete)
+                                        <form method="POST" action="{{ route('site_paylog.requests.destroy', $req->id) }}" onsubmit="return confirm('Delete this payment request?');" class="d-inline">
                                             @csrf
                                             @method('DELETE')
-                                            <input type="hidden" name="id" value="{{ $p->id }}">
-                                            <button type="submit" name="deleteItem" value="1" class="btn btn-sm btn-outline-danger"><i class="fa fa-trash"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fa fa-trash"></i></button>
                                         </form>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="9" class="text-center text-muted py-4">No payments logged for this site on this date.</td></tr>
+                                <tr><td colspan="9" class="text-center text-muted py-4">No payment requests for this site on this date.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

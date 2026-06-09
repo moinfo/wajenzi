@@ -130,6 +130,17 @@ class Controller extends BaseController
         return false;
     }
 
+    private function crudDelete(Request $request, $class_name) {
+        $full_class_name = '\App\Models\\'. $class_name;
+        $obj = $full_class_name::find($request->input('id'));
+
+        if (!$obj) {
+            return false;
+        }
+
+        return (bool) $obj->delete();
+    }
+
     private function crudAdd(Request $request, $class_name) {
         if($request->hasFile('file')) {
             $full_class_name = '\App\Models\\'. $class_name;

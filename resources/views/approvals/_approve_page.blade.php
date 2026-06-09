@@ -245,6 +245,133 @@
             </div>
             @endif
 
+            {{-- Site Payment Request: line items + supporting docs + payment --}}
+            @if(isset($model) && $model === 'SitePaymentRequest')
+            <div class="details-card" style="margin-bottom: 25px;">
+                <div class="card-header" style="background-color: #f8f9fa; padding: 15px 25px; border-bottom: 1px solid #e9ecef;">
+                    <h3 style="margin: 0; color: #0066cc; font-weight: 600; font-size: 18px;">
+                        <i class="fa fa-money"></i> Payment Lines
+                    </h3>
+                </div>
+                <div class="card-body" style="padding: 25px;">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped table-vcenter">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px;">#</th>
+                                    <th>Payee</th>
+                                    <th>Reason</th>
+                                    <th>Category</th>
+                                    <th>Bank/Mobile</th>
+                                    <th>Account Name</th>
+                                    <th class="text-right">Amount (TZS)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($approval_data->lines as $line)
+                                    <tr>
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $line->payee_name }}</td>
+                                        <td>{{ $line->reason }}</td>
+                                        <td><span class="badge badge-{{ $line->category === 'labour' ? 'info' : 'secondary' }}">{{ ucfirst($line->category) }}</span></td>
+                                        <td>{{ $line->channel->name ?? '—' }}</td>
+                                        <td>{{ $line->account_name ?? '—' }}</td>
+                                        <td class="text-right">{{ number_format((float)$line->amount) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-success">
+                                    <th colspan="6" class="text-right">TOTAL</th>
+                                    <th class="text-right">{{ number_format((float)$approval_data->total_amount) }}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    @if($approval_data->files->count())
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef;">
+                            <h5 style="color: #0066cc; font-weight: 600; margin-bottom: 8px;">
+                                <i class="fas fa-paperclip me-1"></i> Supporting Documents
+                            </h5>
+                            @foreach($approval_data->files as $file)
+                                <a href="{{ url($file->file_path) }}" target="_blank" class="btn btn-sm btn-outline-info mb-1">
+                                    <i class="fa fa-file"></i> {{ $file->original_name ?? 'Document' }}
+                                </a>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            {{-- Finance: record / view payment (only once fully approved) --}}
+            @if($approval_data->isFullyApproved())
+            <div class="details-card" style="margin-bottom: 25px;">
+                <div class="card-header" style="background-color: {{ $approval_data->isPaid() ? '#e8f5e9' : '#f8f9fa' }}; padding: 15px 25px; border-bottom: 1px solid #e9ecef;">
+                    <h3 style="margin: 0; color: #0066cc; font-weight: 600; font-size: 18px;">
+                        <i class="fa fa-university"></i> Payment Status
+                        @if($approval_data->isPaid())
+                            <span class="badge badge-success ml-2">PAID</span>
+                        @else
+                            <span class="badge badge-warning ml-2">PENDING PAYMENT</span>
+                        @endif
+                    </h3>
+                </div>
+                <div class="card-body" style="padding: 25px;">
+                    @if($approval_data->isPaid())
+                        <div class="row">
+                            <div class="col-md-3"><strong>Payment Date</strong><br>{{ optional($approval_data->paid_date)->format('d M Y') ?? '-' }}</div>
+                            <div class="col-md-3"><strong>Reference</strong><br>{{ $approval_data->payment_reference ?? '-' }}</div>
+                            <div class="col-md-3"><strong>Paid By</strong><br>{{ $approval_data->payer->name ?? '-' }}</div>
+                            <div class="col-md-3">
+                                <strong>Payment Slip</strong><br>
+                                @if($approval_data->payment_slip)
+                                    <a href="{{ url($approval_data->payment_slip) }}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa fa-paperclip"></i> View</a>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </div>
+                        </div>
+                        @if($approval_data->payment_note)
+                            <div class="mt-3 p-2" style="background:#f9f9f9; border-left:3px solid #4caf50; border-radius:4px;">
+                                <strong>Note:</strong> {{ $approval_data->payment_note }}
+                            </div>
+                        @endif
+                    @else
+                        @can('Process Site Payment')
+                        <form method="post" action="{{ route('site_paylog.requests.pay', $approval_data->id) }}" enctype="multipart/form-data">
+                            @csrf
+                            <div class="row">
+                                <div class="col-md-4 form-group">
+                                    <label class="control-label required">Payment Reference</label>
+                                    <input type="text" name="payment_reference" class="form-control" placeholder="Bank / mobile transaction ref" required>
+                                </div>
+                                <div class="col-md-3 form-group">
+                                    <label class="control-label required">Payment Date</label>
+                                    <input type="date" name="payment_date" class="form-control" value="{{ date('Y-m-d') }}" required>
+                                </div>
+                                <div class="col-md-5 form-group">
+                                    <label class="control-label">Payment Slip <small class="text-muted">(optional)</small></label>
+                                    <input type="file" name="payment_slip" class="form-control" accept=".png,.jpg,.jpeg,.pdf">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Note <small class="text-muted">(optional)</small></label>
+                                <textarea name="payment_note" rows="2" class="form-control" placeholder="Any payment remarks"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success" onclick="return confirm('Confirm this payment has been issued?');">
+                                <i class="fa fa-check"></i> Record Payment &amp; Close
+                            </button>
+                        </form>
+                        @else
+                        <p class="text-muted text-center py-3 mb-0">Approved — awaiting Finance to record the payment.</p>
+                        @endcan
+                    @endif
+                </div>
+            </div>
+            @endif
+            @endif
+
             {{-- Quotation Comparison Items --}}
             @if(isset($quotations) && $quotations->count())
             <div class="details-card" style="margin-bottom: 25px;">

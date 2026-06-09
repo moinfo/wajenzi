@@ -7,7 +7,7 @@
     $categories = $paylog_categories ?? ['material' => 'Material', 'labour' => 'Labour'];
 @endphp
 <div class="block-content">
-    <form method="post" action="{{ route('site_paylog.bulk', ['site_id' => $selected_site_id ?? 0]) }}" id="paylog-form">
+    <form method="post" action="{{ route('site_paylog.bulk', ['site_id' => $selected_site_id ?? 0]) }}" id="paylog-form" enctype="multipart/form-data">
         @csrf
 
         {{-- ── Header: site + date + optional project ──────────────────────── --}}
@@ -99,9 +99,21 @@
             </button>
         </div>
 
+        {{-- ── Supporting documents (invoices, delivery notes, contracts) ───── --}}
+        <div class="form-group">
+            <label class="control-label">Supporting Documents <small class="text-muted">(optional — invoices, delivery notes, contracts)</small></label>
+            <input type="file" name="documents[]" class="form-control" multiple
+                   accept=".png,.jpg,.jpeg,.pdf,.doc,.docx,.xls,.xlsx">
+        </div>
+
+        <div class="alert alert-info py-2" style="font-size:13px;">
+            <i class="si si-info"></i> On submit this becomes a <strong>Payment Request</strong> routed for approval:
+            Procurement (verify) → Managing Director (approve) → Finance (payment).
+        </div>
+
         <div class="form-group">
             <button type="submit" class="btn btn-alt-primary col">
-                <i class="si si-check"></i> Save &amp; Submit
+                <i class="si si-check"></i> Submit Payment Request
             </button>
         </div>
     </form>

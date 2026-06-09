@@ -896,6 +896,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/site-paylog/daily-report', [App\Http\Controllers\SitePaylogController::class, 'dailyReport'])->name('site_paylog.daily_report');
     Route::get('/site-paylog/monthly-report', [App\Http\Controllers\SitePaylogController::class, 'monthlyReport'])->name('site_paylog.monthly_report');
     Route::match(['get', 'post'], '/site-paylog/channels', [App\Http\Controllers\SitePaylogController::class, 'channels'])->name('site_paylog.channels');
+    // Payment Requests (approval workflow: Supervisor -> Procurement -> MD -> Finance)
+    Route::get('/site-paylog/requests', [App\Http\Controllers\SitePaylogController::class, 'requests'])->name('site_paylog.requests');
+    Route::get('/site-paylog/requests/{id}', [App\Http\Controllers\SitePaylogController::class, 'showRequest'])->name('site_paylog.requests.show');
+    Route::post('/site-paylog/requests/{id}/payment', [App\Http\Controllers\SitePaylogController::class, 'recordPayment'])->name('site_paylog.requests.pay');
+    Route::delete('/site-paylog/requests/{id}', [App\Http\Controllers\SitePaylogController::class, 'destroyRequest'])->name('site_paylog.requests.destroy');
 
 // Procurement Dashboard Routes
     Route::get('/procurement_dashboard', [App\Http\Controllers\ProcurementDashboardController::class, 'index'])->name('procurement_dashboard');
