@@ -26,6 +26,9 @@ return new class extends Migration
                 'permission_id' => $perm->id,
             ]);
         }
+
+        // Direct DB writes bypass Spatie's cache; flush so the change takes effect.
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
     public function down(): void
@@ -39,5 +42,7 @@ return new class extends Migration
                 ->where('role_id', $role->id)
                 ->delete();
         }
+
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
     }
 };
