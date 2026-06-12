@@ -86,6 +86,11 @@ class SalesLeadFollowup extends Model
      */
     public function getGoogleCalendarUrl(): string
     {
+        // No scheduled date means there is nothing to put on a calendar.
+        if (!$this->followup_date) {
+            return '#';
+        }
+
         $title = 'Follow-up: ' . ($this->lead->name ?? $this->lead_name ?? 'Lead');
 
         // Use followup_date, default to 9 AM - 10 AM

@@ -54,6 +54,11 @@ class SalesDailyReportController extends Controller
     {
         $query = SalesDailyReport::query();
 
+        // A user only sees their own reports unless they may view all.
+        if (!Auth::user()->can('View All Daily Reports')) {
+            $query->where('prepared_by', Auth::id());
+        }
+
         if ($request->start_date) {
             try {
                 $startDate = \Carbon\Carbon::createFromFormat('d/m/Y', $request->start_date)->format('Y-m-d');
@@ -271,6 +276,16 @@ class SalesDailyReportController extends Controller
         }
     }
 
+    /**
+     * Ensure the current user owns the report or may view all reports.
+     */
+    private function authorizeReportAccess(SalesDailyReport $report): void
+    {
+        if (!Auth::user()->can('View All Daily Reports') && $report->prepared_by != Auth::id()) {
+            abort(403, 'You do not have permission to access this report.');
+        }
+    }
+
     public function show($id)
     {
         $report = SalesDailyReport::with([
@@ -283,6 +298,8 @@ class SalesDailyReportController extends Controller
             'customerAcquisitionCost',
             'clientConcerns.client'
         ])->findOrFail($id);
+
+        $this->authorizeReportAccess($report);
 
         $data = [
             'report' => $report
@@ -299,6 +316,8 @@ class SalesDailyReportController extends Controller
             'customerAcquisitionCost',
             'clientConcerns'
         ])->findOrFail($id);
+
+        $this->authorizeReportAccess($report);
 
         if (!$report->canEdit()) {
             return back()->with('error', 'Cannot edit report in current status.');
@@ -319,6 +338,8 @@ class SalesDailyReportController extends Controller
     public function update(Request $request, $id)
     {
         $report = SalesDailyReport::findOrFail($id);
+
+        $this->authorizeReportAccess($report);
 
         if (!$report->canEdit()) {
             return back()->with('error', 'Cannot edit report in current status.');

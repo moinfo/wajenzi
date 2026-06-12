@@ -147,6 +147,7 @@
                         </select>
                     </div>
                 </div>
+                @can('View All Daily Reports')
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>Prepared By</label>
@@ -160,6 +161,7 @@
                         </select>
                     </div>
                 </div>
+                @endcan
                 <div class="col-12">
                     <button type="submit" class="btn btn-primary">Filter</button>
                     <a href="{{ route('sales_daily_reports') }}" class="btn btn-secondary">Clear</a>

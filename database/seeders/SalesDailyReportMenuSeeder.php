@@ -18,6 +18,19 @@ class SalesDailyReportMenuSeeder extends Seeder
         // Create permission first
         Permission::firstOrCreate(['name' => 'Sales Daily Report']);
 
+        // Permission to view every user's reports; without it a user sees only their own.
+        $viewAll = Permission::firstOrCreate(['name' => 'View All Daily Reports', 'guard_name' => 'web']);
+
+        foreach (['System Administrator', 'Managing Director'] as $roleName) {
+            $role = DB::table('roles')->where('name', $roleName)->first();
+            if ($role) {
+                DB::table('role_has_permissions')->insertOrIgnore([
+                    'permission_id' => $viewAll->id,
+                    'role_id' => $role->id,
+                ]);
+            }
+        }
+
         // Find the Projects parent menu
         $projectsMenu = DB::table('menus')->where('name', 'Projects')->whereNull('parent_id')->first();
         

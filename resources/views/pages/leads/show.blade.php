@@ -1247,9 +1247,11 @@
                                                 <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#attendModal{{ $followup->id }}">
                                                     <i class="fa fa-check-circle"></i> Attend
                                                 </button>
+                                                @if($followup->followup_date)
                                                 <a href="{{ $followup->google_calendar_link }}" target="_blank" class="btn btn-sm btn-info" title="Add to Google Calendar">
                                                     <i class="fa-solid fa-calendar-plus"></i>
                                                 </a>
+                                                @endif
                                             </div>
                                         @else
                                             <span class="text-muted">-</span>

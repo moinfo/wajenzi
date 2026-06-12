@@ -405,11 +405,11 @@
                         <table class="table table-sm table-hover activity-table mb-0">
                             <thead>
                                 <tr>
-                                    @if(auth()->user()->hasAnyRole(['Managing Director', 'CEO', 'Chief Executive Officer', 'System Administrator']))
+                                    @can('Assign Project Activities')
                                     <th width="3%" class="text-center">
                                         <input type="checkbox" class="select-all-activities" title="Select all in this phase">
                                     </th>
-                                    @endif
+                                    @endcan
                                     <th width="6%">Code</th>
                                     <th width="15%">Activity</th>
                                     <th width="9%">Discipline</th>
@@ -419,18 +419,18 @@
                                     <th width="7%">End</th>
                                     <th width="6%">Days</th>
                                     <th width="9%">Status</th>
-                                    <th width="@if(auth()->user()->hasAnyRole(['Managing Director', 'CEO', 'Chief Executive Officer', 'System Administrator']))16%@else19%@endif">Actions</th>
+                                    <th width="@can('Assign Project Activities')16%@else19%@endcan">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($activities as $activity)
                                     <tr class="{{ $activity->isOverdue() ? 'table-danger' : '' }}">
-                                        @if(auth()->user()->hasAnyRole(['Managing Director', 'CEO', 'Chief Executive Officer', 'System Administrator']))
+                                        @can('Assign Project Activities')
                                         <td class="text-center">
                                             <input type="checkbox" class="activity-checkbox" value="{{ $activity->id }}"
                                                    data-name="{{ $activity->activity_code }}: {{ $activity->name }}">
                                         </td>
-                                        @endif
+                                        @endcan
                                         <td><span class="act-code">{{ $activity->activity_code }}</span></td>
                                         <td>
                                             <div class="act-name">{{ $activity->name }}</div>
