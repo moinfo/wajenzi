@@ -36,6 +36,8 @@ class ProjectSiteVisit extends Model
         'visit_date',
         'status',
         'location',
+        'site_visit_location_id',
+        'visit_days',
         'description',
         'phone_number',
         'findings',
@@ -101,6 +103,22 @@ class ProjectSiteVisit extends Model
     }
 
     /**
+     * Next unique invoice number, e.g. SV-INV-2026-0001.
+     */
+    public static function generateInvoiceNumber(): string
+    {
+        $prefix = 'SV-INV-' . date('Y') . '-';
+
+        $last = static::where('invoice_number', 'like', "{$prefix}%")
+            ->orderBy('invoice_number', 'desc')
+            ->first();
+
+        $next = $last ? ((int) substr($last->invoice_number, -4)) + 1 : 1;
+
+        return $prefix . str_pad((string) $next, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
      * Human label for the current stage.
      */
     public function stageLabel(): string
@@ -147,6 +165,25 @@ class ProjectSiteVisit extends Model
     public function isTerminal(): bool
     {
         return in_array($this->stage, ['completed', 'cancelled'], true);
+    }
+
+    /**
+     * Suggested cost derived from the linked Site Visit Calculator location:
+     * base_cost + (travel + local + allowance + food + accommodation) × visit_days.
+     * Returns null when no location is linked.
+     */
+    public function estimatedCost(): ?float
+    {
+        $loc = $this->siteVisitLocation;
+        if (!$loc) {
+            return null;
+        }
+
+        $perDay = (float) $loc->preset_travel_tzs + (float) $loc->preset_local_tzs
+            + (float) $loc->preset_allowance_tzs + (float) $loc->preset_food_tzs
+            + (float) $loc->preset_accommodation_tzs;
+
+        return (float) $loc->base_cost_tzs + $perDay * max(1, (int) $this->visit_days);
     }
 
     // Relationships
@@ -208,5 +245,10 @@ class ProjectSiteVisit extends Model
     public function scheduleActivity(): BelongsTo
     {
         return $this->belongsTo(ProjectScheduleActivity::class, 'schedule_activity_id');
+    }
+
+    public function siteVisitLocation(): BelongsTo
+    {
+        return $this->belongsTo(SiteVisitLocation::class, 'site_visit_location_id');
     }
 }

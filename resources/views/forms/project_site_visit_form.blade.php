@@ -56,6 +56,25 @@ $formAction = $isEdit
                     <input type="text" class="form-control" id="input-location" required="required" name="location" value="{{ $object->location ?? '' }}" placeholder="Site Visit location">
                 </div>
             </div>
+            <div class="col-sm-8">
+                <div class="form-group">
+                    <label for="site_visit_location_id" class="control-label">Calculator Location <small class="text-muted">(drives the billing estimate)</small></label>
+                    <select name="site_visit_location_id" id="input-site_visit_location_id" class="form-control">
+                        <option value="">— None —</option>
+                        @foreach (($site_visit_locations ?? []) as $loc)
+                            <option value="{{ $loc->id }}" {{ ($loc->id == ($object->site_visit_location_id ?? null)) ? 'selected' : '' }}>
+                                {{ $loc->name }} ({{ number_format((float) $loc->base_cost_tzs) }} TZS base)
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="form-group">
+                    <label for="visit_days" class="control-label">Days</label>
+                    <input type="number" min="1" max="365" class="form-control" id="input-visit_days" name="visit_days" value="{{ $object->visit_days ?? 1 }}">
+                </div>
+            </div>
             <div class="col-sm-12">
                 <div class="form-group">
                     <label for="description" class="control-label required">Description</label>

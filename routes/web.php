@@ -547,6 +547,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project_site_visit/store', [App\Http\Controllers\ProjectSiteVisitController::class, 'store'])->name('project_site_visit.store');
     Route::post('/project_site_visit/update/{id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'update'])->name('project_site_visit.update');
     Route::get('/project_site_visit/{id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'show'])->name('project_site_visit.show');
+    Route::get('/project_site_visit/{id}/invoice-pdf', [App\Http\Controllers\ProjectSiteVisitController::class, 'invoicePdf'])->name('project_site_visit.invoice_pdf');
     // Stage transitions
     Route::post('/project_site_visit/{id}/invoice', [App\Http\Controllers\ProjectSiteVisitController::class, 'enterInvoice'])->name('project_site_visit.invoice');
     Route::post('/project_site_visit/{id}/confirm-payment', [App\Http\Controllers\ProjectSiteVisitController::class, 'confirmPayment'])->name('project_site_visit.confirm_payment');

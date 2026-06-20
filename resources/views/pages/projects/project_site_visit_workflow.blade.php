@@ -97,25 +97,62 @@
                     <div class="block">
                         <div class="block-header block-header-default"><h3 class="block-title">Details</h3></div>
                         <div class="block-content">
+                            @php
+                                $hasWorkflowHistory = $visit->invoice_number || $visit->payment_confirmed_at
+                                    || $visit->assigned_at || $visit->team_confirmed_at || $visit->report_path
+                                    || $visit->integrated_at;
+                            @endphp
                             <table class="table table-sm">
-                                <tr><th>Reference</th><td>{{ $visit->reference_number }}</td></tr>
-                                <tr><th>Current Stage</th><td><span class="badge badge-info">{{ $visit->stageLabel() }}</span></td></tr>
+                                {{-- Core --}}
+                                <tr><th>Reference</th><td>{{ $visit->reference_number ?: '—' }}</td></tr>
+                                <tr><th>Current Stage</th><td><span class="badge badge-info">{{ $visit->stageLabel() }}</span> <span class="text-muted">({{ $visit->stageIndex() }}/{{ $visit->stageCount() }})</span></td></tr>
+                                <tr><th>Status</th><td>{{ $visit->status ?: '—' }}</td></tr>
+                                @if($visit->document_number)
+                                    <tr><th>Document No.</th><td>{{ $visit->document_number }}</td></tr>
+                                @endif
+                                <tr><th>Project / Client</th><td>
+                                    {{ $subject }}
+                                    @unless($visit->project)<span class="badge badge-light">Client only</span>@endunless
+                                </td></tr>
+                                <tr><th>Phone</th><td>{{ $visit->phone_number ?: '—' }}</td></tr>
+                                <tr><th>Location</th><td>{{ $visit->location ?: '—' }}</td></tr>
+                                @if($visit->siteVisitLocation)
+                                    <tr><th>Calculator Location</th><td>{{ $visit->siteVisitLocation->name }} · {{ $visit->visit_days }} day(s)</td></tr>
+                                    <tr><th>Estimated Cost</th><td>{{ number_format((float) $visit->estimatedCost()) }} TZS <span class="text-muted font-size-sm">(from calculator presets)</span></td></tr>
+                                @endif
+                                <tr><th>Proposed Visit Date</th><td>{{ optional($visit->visit_date)->format('Y-m-d') ?: '—' }}</td></tr>
+                                <tr><th>Description</th><td>{{ $visit->description ?: '—' }}</td></tr>
+
+                                {{-- Billing --}}
                                 @if($visit->invoice_number)
                                     <tr><th>Invoice No.</th><td>{{ $visit->invoice_number }}</td></tr>
                                     <tr><th>Invoice Amount</th><td>{{ number_format((float) $visit->invoice_amount) }} TZS</td></tr>
                                     <tr><th>Billed By</th><td>{{ $visit->billedBy->name ?? '—' }}</td></tr>
+                                    <tr><th>Invoice PDF</th><td>
+                                        <a href="{{ route('project_site_visit.invoice_pdf', $visit->id) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fa fa-file-pdf-o"></i> View
+                                        </a>
+                                        <a href="{{ route('project_site_visit.invoice_pdf', ['id' => $visit->id, 'download' => 1]) }}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fa fa-download"></i> Download / Share
+                                        </a>
+                                    </td></tr>
                                 @endif
                                 @if($visit->payment_confirmed_at)
                                     <tr><th>Payment Confirmed</th><td>{{ $visit->payment_confirmed_at->format('Y-m-d H:i') }} by {{ $visit->paymentConfirmedBy->name ?? '—' }}</td></tr>
                                 @endif
+
+                                {{-- Assignment --}}
                                 @if($visit->assigned_at)
                                     <tr><th>Architect</th><td>{{ $visit->architect->name ?? '—' }}</td></tr>
                                     <tr><th>Site Engineer</th><td>{{ $visit->siteEngineer->name ?? '—' }}</td></tr>
                                     <tr><th>Site Supervisor</th><td>{{ $visit->siteSupervisor->name ?? '—' }}</td></tr>
+                                    <tr><th>Assigned</th><td>{{ $visit->assigned_at->format('Y-m-d H:i') }}</td></tr>
                                 @endif
                                 @if($visit->team_confirmed_at)
                                     <tr><th>Readiness Confirmed</th><td>{{ $visit->team_confirmed_at->format('Y-m-d H:i') }} by {{ $visit->teamConfirmedBy->name ?? '—' }}</td></tr>
                                 @endif
+
+                                {{-- Reporting & integration --}}
                                 @if($visit->report_path)
                                     <tr><th>Report</th><td>
                                         <a href="{{ Storage::url($visit->report_path) }}" target="_blank">{{ $visit->report_name ?: 'Download' }}</a>
@@ -124,9 +161,38 @@
                                     </td></tr>
                                 @endif
                                 @if($visit->integrated_at && $visit->scheduleActivity)
-                                    <tr><th>Linked to Survey</th><td>{{ $visit->scheduleActivity->activity_code }} — {{ $visit->scheduleActivity->name }}</td></tr>
+                                    <tr><th>Linked to Survey</th><td>{{ $visit->scheduleActivity->activity_code }} — {{ $visit->scheduleActivity->name }} <span class="text-muted font-size-sm">({{ $visit->integrated_at->format('Y-m-d') }})</span></td></tr>
                                 @endif
+
+                                {{-- Legacy fields (older visits) --}}
+                                @if($visit->inspector_id)
+                                    <tr><th>Inspector (legacy)</th><td>{{ $visit->inspector->name ?? '—' }}</td></tr>
+                                @endif
+                                @if($visit->findings)
+                                    <tr><th>Findings</th><td>{{ $visit->findings }}</td></tr>
+                                @endif
+                                @if($visit->recommendations)
+                                    <tr><th>Recommendations</th><td>{{ $visit->recommendations }}</td></tr>
+                                @endif
+
+                                {{-- Cancellation --}}
+                                @if($visit->cancelled_at)
+                                    <tr><th>Cancelled</th><td>{{ $visit->cancelled_at->format('Y-m-d H:i') }}@if($visit->cancel_reason) — {{ $visit->cancel_reason }}@endif</td></tr>
+                                @endif
+
+                                {{-- Audit --}}
+                                <tr><th>Raised By</th><td>{{ $visit->user->name ?? '—' }}</td></tr>
+                                <tr><th>Created</th><td>{{ optional($visit->created_at)->format('Y-m-d H:i') ?: '—' }}</td></tr>
+                                <tr><th>Last Updated</th><td>{{ optional($visit->updated_at)->format('Y-m-d H:i') ?: '—' }}</td></tr>
                             </table>
+
+                            @if($visit->stage === 'completed' && !$hasWorkflowHistory)
+                                <div class="alert alert-info mb-0 font-size-sm">
+                                    <i class="fa fa-info-circle"></i> This visit predates the staged workflow, so no
+                                    billing, assignment, or report history was recorded. It was migrated as
+                                    <strong>Completed</strong> from its previous status (<strong>{{ $visit->status }}</strong>).
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -139,27 +205,74 @@
 
                             @if($visit->stage === 'initiation')
                                 @if($canInvoice)
-                                    <p class="text-muted">Prepare the invoice for this site visit.</p>
+                                    <p class="text-muted">Prepare the invoice. Pick the calculator location and days — the amount is computed from the location's cost presets and stays editable.</p>
                                     <form method="post" action="{{ route('project_site_visit.invoice', $visit->id) }}">
                                         @csrf
                                         <div class="form-group">
-                                            <label class="required">Invoice Number</label>
-                                            <input type="text" name="invoice_number" class="form-control" required>
+                                            <label class="required">Calculator Location</label>
+                                            <select name="site_visit_location_id" id="sv-loc" class="form-control" onchange="svRecalc()">
+                                                <option value="" data-base="0" data-perday="0">— Select location —</option>
+                                                @foreach(($siteVisitLocations ?? []) as $loc)
+                                                    @php $perDay = (float)$loc->preset_travel_tzs + (float)$loc->preset_local_tzs + (float)$loc->preset_allowance_tzs + (float)$loc->preset_food_tzs + (float)$loc->preset_accommodation_tzs; @endphp
+                                                    <option value="{{ $loc->id }}" data-base="{{ (float)$loc->base_cost_tzs }}" data-perday="{{ $perDay }}"
+                                                        {{ $loc->id == $visit->site_visit_location_id ? 'selected' : '' }}>
+                                                        {{ $loc->name }} (base {{ number_format((float)$loc->base_cost_tzs) }}{{ $perDay > 0 ? ' + '.number_format($perDay).'/day' : '' }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <small class="text-muted">Manage locations in the <a href="{{ route('calculators.site-visit') }}" target="_blank">Site Visit Calculator</a>.</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Days</label>
+                                            <input type="number" min="1" max="365" id="sv-days" name="visit_days" class="form-control" value="{{ $visit->visit_days ?: 1 }}" oninput="svRecalc()">
                                         </div>
                                         <div class="form-group">
                                             <label class="required">Invoice Amount (TZS)</label>
-                                            <input type="number" step="0.01" min="0" name="invoice_amount" class="form-control" required>
+                                            <input type="number" step="0.01" min="0" id="sv-amount" name="invoice_amount" class="form-control"
+                                                   value="{{ $visit->estimatedCost() ? round($visit->estimatedCost(), 2) : '' }}" required>
+                                            <small class="text-muted" id="sv-amount-hint">Auto-computed from the location; you can override it.</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Invoice Number</label>
+                                            <input type="text" class="form-control" value="{{ $visit->invoice_number ?: 'Auto-generated on save (SV-INV-…)' }}" readonly disabled>
                                         </div>
                                         <button class="btn btn-primary"><i class="fa fa-file-invoice"></i> Record Invoice</button>
                                     </form>
+                                    <script>
+                                        function svRecalc() {
+                                            var sel = document.getElementById('sv-loc');
+                                            var opt = sel.options[sel.selectedIndex];
+                                            var days = parseInt(document.getElementById('sv-days').value) || 1;
+                                            var base = parseFloat(opt.getAttribute('data-base')) || 0;
+                                            var perDay = parseFloat(opt.getAttribute('data-perday')) || 0;
+                                            var hint = document.getElementById('sv-amount-hint');
+                                            if (opt.value) {
+                                                var amount = base + perDay * days;
+                                                document.getElementById('sv-amount').value = amount;
+                                                hint.textContent = 'Auto-computed: ' + base.toLocaleString() + ' base'
+                                                    + (perDay > 0 ? ' + ' + perDay.toLocaleString() + '/day × ' + days : '')
+                                                    + ' = ' + amount.toLocaleString() + ' TZS. You can override it.';
+                                            } else {
+                                                hint.textContent = 'Select a location to auto-compute, or enter the amount manually.';
+                                            }
+                                        }
+                                    </script>
                                 @else
                                     <p class="text-muted"><i class="fa fa-clock-o"></i> Awaiting billing to prepare the invoice.</p>
                                 @endif
 
                             @elseif($visit->stage === 'billing')
+                                <p>Invoice <strong>{{ $visit->invoice_number }}</strong> for
+                                    <strong>{{ number_format((float) $visit->invoice_amount) }} TZS</strong> is ready.</p>
+                                <p>
+                                    <a href="{{ route('project_site_visit.invoice_pdf', $visit->id) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fa fa-file-pdf-o"></i> View Invoice PDF
+                                    </a>
+                                    <a href="{{ route('project_site_visit.invoice_pdf', ['id' => $visit->id, 'download' => 1]) }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fa fa-download"></i> Download / Share
+                                    </a>
+                                </p>
                                 @if($canPay)
-                                    <p>Invoice <strong>{{ $visit->invoice_number }}</strong> for
-                                        <strong>{{ number_format((float) $visit->invoice_amount) }} TZS</strong> is ready.</p>
                                     <form method="post" action="{{ route('project_site_visit.confirm_payment', $visit->id) }}">
                                         @csrf
                                         <button class="btn btn-success"><i class="fa fa-check"></i> Confirm Payment</button>

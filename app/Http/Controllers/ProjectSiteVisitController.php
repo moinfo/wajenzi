@@ -10,6 +10,7 @@ use App\Models\ProjectScheduleActivityAttachment;
 use App\Models\ProjectSiteVisit;
 use App\Models\User;
 use App\Notifications\ApprovalNotification;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -117,7 +118,26 @@ class ProjectSiteVisitController extends Controller
             'architects'     => $this->usersWithRoles(['Architect'])->sortBy('name')->values(),
             'siteEngineers'  => $this->usersWithRoles(['Civil Engineer'])->sortBy('name')->values(),
             'supervisors'    => $this->usersWithRoles(['Site Supervisor'])->sortBy('name')->values(),
+            'siteVisitLocations' => \App\Models\SiteVisitLocation::active()->orderBy('sort_order')->get(),
         ]);
+    }
+
+    /**
+     * Render the site-visit invoice as a PDF (inline to view/share, or ?download=1).
+     */
+    public function invoicePdf(Request $request, $id)
+    {
+        $visit = ProjectSiteVisit::with(['project.client', 'client', 'siteVisitLocation', 'billedBy'])
+            ->findOrFail($id);
+
+        if (!$visit->invoice_number) {
+            return back()->with('error', 'No invoice has been prepared for this visit yet.');
+        }
+
+        $pdf  = Pdf::loadView('pages.projects.site_visit_invoice_pdf', compact('visit'));
+        $name = 'invoice-' . $visit->invoice_number . '.pdf';
+
+        return $request->boolean('download') ? $pdf->download($name) : $pdf->stream($name);
     }
 
     /**
@@ -135,20 +155,28 @@ class ProjectSiteVisitController extends Controller
         }
 
         $data = $request->validate([
-            'invoice_number' => 'required|string|max:255',
-            'invoice_amount' => 'required|numeric|min:0',
+            'invoice_amount'         => 'required|numeric|min:0',
+            'site_visit_location_id' => 'nullable|exists:site_visit_locations,id',
+            'visit_days'             => 'nullable|integer|min:1|max:365',
         ]);
 
-        $visit->update($data + [
-            'billed_by' => auth()->id(),
-            'stage'     => 'billing',
+        // Auto-generate the invoice number (keep an existing one on re-submit).
+        $invoiceNumber = $visit->invoice_number ?: ProjectSiteVisit::generateInvoiceNumber();
+
+        $visit->update([
+            'invoice_number'         => $invoiceNumber,
+            'invoice_amount'         => $data['invoice_amount'],
+            'site_visit_location_id' => $data['site_visit_location_id'] ?? $visit->site_visit_location_id,
+            'visit_days'             => $data['visit_days'] ?? $visit->visit_days,
+            'billed_by'              => auth()->id(),
+            'stage'                  => 'billing',
         ]);
 
         $this->notifyUsers(
             $this->usersWithRoles(self::PAYMENT_ROLES),
             "project_site_visit/{$visit->id}",
             'Site Visit Payment Pending',
-            "Invoice {$data['invoice_number']} for site visit {$visit->reference_number} is ready for payment confirmation."
+            "Invoice {$invoiceNumber} for site visit {$visit->reference_number} is ready for payment confirmation."
         );
 
         return back()->with('success', 'Invoice recorded. Awaiting payment confirmation from Finance.');
@@ -398,24 +426,28 @@ class ProjectSiteVisitController extends Controller
     private function validateBasics(Request $request): array
     {
         $request->validate([
-            'psv_link_type' => 'required|in:project,client',
-            'project_id'    => 'required_if:psv_link_type,project|nullable|exists:projects,id',
-            'client_id'     => 'required_if:psv_link_type,client|nullable|exists:project_clients,id',
-            'location'      => 'required|string|max:255',
-            'description'   => 'required|string|max:1000',
-            'phone_number'  => 'nullable|string|max:40',
-            'visit_date'    => 'required|date',
+            'psv_link_type'          => 'required|in:project,client',
+            'project_id'             => 'required_if:psv_link_type,project|nullable|exists:projects,id',
+            'client_id'              => 'required_if:psv_link_type,client|nullable|exists:project_clients,id',
+            'location'               => 'required|string|max:255',
+            'site_visit_location_id' => 'nullable|exists:site_visit_locations,id',
+            'visit_days'             => 'nullable|integer|min:1|max:365',
+            'description'            => 'required|string|max:1000',
+            'phone_number'           => 'nullable|string|max:40',
+            'visit_date'             => 'required|date',
         ]);
 
         $isProject = $request->psv_link_type === 'project';
 
         return [
-            'project_id'   => $isProject ? $request->project_id : null,
-            'client_id'    => $isProject ? null : $request->client_id,
-            'location'     => $request->location,
-            'description'  => $request->description,
-            'phone_number' => $request->phone_number,
-            'visit_date'   => $request->visit_date,
+            'project_id'             => $isProject ? $request->project_id : null,
+            'client_id'              => $isProject ? null : $request->client_id,
+            'location'               => $request->location,
+            'site_visit_location_id' => $request->site_visit_location_id ?: null,
+            'visit_days'             => $request->visit_days ?: 1,
+            'description'            => $request->description,
+            'phone_number'           => $request->phone_number,
+            'visit_date'             => $request->visit_date,
         ];
     }
 
