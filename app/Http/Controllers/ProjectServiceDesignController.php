@@ -177,7 +177,7 @@ class ProjectServiceDesignController extends Controller
             'schedule_rejection_notes' => null,
         ]);
 
-        $mdUsers = User::role(['Managing Director', 'CEO', 'Chief Executive Officer'])->get();
+        $mdUsers = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['Managing Director', 'CEO', 'Chief Executive Officer']))->get();
         foreach ($mdUsers as $md) {
             $md->notify(new \App\Notifications\SystemActionNotification(
                 'Service Design Work Schedule Awaiting Approval',
@@ -264,7 +264,7 @@ class ProjectServiceDesignController extends Controller
             'rejection_notes' => null,
         ]);
 
-        $mdUsers = User::role(['Managing Director', 'CEO', 'Chief Executive Officer'])->get();
+        $mdUsers = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['Managing Director', 'CEO', 'Chief Executive Officer']))->get();
         foreach ($mdUsers as $md) {
             $md->notify(new \App\Notifications\SystemActionNotification(
                 'Service Design Stage Ready for Review',

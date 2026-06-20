@@ -1,9 +1,12 @@
 <?php
-$document_id = \App\Classes\Utility::getLastId('Project')+1;
+$isEdit = (bool) ($object->id ?? null);
 $selectedType = ($object->client_id ?? null) && !($object->project_id ?? null) ? 'client' : 'project';
+$formAction = $isEdit
+    ? route('project_site_visit.update', $object->id)
+    : route('project_site_visit.store');
 ?>
 <div class="block-content">
-    <form method="post" autocomplete="off">
+    <form method="post" action="{{ $formAction }}" autocomplete="off">
         @csrf
         <div class="row">
             <div class="col-sm-12">
@@ -43,6 +46,12 @@ $selectedType = ($object->client_id ?? null) && !($object->project_id ?? null) ?
             </div>
             <div class="col-sm-12">
                 <div class="form-group">
+                    <label for="phone_number" class="control-label">Phone Number</label>
+                    <input type="text" class="form-control" id="input-phone_number" name="phone_number" value="{{ $object->phone_number ?? '' }}" placeholder="Client phone number">
+                </div>
+            </div>
+            <div class="col-sm-12">
+                <div class="form-group">
                     <label for="location" class="control-label required">Location</label>
                     <input type="text" class="form-control" id="input-location" required="required" name="location" value="{{ $object->location ?? '' }}" placeholder="Site Visit location">
                 </div>
@@ -60,16 +69,11 @@ $selectedType = ($object->client_id ?? null) && !($object->project_id ?? null) ?
                 </div>
             </div>
         </div>
-        <input type="hidden" name="create_by_id" value="{{ Auth::user()->id }}">
         <div class="form-group">
-            @if($object->id ?? null)
-                <input type="hidden" name="id" value="{{$object->id }}">
-                <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>
+            @if($isEdit)
+                <button type="submit" class="btn btn-alt-primary"><i class="si si-check"></i> Update</button>
             @else
-                <input type="hidden" name="document_id" value="{{$document_id}}">
-                <input type="hidden" name="document_type_id" value="11">
-                <input type="hidden" name="link" value="project_site_visits/{{$document_id}}/11">
-                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="ProjectSiteVisit">Submit</button>
+                <button type="submit" class="btn btn-alt-primary col">Submit Request</button>
             @endif
         </div>
     </form>

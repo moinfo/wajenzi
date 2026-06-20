@@ -86,7 +86,7 @@ class ProjectStructuralDesign extends Model implements ApprovableModel
                     ['service_design_id' => $serviceDesign->id, 'status' => 'pending']
                 ));
             }
-            $serviceEngineers = User::role('Service Engineer')->get();
+            $serviceEngineers = User::whereHas('roles', fn ($q) => $q->where('name', 'Service Engineer'))->get();
             foreach ($serviceEngineers as $eng) {
                 $eng->notify(new \App\Notifications\SystemActionNotification(
                     'Service Design Assigned',
@@ -102,13 +102,13 @@ class ProjectStructuralDesign extends Model implements ApprovableModel
         $message = "The structural design for {$this->document_number} has been approved and is ready for BOQ preparation.";
 
         // Notify all Quantity Surveyors
-        $qsUsers = User::role('Quantity Surveyor (QS)')->get();
+        $qsUsers = User::whereHas('roles', fn ($q) => $q->where('name', 'Quantity Surveyor (QS)'))->get();
         foreach ($qsUsers as $qs) {
             $qs->notify(new \App\Notifications\SystemActionNotification($title, $message, $link, null, $this->id));
         }
 
         // Notify Sales team so they can share with the client
-        $salesUsers = User::role(['Sales and Marketing', 'Business Development Manager'])->get();
+        $salesUsers = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['Sales and Marketing', 'Business Development Manager']))->get();
         foreach ($salesUsers as $sales) {
             $sales->notify(new \App\Notifications\SystemActionNotification(
                 'Structural Design Ready to Share',

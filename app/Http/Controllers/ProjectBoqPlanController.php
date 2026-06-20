@@ -94,7 +94,7 @@ class ProjectBoqPlanController extends Controller
         $plan->update(['status' => 'submitted', 'submitted_at' => now()]);
 
         // Notify MD/CEO
-        $mdUsers = \App\Models\User::role(['Managing Director', 'CEO'])->get();
+        $mdUsers = \App\Models\User::whereHas('roles', fn ($q) => $q->whereIn('name', ['Managing Director', 'CEO']))->get();
         foreach ($mdUsers as $md) {
             $md->notify(new \App\Notifications\SystemActionNotification(
                 'BOQ Plan Awaiting Approval',

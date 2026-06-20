@@ -748,8 +748,9 @@ class DashboardController extends Controller
             return response()->json(['message' => 'No reminders to send']);
         }
 
-        // Get all accountants
-        $accountants = User::role('Accountant')->get();
+        // Get all accountants. NOTE: User has a custom role() BelongsTo that shadows
+        // Spatie's `role` query scope, so query the `roles` relation by name instead.
+        $accountants = User::whereHas('roles', fn ($q) => $q->where('name', 'Accountant'))->get();
 
         if ($accountants->isEmpty()) {
             return response()->json(['message' => 'No accountants found']);

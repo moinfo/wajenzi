@@ -210,7 +210,7 @@ class ProjectStructuralDesignController extends Controller
         ]);
 
         // Notify MD/CEO
-        $mdUsers = User::role(['Managing Director', 'CEO'])->get();
+        $mdUsers = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['Managing Director', 'CEO']))->get();
         foreach ($mdUsers as $md) {
             $md->notify(new \App\Notifications\SystemActionNotification(
                 'Structural Design Work Schedule Awaiting Approval',
@@ -310,7 +310,7 @@ class ProjectStructuralDesignController extends Controller
         ]);
 
         // Notify MD/CEO
-        $mdUsers = User::role(['Managing Director', 'CEO'])->get();
+        $mdUsers = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['Managing Director', 'CEO']))->get();
         foreach ($mdUsers as $md) {
             $md->notify(new \App\Notifications\SystemActionNotification(
                 'Stage Ready for Review',

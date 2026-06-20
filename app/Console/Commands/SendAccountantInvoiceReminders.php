@@ -53,7 +53,7 @@ class SendAccountantInvoiceReminders extends Command
         $this->info("Found {$invoices->count()} invoices that need reminders.");
 
         // Get all accountants
-        $accountants = User::role('Accountant')->get();
+        $accountants = User::whereHas('roles', fn ($q) => $q->where('name', 'Accountant'))->get();
 
         if ($accountants->isEmpty()) {
             $this->warn('No users with Accountant role found.');

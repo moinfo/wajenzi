@@ -542,15 +542,19 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project_material_inventory/delete/{id}', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'destroy'])->name('project_material_inventory.delete');
 
 
-// Project Site Visits Routes
+// Project Site Visits Routes — 6-stage workflow
     Route::match(['get', 'post'], '/project_site_visits', [App\Http\Controllers\ProjectSiteVisitController::class, 'index'])->name('project_site_visits');
-    Route::match(['get', 'post'], '/project_site_visit/create', [App\Http\Controllers\ProjectSiteVisitController::class, 'create'])->name('project_site_visit.create');
-    Route::match(['get', 'post'], '/project_site_visit/edit/{id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'edit'])->name('project_site_visit.edit');
-    Route::match(['get', 'post'], '/project_site_visit/show/{id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'show'])->name('project_site_visit.show');
     Route::post('/project_site_visit/store', [App\Http\Controllers\ProjectSiteVisitController::class, 'store'])->name('project_site_visit.store');
     Route::post('/project_site_visit/update/{id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'update'])->name('project_site_visit.update');
-    Route::post('/project_site_visit/delete/{id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'destroy'])->name('project_site_visit.delete');
-    Route::match(['get', 'post'], '/project_site_visits/{id}/{document_type_id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'project_site_visits'])->name('individual_project_site_visits');
+    Route::get('/project_site_visit/{id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'show'])->name('project_site_visit.show');
+    // Stage transitions
+    Route::post('/project_site_visit/{id}/invoice', [App\Http\Controllers\ProjectSiteVisitController::class, 'enterInvoice'])->name('project_site_visit.invoice');
+    Route::post('/project_site_visit/{id}/confirm-payment', [App\Http\Controllers\ProjectSiteVisitController::class, 'confirmPayment'])->name('project_site_visit.confirm_payment');
+    Route::post('/project_site_visit/{id}/assign', [App\Http\Controllers\ProjectSiteVisitController::class, 'assignTeam'])->name('project_site_visit.assign');
+    Route::post('/project_site_visit/{id}/confirm-readiness', [App\Http\Controllers\ProjectSiteVisitController::class, 'confirmReadiness'])->name('project_site_visit.confirm_readiness');
+    Route::post('/project_site_visit/{id}/report', [App\Http\Controllers\ProjectSiteVisitController::class, 'uploadReport'])->name('project_site_visit.report');
+    Route::post('/project_site_visit/{id}/integrate', [App\Http\Controllers\ProjectSiteVisitController::class, 'integrate'])->name('project_site_visit.integrate');
+    Route::post('/project_site_visit/{id}/cancel', [App\Http\Controllers\ProjectSiteVisitController::class, 'cancel'])->name('project_site_visit.cancel');
 
 // Project Design Routes
     Route::match(['get', 'post'], '/project_designs', [App\Http\Controllers\ProjectDesignController::class, 'index'])->name('project_designs');
