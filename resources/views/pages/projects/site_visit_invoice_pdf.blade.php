@@ -1,7 +1,9 @@
 @php
     $client = $visit->project->client ?? $visit->client ?? null;
-    $clientName = $client ? trim(($client->first_name ?? '') . ' ' . ($client->last_name ?? '')) : 'N/A';
-    $subject = $visit->project->project_name ?? $clientName;
+    $clientName = $client
+        ? trim(($client->first_name ?? '') . ' ' . ($client->last_name ?? ''))
+        : ($visit->lead->name ?? 'N/A');
+    $subject = $visit->project->project_name ?? ($visit->lead ? $visit->lead->name . ' (Lead)' : $clientName);
     $loc = $visit->siteVisitLocation;
     $days = max(1, (int) $visit->visit_days);
     $isPaid = (bool) $visit->payment_confirmed_at;

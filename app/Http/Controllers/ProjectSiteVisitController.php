@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BillingDocument;
 use App\Models\Project;
 use App\Models\ProjectClient;
 use App\Models\ProjectSchedule;
@@ -39,7 +40,7 @@ class ProjectSiteVisitController extends Controller
             [$start_date, $end_date] = [$end_date, $start_date];
         }
 
-        $visits = ProjectSiteVisit::with(['project.client', 'client'])
+        $visits = ProjectSiteVisit::with(['project.client', 'client', 'lead'])
             ->whereDate('visit_date', '>=', $start_date)
             ->whereDate('visit_date', '<=', $end_date)
             ->when($request->project_id, fn ($q) => $q->where('project_id', $request->project_id))
@@ -107,7 +108,7 @@ class ProjectSiteVisitController extends Controller
     public function show($id)
     {
         $visit = ProjectSiteVisit::with([
-            'project.client', 'project.projectType', 'client', 'user',
+            'project.client', 'project.projectType', 'client', 'lead', 'user',
             'architect', 'siteEngineer', 'siteSupervisor', 'billedBy',
             'paymentConfirmedBy', 'teamConfirmedBy', 'reportUploader', 'scheduleActivity',
         ])->findOrFail($id);
@@ -127,7 +128,7 @@ class ProjectSiteVisitController extends Controller
      */
     public function invoicePdf(Request $request, $id)
     {
-        $visit = ProjectSiteVisit::with(['project.client', 'client', 'siteVisitLocation', 'billedBy'])
+        $visit = ProjectSiteVisit::with(['project.client', 'client', 'lead', 'siteVisitLocation', 'billedBy'])
             ->findOrFail($id);
 
         if (!$visit->invoice_number) {
@@ -154,20 +155,83 @@ class ProjectSiteVisitController extends Controller
             return back()->with('error', 'An invoice can only be prepared while the visit is awaiting billing.');
         }
 
-        $data = $request->validate([
-            'invoice_amount'         => 'required|numeric|min:0',
+        $request->validate([
+            'issue_date'             => 'required|date',
+            'due_date'               => 'nullable|date|after_or_equal:issue_date',
+            'payment_terms'          => 'required|in:immediate,net_7,net_15,net_30,net_45,net_60,net_90,custom',
+            'items'                  => 'required|array|min:1',
+            'items.*.item_name'      => 'required|string|max:255',
+            'items.*.quantity'       => 'required|numeric|min:0.01',
+            'items.*.unit_price'     => 'required|numeric|min:0',
+            'items.*.description'    => 'nullable|string|max:1000',
+            'service_description'    => 'nullable|string|max:20000',
+            'notes'                  => 'nullable|string|max:5000',
+            'terms_conditions'       => 'nullable|string|max:20000',
+            'footer_text'            => 'nullable|string|max:2000',
             'site_visit_location_id' => 'nullable|exists:site_visit_locations,id',
             'visit_days'             => 'nullable|integer|min:1|max:365',
         ]);
 
-        // Auto-generate the invoice number (keep an existing one on re-submit).
-        $invoiceNumber = $visit->invoice_number ?: ProjectSiteVisit::generateInvoiceNumber();
+        // Resolve the billing target from the visit's link (project / client / lead).
+        $clientId = $projectId = $leadId = null;
+        if ($visit->project) {
+            $projectId = $visit->project_id;
+            $clientId  = $visit->project->client_id;
+        } elseif ($visit->client_id) {
+            $clientId = $visit->client_id;
+        } elseif ($visit->lead_id) {
+            $leadId = $visit->lead_id;
+        }
+
+        if (!$clientId && !$leadId) {
+            return back()->with('error', 'This visit has no client or lead to bill. Link it to a client/lead first.');
+        }
+
+        $invoice = DB::transaction(function () use ($request, $visit, $clientId, $projectId, $leadId) {
+            $invoice = new BillingDocument();
+            $invoice->document_type     = 'invoice';
+            $invoice->document_number   = $invoice->generateDocumentNumber('invoice');
+            $invoice->title             = 'Site Visit ' . $visit->reference_number;
+            $invoice->client_id         = $clientId;
+            $invoice->project_id        = $projectId;
+            $invoice->lead_id           = $leadId;
+            $invoice->status            = 'pending';
+            $invoice->issue_date        = $request->issue_date;
+            $invoice->due_date          = $request->due_date;
+            $invoice->payment_terms     = $request->payment_terms;
+            $invoice->currency_code     = 'TZS';
+            $invoice->exchange_rate     = 1;
+            $invoice->shipping_amount   = 0;
+            $invoice->notes             = $request->notes;
+            $invoice->service_description = $request->service_description ?: $visit->description;
+            $invoice->terms_conditions  = $request->terms_conditions;
+            $invoice->footer_text       = $request->footer_text;
+            $invoice->created_by        = auth()->id();
+            $invoice->save();
+
+            foreach (array_values($request->items) as $i => $item) {
+                $invoice->items()->create([
+                    'item_type'  => 'custom',
+                    'item_name'  => $item['item_name'],
+                    'description' => $item['description'] ?? null,
+                    'quantity'   => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'sort_order' => $i + 1,
+                ]);
+            }
+
+            $invoice->load('items');
+            $invoice->calculateTotals();
+
+            return $invoice->fresh();
+        });
 
         $visit->update([
-            'invoice_number'         => $invoiceNumber,
-            'invoice_amount'         => $data['invoice_amount'],
-            'site_visit_location_id' => $data['site_visit_location_id'] ?? $visit->site_visit_location_id,
-            'visit_days'             => $data['visit_days'] ?? $visit->visit_days,
+            'invoice_number'         => $invoice->document_number,
+            'invoice_amount'         => $invoice->total_amount,
+            'billing_document_id'    => $invoice->id,
+            'site_visit_location_id' => $request->site_visit_location_id ?: $visit->site_visit_location_id,
+            'visit_days'             => $request->visit_days ?: $visit->visit_days,
             'billed_by'              => auth()->id(),
             'stage'                  => 'billing',
         ]);
@@ -176,10 +240,10 @@ class ProjectSiteVisitController extends Controller
             $this->usersWithRoles(self::PAYMENT_ROLES),
             "project_site_visit/{$visit->id}",
             'Site Visit Payment Pending',
-            "Invoice {$invoiceNumber} for site visit {$visit->reference_number} is ready for payment confirmation."
+            "Invoice {$invoice->document_number} for site visit {$visit->reference_number} is ready for payment confirmation."
         );
 
-        return back()->with('success', 'Invoice recorded. Awaiting payment confirmation from Finance.');
+        return back()->with('success', "Invoice {$invoice->document_number} created. Awaiting payment confirmation from Finance.");
     }
 
     /**
@@ -426,9 +490,10 @@ class ProjectSiteVisitController extends Controller
     private function validateBasics(Request $request): array
     {
         $request->validate([
-            'psv_link_type'          => 'required|in:project,client',
+            'psv_link_type'          => 'required|in:project,client,lead',
             'project_id'             => 'required_if:psv_link_type,project|nullable|exists:projects,id',
             'client_id'              => 'required_if:psv_link_type,client|nullable|exists:project_clients,id',
+            'lead_id'                => 'required_if:psv_link_type,lead|nullable|exists:leads,id',
             'location'               => 'required|string|max:255',
             'site_visit_location_id' => 'nullable|exists:site_visit_locations,id',
             'visit_days'             => 'nullable|integer|min:1|max:365',
@@ -437,11 +502,12 @@ class ProjectSiteVisitController extends Controller
             'visit_date'             => 'required|date',
         ]);
 
-        $isProject = $request->psv_link_type === 'project';
+        $type = $request->psv_link_type;
 
         return [
-            'project_id'             => $isProject ? $request->project_id : null,
-            'client_id'              => $isProject ? null : $request->client_id,
+            'project_id'             => $type === 'project' ? $request->project_id : null,
+            'client_id'              => $type === 'client' ? $request->client_id : null,
+            'lead_id'                => $type === 'lead' ? $request->lead_id : null,
             'location'               => $request->location,
             'site_visit_location_id' => $request->site_visit_location_id ?: null,
             'visit_days'             => $request->visit_days ?: 1,
@@ -457,15 +523,18 @@ class ProjectSiteVisitController extends Controller
      */
     private function surveyActivityFor(ProjectSiteVisit $visit): ?ProjectScheduleActivity
     {
-        if (!$visit->project_id || !$visit->project) {
-            return null;
-        }
+        $schedule = null;
 
-        $project  = $visit->project;
-        $schedule = ProjectSchedule::where(function ($q) use ($project) {
-            $q->whereHas('lead', fn ($l) => $l->where('project_id', $project->id))
-                ->orWhere('client_id', $project->client_id);
-        })->first();
+        if ($visit->project_id && $visit->project) {
+            $project  = $visit->project;
+            $schedule = ProjectSchedule::where(function ($q) use ($project) {
+                $q->whereHas('lead', fn ($l) => $l->where('project_id', $project->id))
+                    ->orWhere('client_id', $project->client_id);
+            })->first();
+        } elseif ($visit->lead_id) {
+            // A lead may already have a schedule (project_schedules.lead_id).
+            $schedule = ProjectSchedule::where('lead_id', $visit->lead_id)->first();
+        }
 
         return $schedule
             ? $schedule->activities()->where('activity_code', 'A0')->first()
@@ -479,6 +548,9 @@ class ProjectSiteVisitController extends Controller
         }
         if ($visit->client) {
             return trim($visit->client->first_name . ' ' . $visit->client->last_name);
+        }
+        if ($visit->lead) {
+            return $visit->lead->name . ' (Lead)';
         }
 
         return 'client-only visit';

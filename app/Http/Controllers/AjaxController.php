@@ -371,6 +371,7 @@ class AjaxController
                             'design_service_addons'     => $design_service_addons,
                             'design_special_structures' => $design_special_structures,
                             'site_visit_locations'      => $site_visit_locations,
+                            'leads'                     => \App\Models\Lead::whereIn('status', ['active', 'converted'])->orderBy('name')->get(),
                         ];
                     $object = $request->has('className') ? ucfirst($request->input('className')) : null;
                     $metadata = $request->has('metadata') ? $request->input('metadata') : [];

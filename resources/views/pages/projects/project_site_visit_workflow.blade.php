@@ -14,7 +14,9 @@
 
     $subject = $visit->project
         ? $visit->project->project_name
-        : ($visit->client ? trim($visit->client->first_name . ' ' . $visit->client->last_name) : 'Client-only visit');
+        : ($visit->client
+            ? trim($visit->client->first_name . ' ' . $visit->client->last_name)
+            : ($visit->lead ? $visit->lead->name . ' (Lead)' : 'Client-only visit'));
 
     // Ordered workflow steps for the progress tracker (terminal 'completed' excluded).
     $steps = [
@@ -55,7 +57,7 @@
                     <div class="row">
                         <div class="col-md-3"><small class="text-muted d-block">Project / Client</small>
                             {{ $subject }}
-                            @unless($visit->project)<span class="badge badge-light">Client only</span>@endunless
+                            @if($visit->lead)<span class="badge badge-light">Lead</span>@elseif(!$visit->project)<span class="badge badge-light">Client only</span>@endif
                         </div>
                         <div class="col-md-3"><small class="text-muted d-block">Phone</small>{{ $visit->phone_number ?: '—' }}</div>
                         <div class="col-md-3"><small class="text-muted d-block">Location</small>{{ $visit->location ?: '—' }}</div>
@@ -112,7 +114,7 @@
                                 @endif
                                 <tr><th>Project / Client</th><td>
                                     {{ $subject }}
-                                    @unless($visit->project)<span class="badge badge-light">Client only</span>@endunless
+                                    @if($visit->lead)<span class="badge badge-light">Lead</span>@elseif(!$visit->project)<span class="badge badge-light">Client only</span>@endif
                                 </td></tr>
                                 <tr><th>Phone</th><td>{{ $visit->phone_number ?: '—' }}</td></tr>
                                 <tr><th>Location</th><td>{{ $visit->location ?: '—' }}</td></tr>
@@ -128,13 +130,19 @@
                                     <tr><th>Invoice No.</th><td>{{ $visit->invoice_number }}</td></tr>
                                     <tr><th>Invoice Amount</th><td>{{ number_format((float) $visit->invoice_amount) }} TZS</td></tr>
                                     <tr><th>Billed By</th><td>{{ $visit->billedBy->name ?? '—' }}</td></tr>
-                                    <tr><th>Invoice PDF</th><td>
-                                        <a href="{{ route('project_site_visit.invoice_pdf', $visit->id) }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                            <i class="fa fa-file-pdf-o"></i> View
-                                        </a>
-                                        <a href="{{ route('project_site_visit.invoice_pdf', ['id' => $visit->id, 'download' => 1]) }}" class="btn btn-sm btn-outline-secondary">
-                                            <i class="fa fa-download"></i> Download / Share
-                                        </a>
+                                    <tr><th>Invoice</th><td>
+                                        @if($visit->billing_document_id)
+                                            <a href="{{ route('billing.invoices.show', $visit->billing_document_id) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fa fa-file-invoice"></i> Open Invoice
+                                            </a>
+                                            <a href="{{ route('billing.invoices.pdf', $visit->billing_document_id) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fa fa-file-pdf-o"></i> PDF
+                                            </a>
+                                        @else
+                                            <a href="{{ route('project_site_visit.invoice_pdf', $visit->id) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fa fa-file-pdf-o"></i> View PDF
+                                            </a>
+                                        @endif
                                     </td></tr>
                                 @endif
                                 @if($visit->payment_confirmed_at)
@@ -205,57 +213,146 @@
 
                             @if($visit->stage === 'initiation')
                                 @if($canInvoice)
-                                    <p class="text-muted">Prepare the invoice. Pick the calculator location and days — the amount is computed from the location's cost presets and stays editable.</p>
+                                    <p class="text-muted">Prepare the invoice. Pick a calculator location and days — its cost components are itemised into line items that add up to the total. Lines stay editable, and you can add more.</p>
                                     <form method="post" action="{{ route('project_site_visit.invoice', $visit->id) }}">
                                         @csrf
+                                        <div class="form-row">
+                                            <div class="form-group col-md-7">
+                                                <label>Calculator Location</label>
+                                                <select id="sv-loc" name="site_visit_location_id" class="form-control" onchange="svRebuild()">
+                                                    <option value="" data-name="">— None (enter lines manually) —</option>
+                                                    @foreach(($siteVisitLocations ?? []) as $loc)
+                                                        <option value="{{ $loc->id }}" data-name="{{ $loc->name }}"
+                                                            data-base="{{ (float)$loc->base_cost_tzs }}"
+                                                            data-travel="{{ (float)$loc->preset_travel_tzs }}"
+                                                            data-local="{{ (float)$loc->preset_local_tzs }}"
+                                                            data-allowance="{{ (float)$loc->preset_allowance_tzs }}"
+                                                            data-food="{{ (float)$loc->preset_food_tzs }}"
+                                                            data-accommodation="{{ (float)$loc->preset_accommodation_tzs }}"
+                                                            {{ $loc->id == $visit->site_visit_location_id ? 'selected' : '' }}>
+                                                            {{ $loc->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="form-group col-md-5">
+                                                <label>Days</label>
+                                                <input type="number" min="1" max="365" id="sv-days" name="visit_days" class="form-control" value="{{ $visit->visit_days ?: 1 }}" oninput="svRebuild()">
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-4">
+                                                <label class="required">Issue Date</label>
+                                                <input type="date" name="issue_date" class="form-control" value="{{ date('Y-m-d') }}" required>
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <label>Due Date</label>
+                                                <input type="date" name="due_date" class="form-control">
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <label class="required">Payment Terms</label>
+                                                <select name="payment_terms" class="form-control" required>
+                                                    <option value="immediate">Immediate</option>
+                                                    <option value="net_7">Net 7</option>
+                                                    <option value="net_15">Net 15</option>
+                                                    <option value="net_30" selected>Net 30</option>
+                                                    <option value="net_45">Net 45</option>
+                                                    <option value="net_60">Net 60</option>
+                                                    <option value="net_90">Net 90</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <label class="required">Line Items</label>
+                                        <table class="table table-sm mb-1" id="sv-items">
+                                            <thead>
+                                                <tr><th>Description</th><th style="width:80px;">Qty</th><th style="width:120px;">Unit Price</th><th style="width:110px;" class="text-right">Amount</th><th style="width:30px;"></th></tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><input type="text" name="items[0][item_name]" class="form-control form-control-sm sv-desc" placeholder="Item name" required></td>
+                                                    <td><input type="number" min="0.01" step="0.01" name="items[0][quantity]" class="form-control form-control-sm sv-qty" value="1" oninput="svTotal()" required></td>
+                                                    <td><input type="number" min="0" step="0.01" name="items[0][unit_price]" class="form-control form-control-sm sv-price" value="0" oninput="svTotal()" required></td>
+                                                    <td class="text-right align-middle sv-amt">0</td>
+                                                    <td><button type="button" class="btn btn-sm btn-link text-danger" onclick="svDel(this)">&times;</button></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="svAdd()"><i class="fa fa-plus"></i> Add line</button>
+                                            <span class="font-weight-bold">Total: <span id="sv-grand">0</span> TZS</span>
+                                        </div>
+
+                                        <h4 class="font-size-base font-weight-bold mt-3 mb-2">Notes &amp; Terms</h4>
                                         <div class="form-group">
-                                            <label class="required">Calculator Location</label>
-                                            <select name="site_visit_location_id" id="sv-loc" class="form-control" onchange="svRecalc()">
-                                                <option value="" data-base="0" data-perday="0">— Select location —</option>
-                                                @foreach(($siteVisitLocations ?? []) as $loc)
-                                                    @php $perDay = (float)$loc->preset_travel_tzs + (float)$loc->preset_local_tzs + (float)$loc->preset_allowance_tzs + (float)$loc->preset_food_tzs + (float)$loc->preset_accommodation_tzs; @endphp
-                                                    <option value="{{ $loc->id }}" data-base="{{ (float)$loc->base_cost_tzs }}" data-perday="{{ $perDay }}"
-                                                        {{ $loc->id == $visit->site_visit_location_id ? 'selected' : '' }}>
-                                                        {{ $loc->name }} (base {{ number_format((float)$loc->base_cost_tzs) }}{{ $perDay > 0 ? ' + '.number_format($perDay).'/day' : '' }})
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <small class="text-muted">Manage locations in the <a href="{{ route('calculators.site-visit') }}" target="_blank">Site Visit Calculator</a>.</small>
+                                            <label>Service Description <small class="text-muted">(shown as “Service Includes” on the invoice PDF)</small></label>
+                                            <textarea name="service_description" id="sv-service-editor" class="form-control">{!! old('service_description', \App\Models\InvoiceSetting::getDefaultServiceDescriptionHtml()) !!}</textarea>
                                         </div>
                                         <div class="form-group">
-                                            <label>Days</label>
-                                            <input type="number" min="1" max="365" id="sv-days" name="visit_days" class="form-control" value="{{ $visit->visit_days ?: 1 }}" oninput="svRecalc()">
+                                            <label>Internal Notes</label>
+                                            <textarea name="notes" id="sv-notes-editor" class="form-control" placeholder="Internal notes (not shown to client)"></textarea>
                                         </div>
                                         <div class="form-group">
-                                            <label class="required">Invoice Amount (TZS)</label>
-                                            <input type="number" step="0.01" min="0" id="sv-amount" name="invoice_amount" class="form-control"
-                                                   value="{{ $visit->estimatedCost() ? round($visit->estimatedCost(), 2) : '' }}" required>
-                                            <small class="text-muted" id="sv-amount-hint">Auto-computed from the location; you can override it.</small>
+                                            <label>Terms &amp; Conditions</label>
+                                            <textarea name="terms_conditions" id="sv-terms-editor" class="form-control">{!! old('terms_conditions', \App\Models\InvoiceSetting::getDefaultTermsHtml()) !!}</textarea>
                                         </div>
                                         <div class="form-group">
-                                            <label>Invoice Number</label>
-                                            <input type="text" class="form-control" value="{{ $visit->invoice_number ?: 'Auto-generated on save (SV-INV-…)' }}" readonly disabled>
+                                            <label>Footer Text</label>
+                                            <textarea name="footer_text" class="form-control" rows="2">{{ old('footer_text', \App\Models\BillingDocumentSetting::where('setting_key', 'invoice_footer')->value('setting_value') ?: 'Thank you for your business!') }}</textarea>
                                         </div>
-                                        <button class="btn btn-primary"><i class="fa fa-file-invoice"></i> Record Invoice</button>
+                                        <div class="text-muted font-size-sm mb-2">Invoice number is generated automatically (INV-{{ date('Y') }}-…).</div>
+                                        <button class="btn btn-primary"><i class="fa fa-file-invoice"></i> Create Invoice</button>
                                     </form>
                                     <script>
-                                        function svRecalc() {
+                                        var svIdx = 0;
+                                        function svRowHtml(name, qty, price) {
+                                            var i = svIdx++;
+                                            return '<tr>'
+                                                + '<td><input type="text" name="items['+i+'][item_name]" class="form-control form-control-sm sv-desc" value="'+ (name||'').replace(/"/g,'&quot;') +'" placeholder="Item name" required></td>'
+                                                + '<td><input type="number" min="0.01" step="0.01" name="items['+i+'][quantity]" class="form-control form-control-sm sv-qty" value="'+ (qty||1) +'" oninput="svTotal()" required></td>'
+                                                + '<td><input type="number" min="0" step="0.01" name="items['+i+'][unit_price]" class="form-control form-control-sm sv-price" value="'+ (price||0) +'" oninput="svTotal()" required></td>'
+                                                + '<td class="text-right align-middle sv-amt">0</td>'
+                                                + '<td><button type="button" class="btn btn-sm btn-link text-danger" onclick="svDel(this)">&times;</button></td>'
+                                                + '</tr>';
+                                        }
+                                        function svTotal() {
+                                            var t = 0;
+                                            document.querySelectorAll('#sv-items tbody tr').forEach(function(tr){
+                                                var q = parseFloat(tr.querySelector('.sv-qty').value)||0;
+                                                var p = parseFloat(tr.querySelector('.sv-price').value)||0;
+                                                var amt = q*p;
+                                                tr.querySelector('.sv-amt').textContent = amt.toLocaleString();
+                                                t += amt;
+                                            });
+                                            document.getElementById('sv-grand').textContent = t.toLocaleString();
+                                        }
+                                        function svRebuild() {
                                             var sel = document.getElementById('sv-loc');
                                             var opt = sel.options[sel.selectedIndex];
-                                            var days = parseInt(document.getElementById('sv-days').value) || 1;
-                                            var base = parseFloat(opt.getAttribute('data-base')) || 0;
-                                            var perDay = parseFloat(opt.getAttribute('data-perday')) || 0;
-                                            var hint = document.getElementById('sv-amount-hint');
-                                            if (opt.value) {
-                                                var amount = base + perDay * days;
-                                                document.getElementById('sv-amount').value = amount;
-                                                hint.textContent = 'Auto-computed: ' + base.toLocaleString() + ' base'
-                                                    + (perDay > 0 ? ' + ' + perDay.toLocaleString() + '/day × ' + days : '')
-                                                    + ' = ' + amount.toLocaleString() + ' TZS. You can override it.';
-                                            } else {
-                                                hint.textContent = 'Select a location to auto-compute, or enter the amount manually.';
-                                            }
+                                            var days = parseInt(document.getElementById('sv-days').value)||1;
+                                            if (!opt || !opt.value) { svTotal(); return; }
+                                            var name = opt.getAttribute('data-name');
+                                            var parts = [
+                                                ['Base fee - ' + name, 1, parseFloat(opt.getAttribute('data-base'))||0, true],
+                                                ['Travel (' + days + ' day(s))', days, parseFloat(opt.getAttribute('data-travel'))||0, false],
+                                                ['Local transport (' + days + ' day(s))', days, parseFloat(opt.getAttribute('data-local'))||0, false],
+                                                ['Allowance (' + days + ' day(s))', days, parseFloat(opt.getAttribute('data-allowance'))||0, false],
+                                                ['Food (' + days + ' day(s))', days, parseFloat(opt.getAttribute('data-food'))||0, false],
+                                                ['Accommodation (' + days + ' day(s))', days, parseFloat(opt.getAttribute('data-accommodation'))||0, false]
+                                            ];
+                                            svIdx = 0;
+                                            var html = '';
+                                            parts.forEach(function(p){ if (p[3] || p[2] > 0) html += svRowHtml(p[0], p[1], p[2]); });
+                                            document.querySelector('#sv-items tbody').innerHTML = html;
+                                            svTotal();
                                         }
+                                        function svAdd() {
+                                            document.querySelector('#sv-items tbody').insertAdjacentHTML('beforeend', svRowHtml('', 1, 0));
+                                        }
+                                        function svDel(btn) {
+                                            if (document.querySelectorAll('#sv-items tbody tr').length > 1) { btn.closest('tr').remove(); svTotal(); }
+                                        }
+                                        svRebuild();
                                     </script>
                                 @else
                                     <p class="text-muted"><i class="fa fa-clock-o"></i> Awaiting billing to prepare the invoice.</p>
@@ -265,12 +362,18 @@
                                 <p>Invoice <strong>{{ $visit->invoice_number }}</strong> for
                                     <strong>{{ number_format((float) $visit->invoice_amount) }} TZS</strong> is ready.</p>
                                 <p>
-                                    <a href="{{ route('project_site_visit.invoice_pdf', $visit->id) }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                        <i class="fa fa-file-pdf-o"></i> View Invoice PDF
-                                    </a>
-                                    <a href="{{ route('project_site_visit.invoice_pdf', ['id' => $visit->id, 'download' => 1]) }}" class="btn btn-sm btn-outline-secondary">
-                                        <i class="fa fa-download"></i> Download / Share
-                                    </a>
+                                    @if($visit->billing_document_id)
+                                        <a href="{{ route('billing.invoices.show', $visit->billing_document_id) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fa fa-file-invoice"></i> Open Invoice
+                                        </a>
+                                        <a href="{{ route('billing.invoices.pdf', $visit->billing_document_id) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fa fa-file-pdf-o"></i> Invoice PDF
+                                        </a>
+                                    @else
+                                        <a href="{{ route('project_site_visit.invoice_pdf', $visit->id) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fa fa-file-pdf-o"></i> View Invoice PDF
+                                        </a>
+                                    @endif
                                 </p>
                                 @if($canPay)
                                     <form method="post" action="{{ route('project_site_visit.confirm_payment', $visit->id) }}">
@@ -373,9 +476,6 @@
                                 <form method="post" action="{{ route('project_site_visit.cancel', $visit->id) }}"
                                       onsubmit="return confirm('Cancel this site visit?');">
                                     @csrf
-                                    <div class="form-group">
-                                        <input type="text" name="cancel_reason" class="form-control form-control-sm" placeholder="Reason (optional)">
-                                    </div>
                                     <button class="btn btn-sm btn-outline-danger"><i class="fa fa-times"></i> Cancel Visit</button>
                                 </form>
                             @endif
@@ -385,4 +485,31 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('css_after')
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+@endsection
+
+@section('js_after')
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+    <script>
+        $(function () {
+            var basic = [
+                ['font', ['bold', 'italic', 'underline', 'clear']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['insert', ['link']],
+                ['view', ['fullscreen', 'codeview']]
+            ];
+            if ($('#sv-service-editor').length) {
+                $('#sv-service-editor').summernote({ height: 180, toolbar: basic, placeholder: 'Service description…' });
+            }
+            if ($('#sv-notes-editor').length) {
+                $('#sv-notes-editor').summernote({ height: 120, toolbar: basic, placeholder: 'Internal notes…' });
+            }
+            if ($('#sv-terms-editor').length) {
+                $('#sv-terms-editor').summernote({ height: 260, toolbar: basic, placeholder: 'Terms & conditions…' });
+            }
+        });
+    </script>
 @endsection

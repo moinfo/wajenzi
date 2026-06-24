@@ -117,6 +117,10 @@
                                                 <i class="fa fa-user text-info mr-1"></i>
                                                 {{ $visit->client->first_name }} {{ $visit->client->last_name }}
                                                 <span class="badge badge-light ml-1">Client only</span>
+                                            @elseif($visit->lead)
+                                                <i class="fa fa-bullseye text-warning mr-1"></i>
+                                                {{ $visit->lead->name }}
+                                                <span class="badge badge-light ml-1">Lead</span>
                                             @else
                                                 <span class="text-muted">N/A</span>
                                             @endif

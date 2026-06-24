@@ -1,6 +1,8 @@
 <?php
 $isEdit = (bool) ($object->id ?? null);
-$selectedType = ($object->client_id ?? null) && !($object->project_id ?? null) ? 'client' : 'project';
+$selectedType = ($object->lead_id ?? null)
+    ? 'lead'
+    : ((($object->client_id ?? null) && !($object->project_id ?? null)) ? 'client' : 'project');
 $formAction = $isEdit
     ? route('project_site_visit.update', $object->id)
     : route('project_site_visit.store');
@@ -16,9 +18,15 @@ $formAction = $isEdit
                         <input type="radio" class="custom-control-input" id="psv-type-project" name="psv_link_type" value="project" {{ $selectedType === 'project' ? 'checked' : '' }}>
                         <label class="custom-control-label" for="psv-type-project">Project</label>
                     </div>
+                    {{-- Client option hidden for now — re-enable when needed
                     <div class="custom-control custom-radio custom-control-inline">
                         <input type="radio" class="custom-control-input" id="psv-type-client" name="psv_link_type" value="client" {{ $selectedType === 'client' ? 'checked' : '' }}>
                         <label class="custom-control-label" for="psv-type-client">Client (no project yet)</label>
+                    </div>
+                    --}}
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" class="custom-control-input" id="psv-type-lead" name="psv_link_type" value="lead" {{ $selectedType === 'lead' ? 'checked' : '' }}>
+                        <label class="custom-control-label" for="psv-type-lead">Lead</label>
                     </div>
                 </div>
             </div>
@@ -33,6 +41,7 @@ $formAction = $isEdit
                     </select>
                 </div>
             </div>
+            {{-- Client field hidden for now — re-enable with the Client radio above
             <div class="col-sm-12 psv-client-field" style="display:none;">
                 <div class="form-group">
                     <label for="input-client_id" class="control-label required">Client</label>
@@ -40,6 +49,20 @@ $formAction = $isEdit
                         <option value="">Select Client</option>
                         @foreach ($clients as $client)
                             <option value="{{ $client->id }}" {{ ($client->id == ($object->client_id ?? null)) ? 'selected' : '' }}>{{ $client->first_name.' '.$client->last_name }}{{ $client->phone_number ? ' - '.$client->phone_number : '' }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            --}}
+            <div class="col-sm-12 psv-lead-field" style="display:none;">
+                <div class="form-group">
+                    <label for="input-lead_id" class="control-label required">Lead</label>
+                    <select name="lead_id" id="input-lead_id" class="form-control">
+                        <option value="">Select Lead</option>
+                        @foreach (($leads ?? []) as $lead)
+                            <option value="{{ $lead->id }}" {{ ($lead->id == ($object->lead_id ?? null)) ? 'selected' : '' }}>
+                                {{ $lead->name }}{{ $lead->phone ? ' - '.$lead->phone : '' }}{{ $lead->lead_number ? ' ('.$lead->lead_number.')' : '' }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -101,26 +124,25 @@ $formAction = $isEdit
 <script>
 (function() {
     var modal = document.getElementById('ajax-loader-modal') || document;
-    var projectField = modal.querySelector('.psv-project-field');
-    var clientField  = modal.querySelector('.psv-client-field');
-    var projectSelect = modal.querySelector('#input-project_id');
-    var clientSelect  = modal.querySelector('#input-client_id');
+    // type -> { field wrapper class, <select> id }
+    var groups = {
+        project: { field: modal.querySelector('.psv-project-field'), select: modal.querySelector('#input-project_id') },
+        client:  { field: modal.querySelector('.psv-client-field'),  select: modal.querySelector('#input-client_id') },
+        lead:    { field: modal.querySelector('.psv-lead-field'),    select: modal.querySelector('#input-lead_id') }
+    };
     var radios = modal.querySelectorAll('input[name="psv_link_type"]');
 
     function apply(type) {
-        var isProject = type === 'project';
-        projectField.style.display = isProject ? '' : 'none';
-        clientField.style.display  = isProject ? 'none' : '';
-        if (projectSelect) {
-            projectSelect.required = isProject;
-            projectSelect.disabled = !isProject;
-            if (!isProject) projectSelect.value = '';
-        }
-        if (clientSelect) {
-            clientSelect.required = !isProject;
-            clientSelect.disabled = isProject;
-            if (isProject) clientSelect.value = '';
-        }
+        Object.keys(groups).forEach(function(key) {
+            var g = groups[key];
+            var on = key === type;
+            if (g.field) g.field.style.display = on ? '' : 'none';
+            if (g.select) {
+                g.select.required = on;
+                g.select.disabled = !on;
+                if (!on) g.select.value = '';
+            }
+        });
     }
 
     radios.forEach(function(r) {

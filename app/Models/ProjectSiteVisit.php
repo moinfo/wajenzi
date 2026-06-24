@@ -32,6 +32,7 @@ class ProjectSiteVisit extends Model
         'stage',
         'project_id',
         'client_id',
+        'lead_id',
         'inspector_id',
         'visit_date',
         'status',
@@ -47,6 +48,7 @@ class ProjectSiteVisit extends Model
         // Billing
         'invoice_amount',
         'invoice_number',
+        'billing_document_id',
         'billed_by',
         'payment_confirmed_at',
         'payment_confirmed_by',
@@ -197,6 +199,11 @@ class ProjectSiteVisit extends Model
         return $this->belongsTo(ProjectClient::class, 'client_id');
     }
 
+    public function lead(): BelongsTo
+    {
+        return $this->belongsTo(Lead::class, 'lead_id');
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'create_by_id');
@@ -250,5 +257,10 @@ class ProjectSiteVisit extends Model
     public function siteVisitLocation(): BelongsTo
     {
         return $this->belongsTo(SiteVisitLocation::class, 'site_visit_location_id');
+    }
+
+    public function billingDocument(): BelongsTo
+    {
+        return $this->belongsTo(BillingDocument::class, 'billing_document_id');
     }
 }
