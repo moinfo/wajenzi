@@ -19,8 +19,8 @@ Each transition is gated by role (System Administrator overrides everything).
 
 | Stage | Action | Allowed roles |
 |------|--------|---------------|
-| 1 Initiation | create the request | `Add Visit` permission (Sales/Project coordinator) |
-| 2a Billing | enter invoice (number + amount) | Accountant, Finance |
+| 1 Initiation | create the request (optionally pick a calculator location + days) | `Add Visit` permission (Sales/Project coordinator) |
+| 2a Billing | pick calculator location + days → amount **auto-computed**; invoice no. **auto-generated** | Accountant, Finance |
 | 2b Billing | confirm payment | Finance, Accountant |
 | 3 Assignment | assign Architect / Site Engineer / Supervisor | Project Manager, Sales Manager |
 | 4 Confirmation | confirm readiness | the assigned Architect / Site Engineer / Supervisor |
@@ -67,11 +67,15 @@ To assign a role to a test user (tinker):
   }
   ```
 - **An APPROVED client** (for the client-only path): any row in `project_clients` with `status = APPROVED`.
+- **At least one active Site Visit Calculator location** (`site_visit_locations` with `is_active = 1`) — drives the billing estimate. Manage them in the
+  **Site Visit Calculator** (`/calculators/site-visit`) or `hr_settings_site_visit_locations`. Check: `\App\Models\SiteVisitLocation::active()->count()`.
+- **Company logo present** at `public/media/logo/wajenzilogo.png` (used by the invoice PDF header).
 
 ### 2.3 Environment
-- Migrations applied: `2026_06_20_000001_add_workflow_to_project_site_visits_table`
-  and `2026_06_20_000002_purge_site_visit_ringlesoft_rows` show **Ran** in
-  `php artisan migrate:status`.
+- Migrations applied (all show **Ran** in `php artisan migrate:status`):
+  `2026_06_20_000001_add_workflow_to_project_site_visits_table`,
+  `2026_06_20_000002_purge_site_visit_ringlesoft_rows`,
+  `2026_06_20_000003_add_site_visit_location_to_project_site_visits`.
 - The `public` storage symlink exists (`php artisan storage:link`) so uploaded
   reports are downloadable.
 - Run artisan as the web user: `sudo -u www-data php artisan ...`.
@@ -85,8 +89,8 @@ visit detail page (`/project_site_visit/{id}`) and check the expected result.
 
 | # | Login as | Action | Expected result |
 |---|----------|--------|-----------------|
-| 1 | Sales/Project coordinator | On `/project_site_visits`, click **New Visit** → choose **Project**, pick the project from §2.2, fill phone/location/description/visit date → **Submit Request** | Redirects to the detail page. Stage badge = **1/7 Initiation**. A reference `SV-YYYY-####` is shown. List shows the row with the Initiation badge. |
-| 2 | Accountant | Detail page → **Record Invoice** (invoice number + amount) | Stage → **2/7 Billing**. "Awaiting Finance to confirm payment." Details panel shows Invoice No. + amount + billed-by. |
+| 1 | Sales/Project coordinator | On `/project_site_visits`, click **New Visit** → choose **Project**, pick the project from §2.2, fill phone/location/description/visit date (optionally pick a **Calculator Location** + **Days**) → **Submit Request** | Redirects to the detail page. Stage badge = **1/7 Initiation**. A reference `SV-YYYY-####` is shown. List shows the row with the Initiation badge. |
+| 2 | Accountant | Detail page → in the Billing card pick a **Calculator Location** and **Days** → the **Invoice Amount auto-fills** (base + per-day × days, still editable). Invoice Number field shows "Auto-generated…". Click **Record Invoice** | Stage → **2/7 Billing**. "Awaiting Finance to confirm payment." Details panel shows the auto invoice no. `SV-INV-YYYY-####`, amount, billed-by, the linked Calculator Location + estimate, and **View / Download Invoice PDF** buttons. |
 | 3 | Finance (or Accountant) | **Confirm Payment** | Stage → **3/7 Assignment**. Details show "Payment Confirmed … by …". |
 | 4 | Project Manager / Sales Manager | **Assign Team** — pick Architect, Site Engineer, Supervisor | Stage → **4/7 Confirmation**. Details list the three assignees. |
 | 5 | the assigned **Architect** | **Confirm Readiness** | Stage → **5/7 Reporting**. Details show "Readiness Confirmed …". |
@@ -203,7 +207,51 @@ Confirm the migration backfilled old rows:
 
 ---
 
-## 11. Scripted regression (full E2E in one shot)
+## 11. Test Case 9 — Calculator-location relationship & auto amount
+
+The visit relates to a Site Visit Calculator location (`site_visit_location_id`)
+and the billing amount is derived from that location's cost presets.
+
+1. Create a visit. In the **Billing** card (as Accountant), pick a **Calculator Location** and set **Days**.
+2. Watch the **Invoice Amount** field auto-update as you change the location/days.
+
+**Expected:**
+- Amount = `base_cost + (travel + local + allowance + food + accommodation) × days`, recomputed live; still editable to override.
+- After **Record Invoice**, the Details panel shows **Calculator Location**, **days**, and **Estimated Cost**.
+- `ProjectSiteVisit::find($id)->siteVisitLocation` resolves, and `->estimatedCost()` equals the formula above.
+- A visit with **no** location linked shows a blank amount you can type manually (no estimate) — this is expected.
+
+Spot check (tinker):
+```php
+$v = \App\Models\ProjectSiteVisit::whereNotNull('site_visit_location_id')->latest('id')->first();
+echo $v->siteVisitLocation->name, ' | days=', $v->visit_days, ' | est=', $v->estimatedCost();
+```
+
+---
+
+## 12. Test Case 10 — Auto invoice number & branded invoice PDF
+
+1. Take a visit through the Billing step **without** typing an invoice number.
+2. From the detail page (Billing card or Details panel), click **View Invoice PDF**, then **Download / Share**.
+
+**Expected:**
+- Invoice number is auto-assigned in the form `SV-INV-YYYY-####` (sequential; survives re-submit).
+- **View** opens the PDF inline (`/project_site_visit/{id}/invoice-pdf`); **Download / Share** downloads it (`?download=1`).
+- The PDF uses the **same branded header as the billing invoices**: teal accent bar, `wajenzilogo.png`, "WAJENZI PROFESSIONAL CO. LTD", single correct **TIN: 154-867-805**, dark **INVOICE** title band with a **Paid / Pending Payment** badge, Bill-To box, dark items table, **Total**, and dark footer.
+- The line item reflects the calculator location + days; **Total** equals the invoice amount.
+- Before any invoice exists, hitting the PDF route returns "No invoice has been prepared…".
+
+Render check (tinker — bytes should start with `%PDF-`, and be larger once the logo is embedded):
+```php
+auth()->loginUsingId(1);
+$r = app(App\Http\Controllers\ProjectSiteVisitController::class)
+    ->invoicePdf(\Illuminate\Http\Request::create('/x','GET'), <visitId>);
+echo strlen($r->getContent()), ' ', substr($r->getContent(),0,5);
+```
+
+---
+
+## 13. Scripted regression (full E2E in one shot)
 
 This drives all 6 stages through the real controller and **rolls everything back**
 (no test data persists). Replace the user ids / project id with values from your
@@ -216,6 +264,7 @@ use App\Models\{User,ProjectSiteVisit};
 $ctrl = app(App\Http\Controllers\ProjectSiteVisitController::class);
 $coordinator = User::find(1); $accountant = User::find(4); $architect = User::find(10);
 $engineer = 29; $supervisor = 1; $projectId = 10;   // project with an A0 activity
+$loc = \App\Models\SiteVisitLocation::active()->first();   // calculator location for the estimate
 $session = app("session.store"); $session->start();
 $mk = fn($p) => tap(Request::create("/x","POST",$p), fn($r)=>$r->setLaravelSession($session) ?: app()->instance("request",$r));
 $reportPath = null;
@@ -225,7 +274,9 @@ try {
     $ctrl->store($mk(["psv_link_type"=>"project","project_id"=>$projectId,"location"=>"L","description"=>"E2E","phone_number"=>"0700","visit_date"=>date("Y-m-d")]));
     $v = ProjectSiteVisit::latest("id")->first();                          echo "store     -> {$v->stage} ({$v->reference_number})\n";
     Auth::login($accountant);
-    $ctrl->enterInvoice($mk(["invoice_number"=>"INV-1","invoice_amount"=>150000]), $v->id); echo "invoice   -> {$v->fresh()->stage}\n";
+    // invoice number is auto-generated; location/days drive the estimate
+    $ctrl->enterInvoice($mk(["invoice_amount"=>150000,"site_visit_location_id"=>optional($loc)->id,"visit_days"=>2]), $v->id);
+    echo "invoice   -> {$v->fresh()->stage} (no={$v->fresh()->invoice_number})\n";
     $ctrl->confirmPayment($mk([]), $v->id);                                 echo "pay       -> {$v->fresh()->stage}\n";
     Auth::login($coordinator);
     $ctrl->assignTeam($mk(["architect_id"=>$architect->id,"site_engineer_id"=>$engineer,"site_supervisor_id"=>$supervisor]), $v->id); echo "assign    -> {$v->fresh()->stage}\n";
@@ -246,7 +297,7 @@ finally { DB::rollBack(); if ($reportPath) \Illuminate\Support\Facades\Storage::
 **Expected output:**
 ```
 store     -> initiation (SV-YYYY-####)
-invoice   -> billing
+invoice   -> billing (no=SV-INV-YYYY-####)
 pay       -> assignment
 assign    -> confirmation
 readiness -> reporting
@@ -257,7 +308,7 @@ integrate -> completed (activity #…)
 
 ---
 
-## 12. Sign-off checklist
+## 14. Sign-off checklist
 
 - [ ] TC1 happy path reaches **Completed** and report is attached to the Survey (A0) activity
 - [ ] TC2 client-only visit completes at report upload (no integration step)
@@ -267,4 +318,6 @@ integrate -> completed (activity #…)
 - [ ] TC6 edit/delete only available in Initiation
 - [ ] TC7 the right actor is notified at each transition
 - [ ] TC8 pre-existing visits backfilled with stage + reference number
-- [ ] §11 scripted regression prints the expected stage sequence
+- [ ] TC9 billing amount auto-computes from the calculator location; `estimatedCost()` matches
+- [ ] TC10 invoice number auto-generates (`SV-INV-YYYY-####`) and the branded invoice PDF renders
+- [ ] §13 scripted regression prints the expected stage sequence
