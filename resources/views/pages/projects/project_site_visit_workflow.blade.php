@@ -386,30 +386,31 @@
 
                             @elseif($visit->stage === 'assignment')
                                 @if($isCoordinator)
-                                    <p class="text-muted">Assign the field team.</p>
+                                    <p class="text-muted">Assign the field team — pick any one, two, or all three.</p>
                                     <form method="post" action="{{ route('project_site_visit.assign', $visit->id) }}">
                                         @csrf
                                         <div class="form-group">
-                                            <label class="required">Architect</label>
-                                            <select name="architect_id" class="form-control" required>
-                                                <option value="">Select…</option>
+                                            <label>Architect</label>
+                                            <select name="architect_id" class="form-control">
+                                                <option value="">— None —</option>
                                                 @foreach($architects as $u)<option value="{{ $u->id }}">{{ $u->name }}</option>@endforeach
                                             </select>
                                         </div>
                                         <div class="form-group">
-                                            <label class="required">Site Engineer</label>
-                                            <select name="site_engineer_id" class="form-control" required>
-                                                <option value="">Select…</option>
+                                            <label>Site Engineer</label>
+                                            <select name="site_engineer_id" class="form-control">
+                                                <option value="">— None —</option>
                                                 @foreach($siteEngineers as $u)<option value="{{ $u->id }}">{{ $u->name }}</option>@endforeach
                                             </select>
                                         </div>
                                         <div class="form-group">
-                                            <label class="required">Site Supervisor</label>
-                                            <select name="site_supervisor_id" class="form-control" required>
-                                                <option value="">Select…</option>
+                                            <label>Site Supervisor</label>
+                                            <select name="site_supervisor_id" class="form-control">
+                                                <option value="">— None —</option>
                                                 @foreach($supervisors as $u)<option value="{{ $u->id }}">{{ $u->name }}</option>@endforeach
                                             </select>
                                         </div>
+                                        <small class="text-muted d-block mb-2">Assign at least one.</small>
                                         <button class="btn btn-primary"><i class="fa fa-users"></i> Assign Team</button>
                                     </form>
                                 @else

@@ -292,18 +292,27 @@ class ProjectSiteVisitController extends Controller
         }
 
         $data = $request->validate([
-            'architect_id'       => 'required|exists:users,id',
-            'site_engineer_id'   => 'required|exists:users,id',
-            'site_supervisor_id' => 'required|exists:users,id',
+            'architect_id'       => 'nullable|exists:users,id',
+            'site_engineer_id'   => 'nullable|exists:users,id',
+            'site_supervisor_id' => 'nullable|exists:users,id',
         ]);
 
-        $visit->update($data + [
-            'assigned_by' => auth()->id(),
-            'assigned_at' => now(),
-            'stage'       => 'confirmation',
+        // At least one team member is required — but not all three.
+        $assignedIds = array_filter([$data['architect_id'] ?? null, $data['site_engineer_id'] ?? null, $data['site_supervisor_id'] ?? null]);
+        if (empty($assignedIds)) {
+            return back()->with('error', 'Assign at least one team member (architect, site engineer, or supervisor).');
+        }
+
+        $visit->update([
+            'architect_id'       => $data['architect_id'] ?: null,
+            'site_engineer_id'   => $data['site_engineer_id'] ?: null,
+            'site_supervisor_id' => $data['site_supervisor_id'] ?: null,
+            'assigned_by'        => auth()->id(),
+            'assigned_at'        => now(),
+            'stage'              => 'confirmation',
         ]);
 
-        $team = User::whereIn('id', array_values($data))->get();
+        $team = User::whereIn('id', $assignedIds)->get();
         $this->notifyUsers(
             $team,
             "project_site_visit/{$visit->id}",
