@@ -141,7 +141,7 @@ class ProjectScheduleService
             $activityEndDate = self::addWorkingDays($activityStartDate, $template->duration_days);
 
             // Create the activity (auto-assign to schedule's architect)
-            ProjectScheduleActivity::create([
+            $activity = ProjectScheduleActivity::create([
                 'project_schedule_id' => $schedule->id,
                 'activity_code' => $template->activity_code,
                 'name' => $template->name,
@@ -157,6 +157,12 @@ class ProjectScheduleService
                 'role_id' => $template->role_id,
                 'requires_approval' => $template->requires_approval ?? false,
             ]);
+
+            // Inherit the template's full responsible-role set (fall back to the primary role).
+            $templateRoleIds = $template->responsibleRoleIds();
+            if (!empty($templateRoleIds)) {
+                $activity->roles()->sync($templateRoleIds);
+            }
 
             // Store for predecessor reference
             $activityDates[$template->activity_code] = [

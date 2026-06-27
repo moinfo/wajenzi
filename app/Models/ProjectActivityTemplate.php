@@ -46,11 +46,33 @@ class ProjectActivityTemplate extends Model
     }
 
     /**
-     * Get the role responsible for this activity type
+     * Get the role responsible for this activity type (primary role)
      */
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * All roles responsible for this activity type (many-to-many).
+     */
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'project_activity_template_role', 'template_id', 'role_id');
+    }
+
+    /**
+     * Role ids for this template — the pivot set, falling back to the primary role_id.
+     */
+    public function responsibleRoleIds(): array
+    {
+        $ids = $this->roles->pluck('id')->all();
+
+        if (empty($ids) && $this->role_id) {
+            $ids = [$this->role_id];
+        }
+
+        return $ids;
     }
 
     /**

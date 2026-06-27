@@ -626,6 +626,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('project-schedules/activity/{activity}/days', [App\Http\Controllers\ProjectScheduleController::class, 'updateActivityDays'])->name('project-schedules.activity.update-days');
     Route::delete('project-schedules/activity/{activity}', [App\Http\Controllers\ProjectScheduleController::class, 'removeActivity'])->name('project-schedules.activity.remove');
     Route::patch('project-schedules/activity/{activity}/assign', [App\Http\Controllers\ProjectScheduleController::class, 'assignActivity'])->name('project-schedules.activity.assign');
+    Route::patch('project-schedules/activity/{activity}/roles', [App\Http\Controllers\ProjectScheduleController::class, 'updateActivityRoles'])->name('project-schedules.activity.roles');
     Route::post('project-schedules/{projectSchedule}/activities', [App\Http\Controllers\ProjectScheduleController::class, 'addActivity'])->name('project-schedules.activity.add');
     Route::post('project-schedules/{projectSchedule}/activities/bulk-assign', [App\Http\Controllers\ProjectScheduleController::class, 'bulkAssignActivities'])->name('project-schedules.activities.bulk-assign');
     Route::patch('project-schedules/{projectSchedule}/change-architect', [App\Http\Controllers\ProjectScheduleController::class, 'changeArchitect'])->name('project-schedules.change-architect');

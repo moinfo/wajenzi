@@ -70,12 +70,19 @@
         <div class="row">
             <div class="col-md-6">
                 <div class="form-group mb-3">
-                    <label for="input-role-id">Assigned Role</label>
-                    <select class="form-select" id="input-role-id" name="role_id">
-                        <option value="">-- No Role --</option>
-                        @foreach($roles ?? [] as $role)
-                            <option value="{{ $role->id }}"
-                                {{ ($object->role_id ?? '') == $role->id ? 'selected' : '' }}>
+                    @php
+                        $tplRoleIds = isset($object) && $object->id ? $object->responsibleRoleIds() : array_filter([$object->role_id ?? null]);
+                        $allRoles = $roles ?? collect();
+                        // Show currently-selected roles at the top so they're always visible.
+                        $sortedRoles = $allRoles->sortByDesc(fn($r) => in_array($r->id, $tplRoleIds))->values();
+                    @endphp
+                    <label for="input-role-id">Responsible Roles <small class="text-muted">(hold Ctrl/Cmd to pick several)</small></label>
+                    @if(count($tplRoleIds))
+                        <div class="mb-1"><small class="text-success"><i class="fa fa-check-circle"></i> Current: {{ $allRoles->whereIn('id', $tplRoleIds)->pluck('name')->implode(', ') }}</small></div>
+                    @endif
+                    <select class="form-select" id="input-role-id" name="roles[]" multiple size="8">
+                        @foreach($sortedRoles as $role)
+                            <option value="{{ $role->id }}" {{ in_array($role->id, $tplRoleIds) ? 'selected' : '' }}>
                                 {{ $role->name }}
                             </option>
                         @endforeach

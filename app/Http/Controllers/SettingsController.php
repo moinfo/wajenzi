@@ -1730,10 +1730,24 @@ class SettingsController extends Controller
     public function activity_templates_settings(Request $request)
     {
         if ($this->handleCrud($request, 'ProjectActivityTemplate')) {
+            // Sync the multi-role pivot after a create/update (skip deletes, which carry no activity_code).
+            if ($request->filled('activity_code')) {
+                $template = ProjectActivityTemplate::when(
+                    $request->id,
+                    fn ($q) => $q->where('id', $request->id),
+                    fn ($q) => $q->where('activity_code', $request->activity_code)->latest('id')
+                )->first();
+
+                if ($template) {
+                    $roleIds = array_values(array_unique(array_filter($request->input('roles', []))));
+                    $template->roles()->sync($roleIds);
+                    $template->update(['role_id' => $roleIds[0] ?? null]); // keep primary role in sync
+                }
+            }
             return back();
         }
         $data = [
-            'objects' => ProjectActivityTemplate::with('role')->orderBy('sort_order')->get(),
+            'objects' => ProjectActivityTemplate::with(['role', 'roles'])->orderBy('sort_order')->get(),
         ];
         return view('pages.settings.settings_activity_templates')->with($data);
     }
@@ -1783,7 +1797,7 @@ class SettingsController extends Controller
 
     public function syncActivityRoles(Request $request)
     {
-        $templates = ProjectActivityTemplate::whereNotNull('role_id')->get(['activity_code', 'role_id']);
+        $templates = ProjectActivityTemplate::with('roles')->whereNotNull('role_id')->get();
 
         if ($templates->isEmpty()) {
             return back()->with('warning', 'No templates have a role assigned. Nothing to sync.');
@@ -1791,8 +1805,16 @@ class SettingsController extends Controller
 
         $updatedCount = 0;
         foreach ($templates as $template) {
-            $updatedCount += \App\Models\ProjectScheduleActivity::where('activity_code', $template->activity_code)
-                ->update(['role_id' => $template->role_id]);
+            $roleIds = $template->responsibleRoleIds();
+
+            // Sync both the primary role_id and the full responsible-role set on
+            // every matching activity across all schedules.
+            $activities = \App\Models\ProjectScheduleActivity::where('activity_code', $template->activity_code)->get();
+            foreach ($activities as $activity) {
+                $activity->update(['role_id' => $roleIds[0] ?? $template->role_id]);
+                $activity->roles()->sync($roleIds);
+                $updatedCount++;
+            }
         }
 
         return back()->with('success', "Sync complete. {$updatedCount} activity records updated across all project schedules.");

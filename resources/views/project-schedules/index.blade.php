@@ -61,7 +61,7 @@
                             <tr>
                                 <th>Project / Lead</th>
                                 <th>Client</th>
-                                <th>Architect</th>
+                                <th>Role</th>
                                 <th>Start Date</th>
                                 <th>End Date</th>
                                 <th>Progress</th>
@@ -88,7 +88,10 @@
                                         @endif
                                     </td>
                                     <td>{{ $schedule->client ? $schedule->client->first_name . ' ' . $schedule->client->last_name : 'N/A' }}</td>
-                                    <td>{{ $schedule->assignedArchitect->name ?? 'Unassigned' }}</td>
+                                    <td>
+                                        @php $assigneeNames = $schedule->activityAssigneeNames(); @endphp
+                                        {{ !empty($assigneeNames) ? implode(', ', $assigneeNames) : ($schedule->assignedArchitect->name ?? 'Unassigned') }}
+                                    </td>
                                     <td>{{ $schedule->start_date->format('d/m/Y') }}</td>
                                     <td>{{ $schedule->end_date ? $schedule->end_date->format('d/m/Y') : 'N/A' }}</td>
                                     <td>

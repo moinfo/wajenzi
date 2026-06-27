@@ -21,22 +21,33 @@ use Illuminate\Support\Facades\Storage;
 class ProjectScheduleController extends Controller
 {
     /**
+     * Roles that see every schedule and every activity (overseers). Shared by the
+     * list and detail pages so they behave consistently.
+     */
+    private const SEE_ALL_ROLES = [
+        'System Administrator', 'Managing Director', 'Chief Executive Officer', 'CEO',
+        'General Manager', 'Sales Manager', 'Sales and Marketing',
+    ];
+
+    /**
      * Display list of schedules
      */
     public function index(Request $request)
     {
         $user = auth()->user();
-        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Sales and Marketing', 'Sales Manager']);
+        $isAdmin = $user->hasAnyRole(self::SEE_ALL_ROLES);
         $canSeeAll = $isAdmin || $user->can('View All Schedule Activities');
 
         // Schedule visibility is per-person, not per-role: only show schedules where the user is the
-        // assigned architect or has at least one activity explicitly assigned to them. The role_id
-        // check is intentionally NOT applied here — every schedule contains generic role-tagged
-        // activities (e.g. "Architect"), which would otherwise expose every schedule to every architect.
-        $schedules = ProjectSchedule::with(['lead', 'assignedArchitect', 'client', 'approvalStatus'])
+        // assigned architect, has an activity assigned to them (activity-level), or is a per-role
+        // assignee on one of the activities. Broad role_id matching is intentionally NOT applied —
+        // every schedule contains generic role-tagged activities (e.g. "Architect"), which would
+        // otherwise expose every schedule to every architect.
+        $schedules = ProjectSchedule::with(['lead', 'assignedArchitect', 'client', 'approvalStatus', 'activities.assignedUser'])
             ->when(!$canSeeAll, fn($q) => $q->where(function ($q) use ($user) {
                 $q->where('assigned_architect_id', $user->id)
-                  ->orWhereHas('activities', fn($aq) => $aq->where('assigned_to', $user->id));
+                  ->orWhereHas('activities', fn($aq) => $aq->where('assigned_to', $user->id))
+                  ->orWhereHas('activities.roles', fn($rq) => $rq->where('project_schedule_activity_role.assigned_to', $user->id));
             }))
             ->when($request->status, fn($q, $status) => $q->where('status', $status))
             ->when($request->architect_id, fn($q, $id) => $q->where('assigned_architect_id', $id))
@@ -65,9 +76,9 @@ class ProjectScheduleController extends Controller
     public function show(ProjectSchedule $projectSchedule)
     {
         $user = auth()->user();
-        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Chief Executive Officer', 'General Manager', 'Sales Manager']);
+        $isAdmin = $user->hasAnyRole(self::SEE_ALL_ROLES);
 
-        $projectSchedule->load(['lead.client', 'assignedArchitect', 'activities.assignedUser', 'activities.role', 'activities.attachments.uploader', 'assignments.user']);
+        $projectSchedule->load(['lead.client', 'assignedArchitect', 'activities.assignedUser', 'activities.role', 'activities.roles', 'activities.attachments.uploader', 'assignments.user']);
 
         // Admins / overseers see everything; everyone else (including the assigned architect)
         // sees only the activities whose template role matches one of their roles.
@@ -77,7 +88,12 @@ class ProjectScheduleController extends Controller
 
         if (!$canSeeAll) {
             $userRoleIds = $user->roles->pluck('id')->toArray();
-            $activities = $activities->filter(fn ($a) => $a->role_id && in_array($a->role_id, $userRoleIds, true));
+            // Visible if ANY responsible role matches the user's roles, OR the user
+            // is the activity-level or a per-role assignee.
+            $activities = $activities->filter(fn ($a) =>
+                !empty(array_intersect($a->responsibleRoleIds(), $userRoleIds))
+                || in_array($user->id, $a->assigneeIds(), true)
+            );
         }
 
         // Group activities by phase
@@ -404,9 +420,17 @@ class ProjectScheduleController extends Controller
             'assigned_to' => 'nullable|exists:users,id',
         ]);
 
+        $previousAssignee = $activity->assigned_to;
+
         $activity->update([
             'assigned_to' => $request->assigned_to,
         ]);
+
+        // The previous assignee no longer owns this activity — clear their stale
+        // "assigned to you" notification so they don't keep seeing the old name.
+        if ($previousAssignee && $previousAssignee != $request->assigned_to) {
+            $this->markActivityNotificationsRead($previousAssignee, $activity->id);
+        }
 
         // Send notification to newly assigned user
         if ($request->assigned_to) {
@@ -467,10 +491,16 @@ class ProjectScheduleController extends Controller
             'phase'            => 'required|string|max:120',
             'discipline'       => 'nullable|string|max:120',
             'duration_days'    => 'required|integer|min:1|max:60',
+            'roles'            => 'nullable|array',
+            'roles.*'          => 'exists:roles,id',
             'role_id'          => 'nullable|exists:roles,id',
             'assigned_to'      => 'nullable|exists:users,id',
             'predecessor_code' => 'nullable|string|max:20',
         ]);
+
+        // Multiple responsible roles; the first is kept as the primary role_id.
+        $roleIds   = array_values(array_unique(array_filter($request->input('roles', []))));
+        $primaryRole = $roleIds[0] ?? $request->role_id;
 
         // Predecessor must belong to this schedule
         $predecessor = null;
@@ -513,11 +543,14 @@ class ProjectScheduleController extends Controller
                 'duration_days'        => (int) $request->duration_days,
                 'end_date'             => $endDate,
                 'predecessor_code'     => $request->predecessor_code ?: null,
-                'role_id'              => $request->role_id,
+                'role_id'              => $primaryRole,
                 'assigned_to'          => $request->assigned_to,
                 'status'               => 'pending',
                 'sort_order'           => $sortOrder,
             ]);
+
+            // Sync the full responsible-role set (fall back to the primary role).
+            $activity->roles()->sync($roleIds ?: array_filter([$primaryRole]));
 
             // Extend schedule end_date if this activity now finishes later
             if (!$projectSchedule->end_date || $endDate->gt($projectSchedule->end_date)) {
@@ -532,6 +565,106 @@ class ProjectScheduleController extends Controller
         }
 
         return back()->with('success', "Added activity {$activity->activity_code}: {$activity->name}.");
+    }
+
+    /**
+     * Set the responsible roles for an existing activity (multi-role).
+     * Allowed for admins and the schedule's assigned architect.
+     */
+    public function updateActivityRoles(Request $request, ProjectScheduleActivity $activity)
+    {
+        $user = auth()->user();
+        $isAdmin = $user->hasAnyRole([
+            'System Administrator', 'Managing Director',
+            'Chief Executive Officer', 'CEO', 'General Manager',
+        ]);
+        $isAssignedArchitect = $activity->schedule->assigned_architect_id === $user->id;
+
+        if (!$isAdmin && !$isAssignedArchitect && !$user->can('Assign Project Activities')) {
+            return back()->with('error', 'You do not have permission to manage roles for this activity.');
+        }
+
+        $request->validate([
+            'roles'       => 'nullable|array',
+            'roles.*'     => 'exists:roles,id',
+            'assignees'   => 'nullable|array',
+            'assignees.*' => 'nullable|exists:users,id',
+        ]);
+
+        $roleIds   = array_values(array_unique(array_filter($request->input('roles', []))));
+        $assignees = $request->input('assignees', []);
+
+        // Build sync payload with a per-role assignee.
+        $syncData = [];
+        foreach ($roleIds as $rid) {
+            $syncData[$rid] = ['assigned_to' => ($assignees[$rid] ?? null) ?: null];
+        }
+
+        // Capture prior per-role assignees (for notifications + stale-clearing) before syncing.
+        $previous = $activity->roles()->pluck('assigned_to', 'role_id')->all();
+
+        $activity->roles()->sync($syncData);
+
+        // (a) Reconcile the activity-level assignee with the per-role assignment so the
+        // "Assigned" column matches: prefer the primary role's assignee, else the first
+        // role that has one. Only overwrite when a per-role assignee exists.
+        $primaryRoleId   = $roleIds[0] ?? null;
+        $primaryAssignee = $primaryRoleId ? ($assignees[$primaryRoleId] ?? null) : null;
+        if (!$primaryAssignee) {
+            foreach ($roleIds as $rid) {
+                if (!empty($assignees[$rid])) { $primaryAssignee = $assignees[$rid]; break; }
+            }
+        }
+        $updateData = ['role_id' => $primaryRoleId];
+        if ($primaryAssignee) {
+            $updateData['assigned_to'] = $primaryAssignee;
+        }
+        $activity->update($updateData);
+
+        // (b) Clear stale "assigned to you" notifications for anyone removed/replaced.
+        $newAssigneeSet = array_filter(array_column($syncData, 'assigned_to'));
+        foreach ($previous as $rid => $prevUid) {
+            if ($prevUid && !in_array($prevUid, $newAssigneeSet)) {
+                $this->markActivityNotificationsRead($prevUid, $activity->id);
+            }
+        }
+
+        // Notify users who are newly assigned to a role on this activity.
+        $activity->load('schedule.lead');
+        $newAssigneeIds = collect($syncData)
+            ->filter(fn ($p, $rid) => $p['assigned_to'] && ($previous[$rid] ?? null) != $p['assigned_to'])
+            ->pluck('assigned_to')->unique()->filter(fn ($uid) => $uid != auth()->id());
+
+        foreach ($newAssigneeIds as $uid) {
+            $user = User::find($uid);
+            if (!$user) continue;
+            try {
+                $user->notifyNow((new ActivityReassignedNotification($activity, auth()->user()))->onlyDatabase());
+            } catch (\Throwable $e) {
+                \Log::warning("Failed to notify role assignee {$uid}: " . $e->getMessage());
+            }
+        }
+
+        return back()->with('success', "Roles & assignees updated for activity {$activity->activity_code}.");
+    }
+
+    /**
+     * Mark a user's unread "assigned to you" notifications for a given activity as
+     * read — used when they are reassigned away, so the stale name disappears.
+     */
+    private function markActivityNotificationsRead($userId, $activityId): void
+    {
+        if (!$userId) {
+            return;
+        }
+
+        DB::table('notifications')
+            ->where('notifiable_type', \App\Models\User::class)
+            ->where('notifiable_id', $userId)
+            ->whereNull('read_at')
+            ->where('data->type', 'activity_reassigned')
+            ->where('data->document_id', $activityId)
+            ->update(['read_at' => now()]);
     }
 
     /**
@@ -556,6 +689,13 @@ class ProjectScheduleController extends Controller
 
         if ($activities->isEmpty()) {
             return back()->with('error', 'No valid activities found for this schedule.');
+        }
+
+        // Clear stale "assigned to you" notifications for each previous assignee.
+        foreach ($activities as $activity) {
+            if ($activity->assigned_to && $activity->assigned_to != $request->assigned_to) {
+                $this->markActivityNotificationsRead($activity->assigned_to, $activity->id);
+            }
         }
 
         $activities->each->update(['assigned_to' => $request->assigned_to]);

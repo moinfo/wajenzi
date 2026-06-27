@@ -110,12 +110,53 @@ class ProjectScheduleActivity extends Model implements ApprovableModel
     }
 
     /**
-     * Get the role responsible for this activity
+     * Get the role responsible for this activity (primary role).
      * Uses base Model to avoid Spatie guard mismatch issues
      */
     public function role()
     {
         return $this->belongsTo(\App\Models\Role::class);
+    }
+
+    /**
+     * All roles responsible for this activity (many-to-many). The primary
+     * role_id is kept for backward-compat; this is the full set.
+     */
+    public function roles()
+    {
+        return $this->belongsToMany(\App\Models\Role::class, 'project_schedule_activity_role', 'activity_id', 'role_id')
+            ->withPivot('assigned_to')
+            ->withTimestamps();
+    }
+
+    /**
+     * User ids assigned per-role on this activity (the pivot assignees) plus the
+     * activity-level assignee — used for visibility ("can this user see it").
+     */
+    public function assigneeIds(): array
+    {
+        $ids = $this->roles->pluck('pivot.assigned_to')->filter()->all();
+
+        if ($this->assigned_to) {
+            $ids[] = $this->assigned_to;
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * Role ids responsible for this activity — the pivot set, falling back to
+     * the primary role_id when the pivot is empty (defensive for legacy rows).
+     */
+    public function responsibleRoleIds(): array
+    {
+        $ids = $this->roles->pluck('id')->all();
+
+        if (empty($ids) && $this->role_id) {
+            $ids = [$this->role_id];
+        }
+
+        return $ids;
     }
 
     /**

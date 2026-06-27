@@ -265,7 +265,11 @@
                 <div class="row">
                     <div class="col-md-4">
                         <strong>Assigned Architect:</strong>
-                        <p>{{ $projectSchedule->assignedArchitect->name ?? 'Not Assigned' }}</p>
+                        <p class="mb-1">{{ $projectSchedule->assignedArchitect->name ?? 'Not Assigned' }}</p>
+                        @php $allAssignees = $projectSchedule->activityAssigneeNames(); @endphp
+                        @if(!empty($allAssignees))
+                            <small class="text-muted d-block"><strong>All activity assignees:</strong> {{ implode(', ', $allAssignees) }}</small>
+                        @endif
                     </div>
                     <div class="col-md-4">
                         <strong>Client:</strong>
@@ -440,10 +444,21 @@
                                         </td>
                                         <td><span class="act-discipline">{{ $activity->discipline }}</span></td>
                                         <td>
-                                            @php $roleName = $activity->role ? $activity->role->name : null; @endphp
-                                            <span class="role-pill {{ $roleClassFor($roleName) }}">
-                                                {{ $roleName ?: 'Not set' }}
-                                            </span>
+                                            @php $activityRoles = $activity->roles->count() ? $activity->roles : collect(array_filter([$activity->role])); @endphp
+                                            @forelse($activityRoles as $r)
+                                                @php $roleAssigneeName = isset($r->pivot) && $r->pivot->assigned_to ? optional($users->firstWhere('id', $r->pivot->assigned_to))->name : null; @endphp
+                                                <span class="role-pill {{ $roleClassFor($r->name) }}" title="{{ $roleAssigneeName ? $r->name.' → '.$roleAssigneeName : $r->name }}">
+                                                    {{ $r->name }}@if($roleAssigneeName)<small> → {{ $roleAssigneeName }}</small>@endif
+                                                </span>
+                                            @empty
+                                                <span class="role-pill {{ $roleClassFor(null) }}">Not set</span>
+                                            @endforelse
+                                            @if($canAddActivity || auth()->user()->can('Assign Project Activities'))
+                                                <button type="button" class="reassign-btn" title="Manage roles"
+                                                        data-toggle="modal" data-target="#rolesModal{{ $activity->id }}">
+                                                    <i class="fa fa-shield-alt"></i>
+                                                </button>
+                                            @endif
                                         </td>
                                         <td>
                                             @php
@@ -602,7 +617,8 @@
                                 </div>
                                 <small class="text-muted">
                                     {{ $activity->phase }} | {{ $activity->duration_days }} working days
-                                    @if($activity->role) | <i class="fa fa-shield-alt"></i> {{ $activity->role->name }} @endif
+                                    @php $roleNames = $activity->roles->count() ? $activity->roles->pluck('name')->implode(', ') : ($activity->role->name ?? null); @endphp
+                                    @if($roleNames) | <i class="fa fa-shield-alt"></i> {{ $roleNames }} @endif
                                     | <i class="fa fa-user"></i>
                                     {{ $activity->assignedUser ? $activity->assignedUser->name : ($projectSchedule->assignedArchitect->name ?? 'N/A') }}
                                 </small>
@@ -924,9 +940,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Role</label>
-                                <select name="role_id" class="form-control">
-                                    <option value="">-- Not set --</option>
+                                <label>Responsible Roles <small class="text-muted">(hold Ctrl/Cmd to pick several)</small></label>
+                                <select name="roles[]" class="form-control" multiple size="4">
                                     @foreach($roles as $role)
                                         <option value="{{ $role->id }}">{{ $role->name }}</option>
                                     @endforeach
@@ -1021,6 +1036,69 @@
 </div>
 @endforeach
 @endcan
+
+{{-- Manage Roles Modals (multiple responsible roles per activity) --}}
+@if($canAddActivity || auth()->user()->can('Assign Project Activities'))
+@foreach($projectSchedule->activities as $activity)
+@php
+    $activityRoleIds = $activity->responsibleRoleIds();
+    $roleAssignee    = $activity->roles->pluck('pivot.assigned_to', 'id')->all(); // roleId => userId
+    $sortedRolesForActivity = $roles->sortByDesc(fn($r) => in_array($r->id, $activityRoleIds))->values();
+@endphp
+<div class="modal fade" id="rolesModal{{ $activity->id }}" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form action="{{ route('project-schedules.activity.roles', $activity) }}" method="POST">
+                @csrf
+                @method('PATCH')
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fa fa-shield-alt mr-2"></i>Roles &amp; Assignees</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-light border mb-3">
+                        <strong>{{ $activity->activity_code }}:</strong> {{ $activity->name }}
+                    </div>
+                    <p class="text-muted mb-2">Tick the responsible roles and (optionally) choose a person for each. Anyone in a ticked role — and the chosen assignee — can see and act on this activity.</p>
+                    <div style="max-height: 380px; overflow-y: auto;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr><th style="width:40px;"></th><th>Role</th><th style="width:55%;">Assigned User</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach($sortedRolesForActivity as $role)
+                                    @php $isOn = in_array($role->id, $activityRoleIds); @endphp
+                                    <tr class="{{ $isOn ? 'table-success' : '' }}">
+                                        <td class="text-center align-middle">
+                                            <input type="checkbox" name="roles[]" value="{{ $role->id }}" {{ $isOn ? 'checked' : '' }}>
+                                        </td>
+                                        <td class="align-middle">{{ $role->name }}</td>
+                                        <td>
+                                            <select name="assignees[{{ $role->id }}]" class="form-control form-control-sm">
+                                                <option value="">-- Unassigned --</option>
+                                                @foreach($users as $u)
+                                                    <option value="{{ $u->id }}" {{ ($roleAssignee[$role->id] ?? null) == $u->id ? 'selected' : '' }}>
+                                                        {{ $u->name }} – {{ $u->roles->pluck('name')->implode(', ') ?: 'No Role' }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa fa-check mr-1"></i>Save Roles &amp; Assignees</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
+@endif
 
 <script>
 // ── File input label ──────────────────────────────────────────────────────────

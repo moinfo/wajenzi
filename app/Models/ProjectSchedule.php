@@ -91,6 +91,22 @@ class ProjectSchedule extends Model implements ApprovableModel
     }
 
     /**
+     * Distinct names of the people actually assigned to this schedule's activities.
+     * Falls back to the schedule's assigned architect for unassigned activities.
+     * (The list "Architect" column uses this so it reflects real assignees, not
+     * just the schedule-level assigned_architect_id.)
+     */
+    public function activityAssigneeNames(): array
+    {
+        return $this->activities
+            ->map(fn ($a) => optional($a->assignedUser)->name ?? optional($this->assignedArchitect)->name)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
      * The bonus task this schedule generates for its assigned architect.
      * Created automatically by BonusScheduleSyncService when the schedule is approved.
      */

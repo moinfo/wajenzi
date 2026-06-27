@@ -69,7 +69,14 @@
                                         <span class="text-muted">Start</span>
                                     @endif
                                 </td>
-                                <td>{{ $object->role->name ?? '-' }}</td>
+                                <td>
+                                    @php $tplRoleNames = $object->roles->count() ? $object->roles->pluck('name')->all() : array_filter([$object->role->name ?? null]); @endphp
+                                    @forelse($tplRoleNames as $rn)
+                                        <span class="badge badge-info">{{ $rn }}</span>
+                                    @empty
+                                        -
+                                    @endforelse
+                                </td>
                                 <td class="text-center">
                                     @if($object->is_active)
                                         <span class="badge bg-success">Yes</span>
