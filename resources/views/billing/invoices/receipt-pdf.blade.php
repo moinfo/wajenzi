@@ -385,7 +385,7 @@
                     </div>
                     <div class="signature-line">
                         <strong>Customer</strong><br>
-                        <small>{{ $invoice->client->first_name }} {{ $invoice->client->last_name }}</small>
+                        <small>{{ $invoice->recipient_name ?: 'N/A' }}</small>
                     </div>
                 </td>
                 <td width="50%" style="text-align: center; vertical-align: bottom;">

@@ -108,9 +108,18 @@
                                             </a>
                                         </td>
                                         <td>
-                                            <strong>{{ $proforma->client->first_name }} {{ $proforma->client->last_name }}</strong>
-                                            @if($proforma->client->contact_person)
-                                                <br><small class="text-muted">{{ $proforma->client->contact_person }}</small>
+                                            @php $pClient = $proforma->client; $pLead = $proforma->lead; @endphp
+                                            <strong>
+                                                @if($pClient)
+                                                    {{ $pClient->first_name }} {{ $pClient->last_name }}
+                                                @elseif($pLead)
+                                                    {{ $pLead->name }} <span class="badge badge-light">Lead</span>
+                                                @else
+                                                    N/A
+                                                @endif
+                                            </strong>
+                                            @if($pClient && $pClient->contact_person)
+                                                <br><small class="text-muted">{{ $pClient->contact_person }}</small>
                                             @endif
                                         </td>
                                         <td>{{ $proforma->issue_date->format('d/m/Y') }}</td>

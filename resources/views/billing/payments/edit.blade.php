@@ -57,7 +57,7 @@
                                     <div class="form-group">
                                         <label for="document">Invoice</label>
                                         <input type="text" id="document" class="form-control" 
-                                               value="{{ $payment->document->document_number }} - {{ $payment->document->client->company_name }}" readonly>
+                                               value="{{ $payment->document->document_number }} - {{ optional($payment->document)->recipient_name }}" readonly>
                                     </div>
                                 </div>
 
@@ -194,7 +194,7 @@
                             </tr>
                             <tr>
                                 <td><strong>Client:</strong></td>
-                                <td>{{ $payment->document->client->company_name }}</td>
+                                <td>{{ optional($payment->document)->recipient_name ?: 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <td><strong>Invoice Total:</strong></td>

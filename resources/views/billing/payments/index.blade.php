@@ -115,9 +115,18 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <strong>{{ $payment->document->client->first_name }} {{ $payment->document->client->last_name }}</strong>
-                                        @if($payment->document->client->email)
-                                            <br><small class="text-muted">{{ $payment->document->client->email }}</small>
+                                        @php $doc = $payment->document; $client = $doc?->client; $lead = $doc?->lead; @endphp
+                                        <strong>
+                                            @if($client)
+                                                {{ $client->first_name }} {{ $client->last_name }}
+                                            @elseif($lead)
+                                                {{ $lead->name }} <span class="badge badge-light">Lead</span>
+                                            @else
+                                                N/A
+                                            @endif
+                                        </strong>
+                                        @if($client && $client->email)
+                                            <br><small class="text-muted">{{ $client->email }}</small>
                                         @endif
                                     </td>
                                     <td>{{ $payment->payment_date->format('d/m/Y') }}</td>

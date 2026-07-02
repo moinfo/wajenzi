@@ -15,7 +15,7 @@ class PaymentController extends Controller
 {
     public function index(Request $request)
     {
-        $payments = BillingPayment::with(['document.client', 'receiver'])
+        $payments = BillingPayment::with(['document.client', 'document.lead', 'receiver'])
             ->when($request->client_id, function ($query, $clientId) {
                 return $query->where('client_id', $clientId);
             })

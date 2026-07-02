@@ -7,15 +7,16 @@
 .kpi-tbl { width:100%; border-collapse:collapse; font-size:12.5px; }
 .kpi-tbl thead th { background:#f8fafc; color:#475569; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; padding:9px 10px; border-bottom:1px solid #e5e7eb; }
 .kpi-tbl tbody td { padding:10px 10px; border-bottom:1px solid #f3f4f6; vertical-align:top; }
-.kpi-tbl input[type="number"] { width:75px; border:1.5px solid #e5e7eb; border-radius:6px; padding:5px 7px; font-size:12.5px; text-align:center; }
+.kpi-tbl input[type="number"] { width:75px; border:1.5px solid #9ca3af; border-radius:6px; padding:5px 7px; font-size:12.5px; text-align:center; }
 .kpi-tbl input[type="number"]:focus { border-color:#f59e0b; outline:none; box-shadow:0 0 0 3px rgba(245,158,11,.12); }
 .kpi-tbl input[type="number"].overall:focus { border-color:#16a34a; box-shadow:0 0 0 3px rgba(22,163,74,.12); }
 .kpi-tbl input[disabled] { background:#f8fafc; color:#94a3b8; }
-.kpi-tbl textarea { width:100%; min-height:32px; border:1.5px solid #e5e7eb; border-radius:6px; padding:6px 8px; font-size:12px; resize:vertical; }
+.kpi-tbl textarea { width:100%; min-height:32px; border:1.5px solid #9ca3af; border-radius:6px; padding:6px 8px; font-size:12px; resize:vertical; }
 .kpi-tbl .self-shown { font-weight:700; color:#4285f4; }
 .kpi-footer-edit { background:#fff; border-radius:12px; border:1px solid #eef0f3; padding:18px 22px; margin-bottom:18px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
 .kpi-footer-edit label { font-size:11px; font-weight:700; color:#8a92a6; text-transform:uppercase; letter-spacing:.5px; }
-.kpi-footer-edit textarea { width:100%; min-height:80px; border:1.5px solid #e5e7eb; border-radius:8px; padding:10px; font-size:13px; }
+.kpi-footer-edit textarea { width:100%; min-height:80px; border:1.5px solid #9ca3af; border-radius:8px; padding:10px; font-size:13px; background:#fff; }
+.kpi-footer-edit textarea:focus, .kpi-tbl textarea:focus { border-color:#f59e0b; outline:none; box-shadow:0 0 0 3px rgba(245,158,11,.12); }
 .kpi-footer-edit .readonly-text { background:#f8fafc; border-radius:8px; padding:12px; color:#475569; font-size:13px; white-space:pre-wrap; min-height:60px; }
 </style>
 

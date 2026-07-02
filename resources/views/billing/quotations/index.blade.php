@@ -108,8 +108,9 @@
                                             </a>
                                         </td>
                                         <td>
-                                            <strong>{{ $quotation->client->first_name }} {{ $quotation->client->last_name }}</strong>
-                                            @if($quotation->client->contact_person)
+                                            <strong>{{ $quotation->recipient_name ?: 'N/A' }}</strong>
+                                            @unless($quotation->client)<span class="badge badge-light">Lead</span>@endunless
+                                            @if($quotation->client?->contact_person)
                                                 <br><small class="text-muted">{{ $quotation->client->contact_person }}</small>
                                             @endif
                                         </td>

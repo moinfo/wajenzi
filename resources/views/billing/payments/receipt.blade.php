@@ -35,17 +35,20 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="receipt-details">
+                        @php $c = $payment->client; $rdoc = $payment->document; @endphp
                         <h5>Received From:</h5>
-                        <p class="mb-1"><strong>{{ $payment->client->company_name }}</strong></p>
-                        @if($payment->client->contact_person)
-                            <p class="mb-1">{{ $payment->client->contact_person }}</p>
+                        <p class="mb-1"><strong>{{ $c?->company_name ?: (optional($rdoc)->recipient_name ?: 'N/A') }}</strong></p>
+                        @if($c?->contact_person)
+                            <p class="mb-1">{{ $c->contact_person }}</p>
                         @endif
-                        <p class="mb-1">{{ $payment->client->full_billing_address }}</p>
-                        @if($payment->client->phone)
-                            <p class="mb-1">Phone: {{ $payment->client->phone }}</p>
+                        @if($c && $c->full_billing_address)
+                            <p class="mb-1">{{ $c->full_billing_address }}</p>
                         @endif
-                        @if($payment->client->email)
-                            <p class="mb-0">Email: {{ $payment->client->email }}</p>
+                        @if($c?->phone ?: optional($rdoc)->recipient_phone)
+                            <p class="mb-1">Phone: {{ $c?->phone ?: $rdoc->recipient_phone }}</p>
+                        @endif
+                        @if($c?->email ?: optional($rdoc)->recipient_email)
+                            <p class="mb-0">Email: {{ $c?->email ?: $rdoc->recipient_email }}</p>
                         @endif
                     </div>
                 </div>
@@ -148,7 +151,7 @@
                     <div class="text-center">
                         <div style="border-top: 1px solid #333; width: 200px; margin: 0 auto;">
                             <p class="mt-2 mb-0"><strong>Customer Signature</strong></p>
-                            <small class="text-muted">{{ $payment->client->contact_person ?? $payment->client->company_name }}</small>
+                            <small class="text-muted">{{ $payment->client?->contact_person ?? $payment->client?->company_name ?? optional($payment->document)->recipient_name }}</small>
                         </div>
                     </div>
                 </div>

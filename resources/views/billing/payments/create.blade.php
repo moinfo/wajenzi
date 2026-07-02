@@ -34,12 +34,12 @@
                                             <option value="">Choose an outstanding invoice...</option>
                                             @foreach($outstandingDocuments as $doc)
                                                 <option value="{{ $doc->id }}"
-                                                        data-client="{{ $doc->client->company_name }}"
+                                                        data-client="{{ $doc->recipient_name }}"
                                                         data-amount="{{ $doc->total_amount }}"
                                                         data-balance="{{ $doc->balance_amount }}"
                                                         data-currency="{{ $doc->currency_code }}"
                                                         {{ old('document_id', $document?->id) == $doc->id ? 'selected' : '' }}>
-                                                    {{ $doc->document_number }} - {{ $doc->client->company_name }}
+                                                    {{ $doc->document_number }} - {{ $doc->recipient_name }}
                                                     (Balance: {{ $doc->currency_code }} {{ number_format($doc->balance_amount, 2) }})
                                                 </option>
                                             @endforeach

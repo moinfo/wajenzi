@@ -192,24 +192,18 @@
                         <table class="table table-vcenter">
                             <tr>
                                 <td width="35%"><strong>Client:</strong></td>
-                                <td>{{ $payment->document->client->first_name }} {{ $payment->document->client->last_name }}</td>
+                                <td>{{ optional($payment->document)->recipient_name ?: 'N/A' }}</td>
                             </tr>
-                            @if($payment->document->client->email)
+                            @if(optional($payment->document)->recipient_email)
                                 <tr>
                                     <td><strong>Email:</strong></td>
-                                    <td>{{ $payment->document->client->email }}</td>
+                                    <td>{{ $payment->document->recipient_email }}</td>
                                 </tr>
                             @endif
-                            @if($payment->document->client->phone_number)
+                            @if(optional($payment->document)->recipient_phone)
                                 <tr>
                                     <td><strong>Phone:</strong></td>
-                                    <td>{{ $payment->document->client->phone_number }}</td>
-                                </tr>
-                            @endif
-                            @if($payment->document->client->email)
-                                <tr>
-                                    <td><strong>Email:</strong></td>
-                                    <td>{{ $payment->document->client->email }}</td>
+                                    <td>{{ $payment->document->recipient_phone }}</td>
                                 </tr>
                             @endif
                         </table>

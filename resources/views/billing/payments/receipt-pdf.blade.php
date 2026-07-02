@@ -240,18 +240,19 @@
             <td width="48%">
                 <div class="info-box">
                     <div class="box-title">Received From</div>
-                    <strong style="font-size: 14px;">{{ $payment->document->client->first_name }} {{ $payment->document->client->last_name }}</strong><br>
-                    @if($payment->document->client->address)
-                        {{ $payment->document->client->address }}<br>
+                    @php $rClient = optional($payment->document)->client; @endphp
+                    <strong style="font-size: 14px;">{{ optional($payment->document)->recipient_name ?: 'N/A' }}</strong><br>
+                    @if($rClient && $rClient->address)
+                        {{ $rClient->address }}<br>
                     @endif
-                    @if($payment->document->client->phone_number)
-                        Phone: {{ $payment->document->client->phone_number }}<br>
+                    @if(optional($payment->document)->recipient_phone)
+                        Phone: {{ $payment->document->recipient_phone }}<br>
                     @endif
-                    @if($payment->document->client->email)
-                        Email: {{ $payment->document->client->email }}<br>
+                    @if(optional($payment->document)->recipient_email)
+                        Email: {{ $payment->document->recipient_email }}<br>
                     @endif
-                    @if($payment->document->client->identification_number)
-                        ID: {{ $payment->document->client->identification_number }}
+                    @if($rClient && $rClient->identification_number)
+                        ID: {{ $rClient->identification_number }}
                     @endif
                 </div>
             </td>
@@ -373,7 +374,7 @@
                 </div>
                 <div class="signature-line">
                     <strong>Customer Signature</strong><br>
-                    <small style="color: #666;">{{ $payment->document->client->first_name }} {{ $payment->document->client->last_name }}</small>
+                    <small style="color: #666;">{{ optional($payment->document)->recipient_name ?: 'N/A' }}</small>
                 </div>
             </td>
             <td class="signature-cell">
