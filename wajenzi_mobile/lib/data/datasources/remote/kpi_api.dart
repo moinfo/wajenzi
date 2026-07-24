@@ -3,6 +3,7 @@ import '../../../core/network/api_client.dart';
 import '../../models/kpi_create_info.dart';
 import '../../models/kpi_review_detail.dart';
 import '../../models/kpi_review_list_item.dart';
+import '../../models/kpi_template.dart';
 
 final kpiApiProvider = Provider<KpiApi>((ref) {
   return KpiApi(ref.watch(apiClientProvider));
@@ -115,14 +116,109 @@ class KpiApi {
     }
     await _apiClient.patch('/performance/$id/review', data: data);
   }
-}
 
-extension on ApiClient {
-  /// Convenience PATCH wrapper using the underlying Dio instance.
-  Future patch(String path, {dynamic data}) {
-    return dio.patch(_normalize(path), data: data);
+  /// DELETE /performance/{id} — delete a review. `force` removes a completed
+  /// (audit-record) review.
+  Future<void> deleteReview(int id, {bool force = false}) async {
+    await _apiClient.delete(
+      '/performance/$id',
+      queryParameters: force ? {'force': 1} : null,
+    );
   }
 
-  String _normalize(String path) =>
-      path.trim().replaceFirst(RegExp(r'^/+'), '');
+  // ── KPI Templates ────────────────────────────────────────────────────
+
+  /// GET /performance/templates
+  Future<KpiTemplatesResponse> fetchTemplates() async {
+    final response = await _apiClient.get('/performance/templates');
+    final data = response.data['data'] as Map<String, dynamic>? ?? {};
+    return KpiTemplatesResponse.fromJson(data);
+  }
+
+  /// POST /performance/templates — returns the new template id.
+  Future<int> createTemplate({
+    required String name,
+    required int roleId,
+    required String frequency,
+  }) async {
+    final response = await _apiClient.post(
+      '/performance/templates',
+      data: {
+        'name': name,
+        'role_id': roleId,
+        'frequency': frequency,
+      },
+    );
+    final data = response.data['data'] as Map<String, dynamic>? ?? {};
+    return (data['id'] as num?)?.toInt() ?? 0;
+  }
+
+  /// GET /performance/templates/{id}
+  Future<KpiTemplateDetail> fetchTemplate(int id) async {
+    final response = await _apiClient.get('/performance/templates/$id');
+    final data = response.data['data'] as Map<String, dynamic>? ?? {};
+    return KpiTemplateDetail.fromJson(data);
+  }
+
+  /// PATCH /performance/templates/{id}
+  Future<void> updateTemplate(
+    int id, {
+    required String name,
+    required String frequency,
+    String? description,
+    required bool isActive,
+  }) async {
+    await _apiClient.patch(
+      '/performance/templates/$id',
+      data: {
+        'name': name,
+        'frequency': frequency,
+        'description': description ?? '',
+        'is_active': isActive,
+      },
+    );
+  }
+
+  /// POST /performance/templates/{id}/items — returns the new item id.
+  Future<int> addTemplateItem(
+    int templateId, {
+    required int sectionId,
+    required String kpa,
+    required String measure,
+    String? target,
+    required double weight,
+    String? measurementMethod,
+  }) async {
+    final response = await _apiClient.post(
+      '/performance/templates/$templateId/items',
+      data: {
+        'kpi_template_section_id': sectionId,
+        'kpa': kpa,
+        'measure': measure,
+        'target': target ?? '',
+        'weight': weight,
+        if (measurementMethod != null && measurementMethod.isNotEmpty)
+          'measurement_method': measurementMethod,
+      },
+    );
+    final data = response.data['data'] as Map<String, dynamic>? ?? {};
+    return (data['id'] as num?)?.toInt() ?? 0;
+  }
+
+  /// PATCH /performance/templates/{id}/items — bulk save edited rows.
+  /// `items` is keyed by item id: {'12': {'kpa':..,'measure':..,'target':..,'weight':..}}
+  Future<void> bulkUpdateItems(
+    int templateId,
+    Map<String, Map<String, dynamic>> items,
+  ) async {
+    await _apiClient.patch(
+      '/performance/templates/$templateId/items',
+      data: {'items': items},
+    );
+  }
+
+  /// DELETE /performance/templates/{id}/items/{itemId}
+  Future<void> deleteTemplateItem(int templateId, int itemId) async {
+    await _apiClient.delete('/performance/templates/$templateId/items/$itemId');
+  }
 }

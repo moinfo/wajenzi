@@ -151,6 +151,9 @@ import '../../presentation/screens/kpi/kpi_create_screen.dart';
 import '../../presentation/screens/kpi/kpi_detail_screen.dart';
 import '../../presentation/screens/kpi/kpi_self_assess_screen.dart';
 import '../../presentation/screens/kpi/kpi_reviewer_screen.dart';
+import '../../presentation/screens/kpi/kpi_templates_list_screen.dart';
+import '../../presentation/screens/kpi/kpi_template_detail_screen.dart';
+import '../../presentation/screens/kpi/supervisor_assignments_screen.dart';
 import '../../presentation/screens/web/portal_webview_screen.dart';
 // ── Native-mobile-screens fan-out (Clusters A–E) ────────────────────────
 // Cluster A: Calculators & Design Catalogs
@@ -1369,6 +1372,25 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/performance/create',
             name: 'performance-create',
             builder: (context, state) => const KpiCreateScreen(),
+          ),
+          // Literal segments MUST precede /performance/:id so they aren't
+          // swallowed by the :id param route.
+          GoRoute(
+            path: '/performance/supervisor-assignments',
+            name: 'performance-supervisor-assignments',
+            builder: (context, state) => const SupervisorAssignmentsScreen(),
+          ),
+          GoRoute(
+            path: '/performance/templates',
+            name: 'performance-templates',
+            builder: (context, state) => const KpiTemplatesListScreen(),
+          ),
+          GoRoute(
+            path: '/performance/templates/:id',
+            name: 'performance-template-detail',
+            builder: (context, state) => KpiTemplateDetailScreen(
+              templateId: int.parse(state.pathParameters['id']!),
+            ),
           ),
           GoRoute(
             path: '/performance/:id',
@@ -2797,12 +2819,13 @@ String? _mapWebRoute(String webRoute) {
     // KPI sub-routes whose backend URL is /settings/... — the URL fallback
     // would otherwise hit the "settings" fuzzy branch and land on /settings.
     // These are web-only management screens; route to the mobile KPI list.
-    'supervisor_assignments.index': '/performance',
-    'supervisor_assignments': '/performance',
-    'performance.templates': '/performance',
-    'performance_templates': '/performance',
-    'settings/supervisor-assignments': '/performance',
-    'settings_supervisor_assignments': '/performance',
+    'supervisor_assignments.index': '/performance/supervisor-assignments',
+    'supervisor_assignments': '/performance/supervisor-assignments',
+    'performance.templates': '/performance/templates',
+    'performance_templates': '/performance/templates',
+    'settings/supervisor-assignments': '/performance/supervisor-assignments',
+    'settings_supervisor_assignments': '/performance/supervisor-assignments',
+    'settings.supervisor-assignments': '/performance/supervisor-assignments',
     'site-daily-reports.index': '/site-daily-reports',
     'site-daily-reports.create': '/site-daily-reports',
     'site-daily-reports.my-reports': '/site-daily-reports',

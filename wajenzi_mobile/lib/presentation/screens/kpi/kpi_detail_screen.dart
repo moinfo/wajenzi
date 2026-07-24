@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/services/external_launcher_service.dart';
+import '../../../core/utils/permissions.dart';
 import '../../../data/datasources/remote/kpi_api.dart';
 import '../../../data/models/kpi_common.dart';
 import '../../../data/models/kpi_review_detail.dart';
@@ -492,6 +493,17 @@ class KpiDetailScreen extends ConsumerWidget {
         outlined: true,
       ));
     }
+    // Delete is the ONLY Spatie-permission-gated action in the module.
+    // The API enforces the same check; this hides an action the user can't use.
+    if (hasPermission(ref, 'Delete Performance Reviews')) {
+      buttons.add(_btn(
+        'Delete Review',
+        Icons.delete_outline,
+        AppColors.error,
+        () => _confirmDelete(context, ref, d),
+        outlined: true,
+      ));
+    }
 
     if (buttons.isEmpty) return const SizedBox.shrink();
     return Column(
@@ -558,6 +570,75 @@ class KpiDetailScreen extends ConsumerWidget {
       );
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Recall failed: $e')));
+    }
+  }
+
+  Future<void> _confirmDelete(
+      BuildContext context, WidgetRef ref, KpiReviewDetail d) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+    final isCompleted = d.status == 'completed';
+    bool force = false;
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('Delete Review'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Delete review ${d.reviewNumber}? This cannot be undone.'),
+              if (isCompleted) ...[
+                const SizedBox(height: 12),
+                const Text(
+                  'This review is completed and serves as an audit record.',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: force,
+                  activeColor: AppColors.error,
+                  title: const Text('Force delete completed review'),
+                  onChanged: (v) => setLocal(() => force = v ?? false),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel')),
+            TextButton(
+              onPressed: (isCompleted && !force)
+                  ? null
+                  : () => Navigator.pop(ctx, true),
+              child: const Text('Delete',
+                  style: TextStyle(color: AppColors.error)),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok != true) return;
+
+    try {
+      await ref.read(kpiApiProvider).deleteReview(d.id, force: force);
+      // Refresh the lists so the deleted review disappears.
+      ref.read(kpiListProvider(KpiTab.mine).notifier).refresh();
+      ref.read(kpiListProvider(KpiTab.awaiting).notifier).refresh();
+      ref.read(kpiListProvider(KpiTab.all).notifier).refresh();
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Review deleted.')),
+      );
+      if (router.canPop()) {
+        router.pop();
+      } else {
+        router.go('/performance');
+      }
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Delete failed: $e')));
     }
   }
 

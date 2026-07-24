@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\KpiItem;
 use App\Models\KpiReview;
 use App\Models\KpiReviewRating;
 use App\Models\KpiTemplate;
@@ -11,6 +12,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use PDF;
+use Spatie\Permission\Models\Role;
 
 /**
  * Sanctum-authenticated KPI / Performance review API (PUBLIC-V1).
@@ -876,5 +880,405 @@ class KpiApiController extends Controller
     protected function num($value): ?float
     {
         return $value === null ? null : (float) $value;
+    }
+
+    // =====================================================================
+    // Review lifecycle holes (destroy + pdf) — mirror KpiController
+    // =====================================================================
+
+    /**
+     * DELETE performance/{id} — destroy a KPI review.
+     *
+     * Mirrors KpiController::destroy. The ONLY true Spatie permission check in
+     * the module: can('Delete Performance Reviews'). Completed reviews are an
+     * audit record and require ?force=1 (or force:true body) to remove.
+     */
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        $performance = KpiReview::findOrFail($id);
+
+        if (!$request->user()->can('Delete Performance Reviews')) {
+            return $this->forbidden('You do not have permission to delete performance reviews.');
+        }
+
+        if ($performance->status === 'completed' && !$request->boolean('force')) {
+            return response()->json([
+                'success'       => false,
+                'requires_force'=> true,
+                'message'       => 'This review is already completed and serves as an audit record. Tick "Force delete completed review" to remove it.',
+            ], 422);
+        }
+
+        $label = $performance->review_number . ' (' . ($performance->employee->name ?? 'unknown') . ')';
+        // Cascade FKs on kpi_review_ratings/attachments wipe children automatically.
+        $performance->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Review {$label} deleted.",
+        ]);
+    }
+
+    /**
+     * GET performance/{id}/pdf — return the printable review PDF as base64.
+     *
+     * Mirrors KpiController::pdf (same view + grouping), but returns
+     * {pdf_base64, filename} JSON instead of streaming so the mobile client
+     * can save/share it. Gated by the same authorizeView rule.
+     */
+    public function pdf(Request $request, int $id): JsonResponse
+    {
+        $performance = KpiReview::findOrFail($id);
+        if (!$this->userCanView($performance, $request->user())) {
+            return $this->forbidden();
+        }
+
+        $performance->load([
+            'template.sections.items', 'employee.department', 'supervisor', 'ratings',
+            'approvals.user', 'approvals.processApprovalFlowStep',
+        ]);
+
+        $grouped = $this->groupRatingsBySection($performance);
+
+        $pdf = PDF::loadView('pages.kpi.pdf', [
+            'review'         => $performance,
+            'groupedRatings' => $grouped,
+        ])->setPaper('a4', 'portrait');
+
+        $filename = "KPI-{$performance->employee->name}-{$performance->period_label}.pdf";
+        $filename = str_replace([' ', '/'], ['_', '-'], $filename);
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'filename'   => $filename,
+                'pdf_base64' => base64_encode($pdf->output()),
+            ],
+        ]);
+    }
+
+    /**
+     * Group rating rows by their section_code_snapshot for the PDF view.
+     * Mirrors KpiController::groupRatingsBySection exactly.
+     */
+    protected function groupRatingsBySection(KpiReview $performance): array
+    {
+        $grouped = [];
+        foreach ($performance->template->sections as $section) {
+            $grouped[$section->code] = [
+                'section' => $section,
+                'ratings' => $performance->ratings->where('section_code_snapshot', $section->code)->values(),
+            ];
+        }
+        return $grouped;
+    }
+
+    // =====================================================================
+    // KPI Template administration (mirror KpiController template methods)
+    // Every method is gated by authorizeTemplates() — role-based, 403 JSON.
+    // =====================================================================
+
+    /**
+     * GET performance/templates — list templates + roles without a template yet.
+     * Mirrors KpiController::templatesIndex.
+     */
+    public function templatesIndex(Request $request): JsonResponse
+    {
+        if ($resp = $this->authorizeTemplates($request->user())) {
+            return $resp;
+        }
+
+        $templates = KpiTemplate::with(['role', 'sections.items'])->get()->map(function ($t) {
+            $items = $t->sections->flatMap->items;
+            return [
+                'id'           => $t->id,
+                'code'         => $t->code,
+                'name'         => $t->name,
+                'role'         => $t->role->name ?? '—',
+                'frequency'    => $t->frequency,
+                'is_active'    => (bool) $t->is_active,
+                'item_count'   => $items->count(),
+                'total_weight' => (float) $items->sum('weight'),
+            ];
+        })->values();
+
+        // Roles that don't yet own a template — the only valid targets for a new one.
+        $usedRoleIds    = KpiTemplate::whereNotNull('role_id')->pluck('role_id');
+        $availableRoles = Role::whereNotIn('id', $usedRoleIds)->orderBy('name')->get()
+            ->map(fn ($r) => ['id' => $r->id, 'name' => $r->name])->values();
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'templates'       => $templates,
+                'available_roles' => $availableRoles,
+            ],
+        ]);
+    }
+
+    /**
+     * POST performance/templates — create a template with a seeded Section A
+     * (30%, 14 common items) + empty Section B (70%). Mirrors KpiController::templateStore.
+     */
+    public function templateStore(Request $request): JsonResponse
+    {
+        if ($resp = $this->authorizeTemplates($request->user())) {
+            return $resp;
+        }
+
+        $data = $request->validate([
+            'name'      => 'required|string|max:120',
+            // One template per role — block roles that already own one.
+            'role_id'   => 'required|exists:roles,id|unique:kpi_templates,role_id',
+            'frequency' => 'required|in:monthly,quarterly,biannual,annual',
+        ]);
+
+        $code = $this->makeTemplateCode($data['name']);
+
+        $template = DB::transaction(function () use ($data, $code) {
+            $template = KpiTemplate::create([
+                'code'      => $code,
+                'name'      => $data['name'],
+                'role_id'   => $data['role_id'],
+                'frequency' => $data['frequency'],
+                'is_active' => true,
+            ]);
+
+            // Section A — shared "General Performance" (30%), pre-filled with the 14 common items.
+            $sectionA = $template->sections()->create([
+                'code' => 'A', 'title' => 'General Performance',
+                'weight_total' => 30, 'sort_order' => 1, 'is_common' => true,
+            ]);
+            $order = 1;
+            foreach (KpiTemplate::COMMON_SECTION_A_ITEMS as $i) {
+                $sectionA->items()->create([
+                    'kpi_template_id' => $template->id,
+                    'kpa'             => $i['kpa'],
+                    'measure'         => $i['measure'],
+                    'target'          => $i['target'],
+                    'weight'          => $i['weight'],
+                    'sort_order'      => $order++,
+                    'is_active'       => true,
+                ]);
+            }
+
+            // Section B — role-specific "Departmental Objectives" (70%), left empty.
+            $template->sections()->create([
+                'code' => 'B', 'title' => 'Departmental Objectives',
+                'weight_total' => 70, 'sort_order' => 2, 'is_common' => false,
+            ]);
+
+            return $template;
+        });
+
+        return response()->json([
+            'success' => true,
+            'data'    => ['id' => $template->id],
+            'message' => 'Template created. Section A is pre-filled — now add the departmental KPIs in Section B (should total 70%).',
+        ], 201);
+    }
+
+    /**
+     * GET performance/templates/{id} — template with sections[].items[].
+     * Mirrors KpiController::templateShow.
+     */
+    public function templateShow(Request $request, int $id): JsonResponse
+    {
+        if ($resp = $this->authorizeTemplates($request->user())) {
+            return $resp;
+        }
+
+        $template = KpiTemplate::with(['role', 'sections.items'])->findOrFail($id);
+        $allItems = $template->sections->flatMap->items;
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'id'           => $template->id,
+                'code'         => $template->code,
+                'name'         => $template->name,
+                'role'         => $template->role->name ?? '—',
+                'role_id'      => $template->role_id,
+                'frequency'    => $template->frequency,
+                'description'  => $template->description,
+                'is_active'    => (bool) $template->is_active,
+                'item_count'   => $allItems->count(),
+                'total_weight' => (float) $allItems->sum('weight'),
+                'sections'     => $template->sections->map(function ($s) {
+                    return [
+                        'id'           => $s->id,
+                        'code'         => $s->code,
+                        'title'        => $s->title,
+                        'weight_total' => (float) $s->weight_total,
+                        'is_common'    => (bool) $s->is_common,
+                        'sort_order'   => $s->sort_order,
+                        'items'        => $s->items->map(function ($it) {
+                            return [
+                                'id'                 => $it->id,
+                                'kpa'                => $it->kpa,
+                                'measure'            => $it->measure,
+                                'target'             => $it->target,
+                                'weight'             => (float) $it->weight,
+                                'measurement_method' => $it->measurement_method,
+                                'sort_order'         => $it->sort_order,
+                            ];
+                        })->values(),
+                        'items_weight' => (float) $s->items->sum('weight'),
+                    ];
+                })->values(),
+            ],
+        ]);
+    }
+
+    /**
+     * PATCH performance/templates/{id} — update editable metadata (name,
+     * frequency, description, is_active). NOT code/role_id.
+     * Mirrors KpiController::templateUpdate.
+     */
+    public function templateUpdate(Request $request, int $id): JsonResponse
+    {
+        if ($resp = $this->authorizeTemplates($request->user())) {
+            return $resp;
+        }
+
+        $template = KpiTemplate::findOrFail($id);
+        $data = $request->validate([
+            'name'        => 'required|string|max:120',
+            'frequency'   => 'required|in:monthly,quarterly,biannual,annual',
+            'description' => 'nullable|string|max:2000',
+        ]);
+        $data['is_active'] = $request->boolean('is_active');
+        $template->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Template details updated.',
+        ]);
+    }
+
+    /**
+     * POST performance/templates/{id}/items — add a KPI item to a section.
+     * Mirrors KpiController::templateStoreItem.
+     */
+    public function templateStoreItem(Request $request, int $id): JsonResponse
+    {
+        if ($resp = $this->authorizeTemplates($request->user())) {
+            return $resp;
+        }
+
+        $template = KpiTemplate::findOrFail($id);
+        $data = $request->validate([
+            'kpi_template_section_id' => 'required|exists:kpi_template_sections,id',
+            'kpa'                     => 'required|string|max:255',
+            'measure'                 => 'required|string|max:2000',
+            'target'                  => 'nullable|string|max:1000',
+            'weight'                  => 'required|numeric|min:0|max:100',
+            'measurement_method'      => 'nullable|string|max:255',
+        ]);
+        $data['kpi_template_id'] = $template->id;
+        $data['sort_order']      = ($template->items()->max('sort_order') ?? 0) + 1;
+        $item = KpiItem::create($data);
+
+        return response()->json([
+            'success' => true,
+            'data'    => ['id' => $item->id],
+            'message' => 'KPI item added.',
+        ], 201);
+    }
+
+    /**
+     * PATCH performance/templates/{id}/items — bulk-save edited rows.
+     * The ownership filter on kpi_template_id ignores rows that don't belong
+     * to this template. Mirrors KpiController::templateUpdateItems.
+     */
+    public function templateUpdateItems(Request $request, int $id): JsonResponse
+    {
+        if ($resp = $this->authorizeTemplates($request->user())) {
+            return $resp;
+        }
+
+        $template = KpiTemplate::findOrFail($id);
+        $data = $request->validate([
+            'items'           => 'required|array',
+            'items.*.kpa'     => 'required|string|max:255',
+            'items.*.measure' => 'required|string|max:2000',
+            'items.*.target'  => 'nullable|string|max:1000',
+            'items.*.weight'  => 'required|numeric|min:0|max:100',
+        ]);
+
+        DB::transaction(function () use ($template, $data) {
+            foreach ($data['items'] as $itemId => $values) {
+                KpiItem::where('id', $itemId)
+                    ->where('kpi_template_id', $template->id)
+                    ->update([
+                        'kpa'     => $values['kpa'],
+                        'measure' => $values['measure'],
+                        'target'  => $values['target'] ?? null,
+                        'weight'  => $values['weight'],
+                    ]);
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Section saved — ' . count($data['items']) . ' item(s) updated.',
+        ]);
+    }
+
+    /**
+     * DELETE performance/templates/{id}/items/{itemId} — remove a KPI item.
+     * 404 if the item doesn't belong to this template.
+     * Mirrors KpiController::templateDeleteItem.
+     */
+    public function templateDeleteItem(Request $request, int $id, int $itemId): JsonResponse
+    {
+        if ($resp = $this->authorizeTemplates($request->user())) {
+            return $resp;
+        }
+
+        $template = KpiTemplate::findOrFail($id);
+        $item     = KpiItem::findOrFail($itemId);
+        if ($item->kpi_template_id !== $template->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item not found on this template.',
+            ], 404);
+        }
+        $item->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'KPI item deleted.',
+        ]);
+    }
+
+    /**
+     * Build a unique, code-safe identifier for a new template from its name.
+     * Mirrors KpiController::makeTemplateCode.
+     */
+    protected function makeTemplateCode(string $name): string
+    {
+        $base = Str::slug($name) ?: 'template';
+        $base = substr($base, 0, 55);
+        $code = $base;
+        $n = 2;
+        while (KpiTemplate::where('code', $code)->exists()) {
+            $code = $base . '-' . $n++;
+        }
+        return $code;
+    }
+
+    /**
+     * Template management gate — role-based (mirrors KpiController::authorizeTemplates).
+     * Returns a 403 JsonResponse when unauthorized, or null when allowed.
+     */
+    protected function authorizeTemplates($user): ?JsonResponse
+    {
+        if (!$user->hasAnyRole([
+            'System Administrator', 'HR Generalist', 'Managing Director', 'CEO', 'Chief Executive Officer',
+        ])) {
+            return $this->forbidden('You do not have permission to manage KPI templates.');
+        }
+        return null;
     }
 }

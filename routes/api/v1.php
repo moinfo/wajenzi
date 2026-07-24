@@ -112,6 +112,7 @@ use App\Http\Controllers\Api\V1\SalarySlipApiController;
 use App\Http\Controllers\Api\V1\SiteApiController;
 use App\Http\Controllers\Api\V1\SiteSupervisorAssignmentApiController;
 use App\Http\Controllers\Api\V1\KpiApiController;
+use App\Http\Controllers\Api\V1\SupervisorAssignmentApiController;
 use App\Http\Controllers\Api\V1\CurrencyApiController;
 use App\Http\Controllers\Api\V1\DesignServicePackageApiController;
 use App\Http\Controllers\Api\V1\DesignServiceAddonApiController;
@@ -1242,11 +1243,28 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [KpiApiController::class, 'index']);
         Route::get('create-info', [KpiApiController::class, 'createInfo']);
         Route::post('/', [KpiApiController::class, 'store']);
+
+        // Supervisor Assignments (KPI reviewer matrix over users.supervisor_id) — literal, before {id}
+        Route::get('supervisor-assignments', [SupervisorAssignmentApiController::class, 'index']);
+        Route::patch('supervisor-assignments', [SupervisorAssignmentApiController::class, 'update']);
+
+        // KPI Templates — literal segment, MUST precede {id}
+        Route::get('templates', [KpiApiController::class, 'templatesIndex']);
+        Route::post('templates', [KpiApiController::class, 'templateStore']);
+        Route::get('templates/{id}', [KpiApiController::class, 'templateShow']);
+        Route::patch('templates/{id}', [KpiApiController::class, 'templateUpdate']);
+        Route::post('templates/{id}/items', [KpiApiController::class, 'templateStoreItem']);
+        Route::patch('templates/{id}/items', [KpiApiController::class, 'templateUpdateItems']);
+        Route::delete('templates/{id}/items/{itemId}', [KpiApiController::class, 'templateDeleteItem']);
+
+        // Reviews by id
         Route::get('{id}', [KpiApiController::class, 'show']);
+        Route::get('{id}/pdf', [KpiApiController::class, 'pdf']);
         Route::patch('{id}/self', [KpiApiController::class, 'updateSelf']);
         Route::post('{id}/submit', [KpiApiController::class, 'submit']);
         Route::post('{id}/recall', [KpiApiController::class, 'recall']);
         Route::patch('{id}/review', [KpiApiController::class, 'updateReviewer']);
+        Route::delete('{id}', [KpiApiController::class, 'destroy']);
     });
 
     // Field Marketing (mirrors web FieldMarketingController)
