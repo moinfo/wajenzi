@@ -1280,6 +1280,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('visits/{id}', [FieldMarketingApiController::class, 'updateVisit']);
         Route::delete('visits/{id}', [FieldMarketingApiController::class, 'destroyVisit']);
         Route::post('targets', [FieldMarketingApiController::class, 'storeTarget']);
+        Route::post('services', [FieldMarketingApiController::class, 'storeService']);
+        Route::put('services/{id}', [FieldMarketingApiController::class, 'updateService']);
+        Route::delete('services/{id}', [FieldMarketingApiController::class, 'destroyService']);
     });
 
     // WhatsApp Marketing (mirrors web WhatsAppMarketingController)

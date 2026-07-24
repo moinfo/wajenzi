@@ -183,6 +183,22 @@ class _FmFeedViewState extends ConsumerState<_FmFeedView> {
               ),
               const SizedBox(height: 16),
               _StatsRow(stats: stats, isSwahili: isSwahili),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final changed = await showModalBottomSheet<bool>(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => const _ServicesManagerSheet(),
+                  );
+                  if (changed == true && mounted) {
+                    setState(() => _future = _load());
+                  }
+                },
+                icon: const Icon(Icons.category_outlined, size: 18),
+                label: Text(_tr(isSwahili, 'Manage services', 'Simamia huduma')),
+              ),
               const SizedBox(height: 16),
               TextField(
                 controller: _searchCtrl,
@@ -1123,3 +1139,275 @@ InputDecoration _dec(String label) => InputDecoration(
         borderSide: BorderSide.none,
       ),
     );
+
+/// Manage the field-marketing service catalog (add / rename / delete).
+///
+/// Mirrors the web "Services" tab. The list is loaded from reference-data;
+/// mutations are manager-only and enforced server-side (a 403 surfaces its
+/// message). Field officers see the catalog read-only.
+class _ServicesManagerSheet extends ConsumerStatefulWidget {
+  const _ServicesManagerSheet();
+
+  @override
+  ConsumerState<_ServicesManagerSheet> createState() =>
+      _ServicesManagerSheetState();
+}
+
+class _ServicesManagerSheetState extends ConsumerState<_ServicesManagerSheet> {
+  bool _loading = true;
+  bool _canManage = false;
+  bool _changed = false;
+  String? _error;
+  List<Map<String, dynamic>> _services = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final res =
+          await ref.read(apiClientProvider).get('/field-marketing/reference-data');
+      final data = Map<String, dynamic>.from(res.data['data'] as Map);
+      setState(() {
+        _services = (data['services'] as List? ?? const [])
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+        // Managers are not field officers; the server is the real gate.
+        _canManage = data['is_field_officer'] != true;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = _msg(e);
+        _loading = false;
+      });
+    }
+  }
+
+  String _msg(Object e) {
+    try {
+      final data = (e as dynamic).response?.data;
+      if (data is Map && data['message'] is String) return data['message'];
+    } catch (_) {}
+    return e.toString();
+  }
+
+  void _snack(String m) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+  }
+
+  Future<void> _add(bool sw) async {
+    final name = await _promptName(sw, title: sw ? 'Ongeza huduma' : 'Add service');
+    if (name == null || name.trim().isEmpty) return;
+    try {
+      await ref
+          .read(apiClientProvider)
+          .post('/field-marketing/services', data: {'name': name.trim()});
+      _changed = true;
+      await _load();
+    } catch (e) {
+      _snack(_msg(e));
+    }
+  }
+
+  Future<void> _rename(bool sw, Map<String, dynamic> service) async {
+    final name = await _promptName(sw,
+        title: sw ? 'Badilisha jina' : 'Rename service',
+        initial: service['name']?.toString() ?? '');
+    if (name == null || name.trim().isEmpty) return;
+    try {
+      await ref
+          .read(apiClientProvider)
+          .put('/field-marketing/services/${service['id']}', data: {'name': name.trim()});
+      _changed = true;
+      await _load();
+    } catch (e) {
+      _snack(_msg(e));
+    }
+  }
+
+  Future<void> _delete(bool sw, Map<String, dynamic> service) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(sw ? 'Futa huduma' : 'Delete service'),
+        content: Text('${service['name']}'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(sw ? 'Ghairi' : 'Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(sw ? 'Futa' : 'Delete')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ref
+          .read(apiClientProvider)
+          .delete('/field-marketing/services/${service['id']}');
+      _changed = true;
+      await _load();
+    } catch (e) {
+      _snack(_msg(e));
+    }
+  }
+
+  Future<String?> _promptName(bool sw,
+      {required String title, String initial = ''}) {
+    final ctrl = TextEditingController(text: initial);
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          textCapitalization: TextCapitalization.characters,
+          decoration: _dec(sw ? 'Jina la huduma' : 'Service name'),
+          onSubmitted: (v) => Navigator.pop(ctx, v),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(sw ? 'Ghairi' : 'Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, ctrl.text),
+              child: Text(sw ? 'Hifadhi' : 'Save')),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isSwahili = ref.watch(isSwahiliProvider);
+    final isDark = ref.watch(isDarkModeProvider);
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      expand: false,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      isSwahili ? 'Orodha ya huduma' : 'Service Catalog',
+                      style: AppType.display(16),
+                    ),
+                  ),
+                  if (_canManage)
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outline),
+                      tooltip: isSwahili ? 'Ongeza' : 'Add',
+                      onPressed: () => _add(isSwahili),
+                    ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(context, _changed),
+                  ),
+                ],
+              ),
+              if (!_canManage)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    isSwahili
+                        ? 'Huduma zinasimamiwa na wasimamizi wa masoko.'
+                        : 'Services are managed by marketing managers.',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.withValues(alpha: 0.9)),
+                  ),
+                ),
+              const SizedBox(height: 4),
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
+                        ? _ErrorView(
+                            message: _error!, onRetry: _load)
+                        : _services.isEmpty
+                            ? _EmptyState(
+                                icon: Icons.category_outlined,
+                                title: isSwahili
+                                    ? 'Hakuna huduma bado.'
+                                    : 'No services yet.',
+                              )
+                            : ListView.separated(
+                                controller: scrollController,
+                                itemCount: _services.length,
+                                separatorBuilder: (_, __) =>
+                                    const Divider(height: 1),
+                                itemBuilder: (context, i) {
+                                  final s = _services[i];
+                                  return ListTile(
+                                    dense: true,
+                                    leading: const Icon(
+                                        Icons.sell_outlined,
+                                        size: 20),
+                                    title: Text(s['name']?.toString() ?? ''),
+                                    trailing: _canManage
+                                        ? Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              IconButton(
+                                                icon: const Icon(
+                                                    Icons.edit_outlined,
+                                                    size: 20),
+                                                onPressed: () =>
+                                                    _rename(isSwahili, s),
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(
+                                                    Icons.delete_outline,
+                                                    size: 20),
+                                                color: Colors.red,
+                                                onPressed: () =>
+                                                    _delete(isSwahili, s),
+                                              ),
+                                            ],
+                                          )
+                                        : null,
+                                  );
+                                },
+                              ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}

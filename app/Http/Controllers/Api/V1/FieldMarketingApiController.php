@@ -314,6 +314,61 @@ class FieldMarketingApiController extends Controller
         ]);
     }
 
+    // Service catalog management (mirrors web storeService/updateService/
+    // destroyService). Gated to managers like targets — field officers pick
+    // from the catalog but shouldn't edit it.
+    public function storeService(Request $request): JsonResponse
+    {
+        abort_unless($this->isMarketingManager(), 403, 'Only marketing managers can manage services.');
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:100|unique:field_marketing_services,name',
+        ]);
+
+        $service = FieldMarketingService::create([
+            'name'       => strtoupper(trim($validated['name'])),
+            'sort_order' => (FieldMarketingService::max('sort_order') ?? 0) + 1,
+            'status'     => 'active',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Service added.',
+            'data' => $service->only(['id', 'name', 'sort_order', 'status']),
+        ], 201);
+    }
+
+    public function updateService(Request $request, int $id): JsonResponse
+    {
+        abort_unless($this->isMarketingManager(), 403, 'Only marketing managers can manage services.');
+
+        $service = FieldMarketingService::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:100|unique:field_marketing_services,name,' . $id,
+        ]);
+
+        $service->update(['name' => strtoupper(trim($validated['name']))]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Service updated.',
+            'data' => $service->only(['id', 'name', 'sort_order', 'status']),
+        ]);
+    }
+
+    public function destroyService(int $id): JsonResponse
+    {
+        abort_unless($this->isMarketingManager(), 403, 'Only marketing managers can manage services.');
+
+        FieldMarketingService::findOrFail($id)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Service deleted.',
+        ]);
+    }
+
     // ────────────────────────── Builders ──────────────────────────
 
     private function buildSessions(Request $request, int $year, int $mon): array
