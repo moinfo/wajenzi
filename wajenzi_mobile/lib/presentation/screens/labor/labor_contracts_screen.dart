@@ -7,6 +7,8 @@ import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+import 'labor_contract_detail_screen.dart';
+import 'labor_contract_form_screen.dart';
 
 final laborContractsProjectFilterProvider = StateProvider.autoDispose<int?>(
   (ref) => null,
@@ -90,6 +92,11 @@ class _LaborContractsScreenState extends ConsumerState<LaborContractsScreen> {
             onPressed: () => _selectDateRange(context, ref),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openCreate,
+        icon: const Icon(Icons.add),
+        label: Text(isSwahili ? 'Mkataba' : 'Contract'),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -336,14 +343,18 @@ class _LaborContractsScreenState extends ConsumerState<LaborContractsScreen> {
                   )
                 else
                   ...contracts.map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _ContractCard(
-                        item: Map<String, dynamic>.from(item as Map),
-                        isSwahili: isSwahili,
-                        isDarkMode: isDarkMode,
-                      ),
-                    ),
+                    (item) {
+                      final map = Map<String, dynamic>.from(item as Map);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _ContractCard(
+                          item: map,
+                          isSwahili: isSwahili,
+                          isDarkMode: isDarkMode,
+                          onTap: () => _openDetail(map['id'] as int?),
+                        ),
+                      );
+                    },
                   ),
                 const SizedBox(height: 90),
               ],
@@ -352,6 +363,30 @@ class _LaborContractsScreenState extends ConsumerState<LaborContractsScreen> {
         ),
       ),
     );
+  }
+
+  void _refreshList() {
+    ref.invalidate(_laborContractsProvider);
+    ref.invalidate(_laborContractsReferenceProvider);
+  }
+
+  Future<void> _openDetail(int? id) async {
+    if (id == null) return;
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => LaborContractDetailScreen(contractId: id),
+      ),
+    );
+    if (result == true) _refreshList();
+  }
+
+  Future<void> _openCreate() async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => const LaborContractFormScreen(),
+      ),
+    );
+    if (result == true) _refreshList();
   }
 
   Future<void> _selectDateRange(BuildContext context, WidgetRef ref) async {
@@ -420,29 +455,36 @@ class _ContractCard extends StatelessWidget {
   final Map<String, dynamic> item;
   final bool isSwahili;
   final bool isDarkMode;
+  final VoidCallback? onTap;
 
   const _ContractCard({
     required this.item,
     required this.isSwahili,
     required this.isDarkMode,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -696,6 +738,8 @@ class _ContractCard extends StatelessWidget {
             ],
           ),
         ],
+          ),
+        ),
       ),
     );
   }

@@ -7,6 +7,8 @@ import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+import 'labor_log_detail_screen.dart';
+import 'labor_log_form_screen.dart';
 
 final laborLogsProjectFilterProvider = StateProvider.autoDispose<int?>(
   (ref) => null,
@@ -103,6 +105,11 @@ class _LaborLogsScreenState extends ConsumerState<LaborLogsScreen> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _createLog(context),
+        icon: const Icon(Icons.add),
+        label: Text(isSwahili ? 'Rekodi Kazi' : 'Log Work'),
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_laborLogsProvider);
@@ -122,8 +129,6 @@ class _LaborLogsScreenState extends ConsumerState<LaborLogsScreen> {
           ),
           data: (payload) {
             final logs = (payload['data'] as List? ?? const []).cast<dynamic>();
-            final filters =
-                payload['filters'] as Map<String, dynamic>? ?? const {};
             final projects =
                 referenceDataAsync.valueOrNull?['projects'] as List? ??
                 const [];
@@ -321,16 +326,18 @@ class _LaborLogsScreenState extends ConsumerState<LaborLogsScreen> {
                     ),
                   )
                 else
-                  ...logs.map(
-                    (item) => Padding(
+                  ...logs.map((item) {
+                    final log = Map<String, dynamic>.from(item as Map);
+                    return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _WorkLogCard(
-                        item: Map<String, dynamic>.from(item as Map),
+                        item: log,
                         isSwahili: isSwahili,
                         isDarkMode: isDarkMode,
+                        onTap: () => _openDetail(context, log['id'] as int),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
                 const SizedBox(height: 90),
               ],
             );
@@ -341,7 +348,6 @@ class _LaborLogsScreenState extends ConsumerState<LaborLogsScreen> {
   }
 
   Future<void> _selectDateRange(BuildContext context, WidgetRef ref) async {
-    final isSwahili = ref.read(isSwahiliProvider);
     final now = DateTime.now();
     final initialRange = DateTimeRange(
       start: DateTime(now.year, now.month, 1),
@@ -373,6 +379,32 @@ class _LaborLogsScreenState extends ConsumerState<LaborLogsScreen> {
         'start': DateFormat('yyyy-MM-dd').format(picked.start),
         'end': DateFormat('yyyy-MM-dd').format(picked.end),
       };
+    }
+  }
+
+  void _refreshLogs() {
+    ref.invalidate(_laborLogsProvider);
+    ref.invalidate(_laborLogsReferenceProvider);
+    ref.invalidate(_laborLogsDashboardProvider);
+  }
+
+  Future<void> _createLog(BuildContext context) async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const LaborLogFormScreen()),
+    );
+    if (result == true) {
+      _refreshLogs();
+    }
+  }
+
+  Future<void> _openDetail(BuildContext context, int logId) async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => LaborLogDetailScreen(logId: logId),
+      ),
+    );
+    if (result == true) {
+      _refreshLogs();
     }
   }
 }
@@ -407,11 +439,13 @@ class _WorkLogCard extends StatelessWidget {
   final Map<String, dynamic> item;
   final bool isSwahili;
   final bool isDarkMode;
+  final VoidCallback? onTap;
 
   const _WorkLogCard({
     required this.item,
     required this.isSwahili,
     required this.isDarkMode,
+    this.onTap,
   });
 
   @override
@@ -419,20 +453,25 @@ class _WorkLogCard extends StatelessWidget {
     final contract = item['contract'] as Map<String, dynamic>?;
     final artisan = contract?['artisan'] as Map<String, dynamic>?;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -702,7 +741,9 @@ class _WorkLogCard extends StatelessWidget {
               ),
             ],
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -797,50 +838,6 @@ class _MiniBadge extends StatelessWidget {
   }
 }
 
-class _MiniStat extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final String label;
-  final bool isDarkMode;
-
-  const _MiniStat({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.isDarkMode,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF252540) : Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 14,
-            color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: isDarkMode ? Colors.white : AppColors.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _WeatherBadge extends StatelessWidget {
   final String condition;
   final bool isDarkMode;
@@ -922,9 +919,4 @@ class _LogsErrorView extends StatelessWidget {
       ],
     );
   }
-}
-
-double _toDouble(dynamic value) {
-  if (value is num) return value.toDouble();
-  return double.tryParse('$value') ?? 0;
 }

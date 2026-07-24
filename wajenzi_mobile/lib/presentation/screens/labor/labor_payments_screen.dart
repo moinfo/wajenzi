@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
-import '../../widgets/common/error_widget.dart';
 import '../../widgets/common/empty_state_widget.dart';
 import '../../widgets/common/filter_bottom_sheet.dart';
+import 'labor_payment_detail_screen.dart';
+import 'labor_payment_report_screen.dart';
 
 class LaborPaymentsScreen extends ConsumerStatefulWidget {
   const LaborPaymentsScreen({super.key});
@@ -26,6 +26,11 @@ class _LaborPaymentsScreenState extends ConsumerState<LaborPaymentsScreen> {
   bool _isLoading = false;
   bool _hasMore = true;
   int _currentPage = 1;
+
+  // Multi-select (bulk approve)
+  bool _selectionMode = false;
+  final Set<int> _selectedIds = {};
+  bool _isBulkApproving = false;
 
   @override
   void initState() {
@@ -235,20 +240,105 @@ class _LaborPaymentsScreenState extends ConsumerState<LaborPaymentsScreen> {
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'paid':
-        return Colors.green;
-      case 'approved':
-        return Colors.blue;
-      case 'due':
-        return Colors.orange;
-      case 'pending':
-        return Colors.grey;
-      case 'held':
-        return Colors.red;
-      default:
-        return Colors.grey;
+  Future<void> _openDetail(dynamic payment) async {
+    final id = payment['id'];
+    if (id == null) return;
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => LaborPaymentDetailScreen(paymentId: id as int),
+      ),
+    );
+    if (changed == true) {
+      _loadData(refresh: true);
+    }
+  }
+
+  void _openReport() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const LaborPaymentReportScreen()),
+    );
+  }
+
+  void _toggleSelectionMode() {
+    setState(() {
+      _selectionMode = !_selectionMode;
+      if (!_selectionMode) _selectedIds.clear();
+    });
+  }
+
+  void _toggleSelected(int id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+      } else {
+        _selectedIds.add(id);
+      }
+    });
+  }
+
+  Future<void> _bulkApprove() async {
+    if (_selectedIds.isEmpty || _isBulkApproving) return;
+    final isSwahili = ref.read(isSwahiliProvider);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isSwahili ? 'Idhinisha kwa Wingi' : 'Bulk Approve'),
+        content: Text(
+          isSwahili
+              ? 'Idhinisha awamu ${_selectedIds.length} za malipo zilizochaguliwa? Zile ambazo haziko tayari zitarukwa.'
+              : 'Approve ${_selectedIds.length} selected payment phase(s)? Phases not eligible will be skipped.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(isSwahili ? 'Idhinisha' : 'Approve'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _isBulkApproving = true);
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.post(
+        '/labor/payments/bulk-approve',
+        data: {'phase_ids': _selectedIds.toList()},
+      );
+      if (response.data['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                response.data['message']?.toString() ?? 'Payments approved',
+              ),
+            ),
+          );
+        }
+        setState(() {
+          _selectionMode = false;
+          _selectedIds.clear();
+        });
+        _loadData(refresh: true);
+      } else {
+        throw Exception(response.data['message'] ?? 'Bulk approve failed');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Bulk approve failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isBulkApproving = false);
     }
   }
 
@@ -257,32 +347,75 @@ class _LaborPaymentsScreenState extends ConsumerState<LaborPaymentsScreen> {
     final isSwahili = ref.watch(isSwahiliProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu_rounded),
-          onPressed: () =>
-              ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
-        ),
-        title: Text(isSwahili ? 'Malipo ya Labor' : 'Labor Payments'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.dashboard_rounded),
-            tooltip: isSwahili ? 'Dashibodi' : 'Dashboard',
-            onPressed: () => context.go('/labor-dashboard'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterBottomSheet,
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => _loadData(refresh: true),
+      appBar: _selectionMode
+          ? AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: _toggleSelectionMode,
+              ),
+              title: Text(
+                isSwahili
+                    ? '${_selectedIds.length} zimechaguliwa'
+                    : '${_selectedIds.length} selected',
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.done_all),
+                  tooltip: isSwahili ? 'Idhinisha' : 'Approve',
+                  onPressed:
+                      _selectedIds.isEmpty || _isBulkApproving ? null : _bulkApprove,
+                ),
+              ],
+            )
+          : AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.menu_rounded),
+                onPressed: () =>
+                    ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
+              ),
+              title: Text(isSwahili ? 'Malipo ya Labor' : 'Labor Payments'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.checklist_rtl),
+                  tooltip: isSwahili ? 'Chagua' : 'Select',
+                  onPressed: _toggleSelectionMode,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.assessment_outlined),
+                  tooltip: isSwahili ? 'Ripoti' : 'Report',
+                  onPressed: _openReport,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.dashboard_rounded),
+                  tooltip: isSwahili ? 'Dashibodi' : 'Dashboard',
+                  onPressed: () => context.go('/labor-dashboard'),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.filter_list),
+                  onPressed: _showFilterBottomSheet,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => _loadData(refresh: true),
+                ),
+              ],
+            ),
+      body: Column(
+        children: [
+          if (_isBulkApproving) const LinearProgressIndicator(),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () => _loadData(refresh: true),
+              child: _buildList(),
+            ),
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () => _loadData(refresh: true),
-        child: _isLoading && _payments.isEmpty
+    );
+  }
+
+  Widget _buildList() {
+    return _isLoading && _payments.isEmpty
             ? const LoadingWidget(message: 'Loading payments...')
             : _payments.isEmpty
             ? const EmptyStateWidget(
@@ -302,24 +435,47 @@ class _LaborPaymentsScreenState extends ConsumerState<LaborPaymentsScreen> {
                   }
 
                   final payment = _payments[index];
+                  final id = payment['id'];
+                  final selected =
+                      id is int && _selectedIds.contains(id);
                   return PaymentCard(
                     payment: payment,
+                    selectionMode: _selectionMode,
+                    selected: selected,
                     onTap: () {
-                      // Navigate to payment details
+                      if (_selectionMode) {
+                        if (id is int) _toggleSelected(id);
+                      } else {
+                        _openDetail(payment);
+                      }
+                    },
+                    onLongPress: () {
+                      if (!_selectionMode) {
+                        setState(() => _selectionMode = true);
+                      }
+                      if (id is int) _toggleSelected(id);
                     },
                   );
                 },
-              ),
-      ),
-    );
+              );
   }
 }
 
 class PaymentCard extends StatelessWidget {
   final dynamic payment;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
+  final bool selectionMode;
+  final bool selected;
 
-  const PaymentCard({super.key, required this.payment, required this.onTap});
+  const PaymentCard({
+    super.key,
+    required this.payment,
+    required this.onTap,
+    this.onLongPress,
+    this.selectionMode = false,
+    this.selected = false,
+  });
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
@@ -342,8 +498,18 @@ class PaymentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      shape: selected
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
+            )
+          : null,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -353,6 +519,17 @@ class PaymentCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  if (selectionMode) ...[
+                    Icon(
+                      selected
+                          ? Icons.check_circle
+                          : Icons.radio_button_unchecked,
+                      color: selected
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.grey,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

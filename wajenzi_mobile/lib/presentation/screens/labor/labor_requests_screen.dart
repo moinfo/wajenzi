@@ -8,6 +8,7 @@ import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+import 'labor_request_detail_screen.dart';
 
 final laborRequestsSearchProvider = StateProvider.autoDispose<String>(
   (ref) => '',
@@ -343,6 +344,11 @@ class LaborRequestsScreen extends ConsumerWidget {
                         item: Map<String, dynamic>.from(item as Map),
                         isSwahili: isSwahili,
                         isDarkMode: isDarkMode,
+                        onTap: () => _openDetail(
+                          context,
+                          ref,
+                          Map<String, dynamic>.from(item),
+                        ),
                         onEdit: () => _editLaborRequest(
                           context,
                           ref,
@@ -363,6 +369,29 @@ class LaborRequestsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _openDetail(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> request,
+  ) async {
+    final id = _asInt(request['id']);
+    if (id == null) return;
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => LaborRequestDetailScreen(requestId: id),
+      ),
+    );
+    if (changed == true) {
+      ref.invalidate(_laborRequestsProvider);
+    }
+  }
+
+  int? _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse('$value');
   }
 
   Future<void> _editLaborRequest(
@@ -510,6 +539,7 @@ class _RequestCard extends StatelessWidget {
   final Map<String, dynamic> item;
   final bool isSwahili;
   final bool isDarkMode;
+  final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
@@ -517,26 +547,33 @@ class _RequestCard extends StatelessWidget {
     required this.item,
     required this.isSwahili,
     required this.isDarkMode,
+    this.onTap,
     this.onEdit,
     this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
+        child: Ink(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -742,7 +779,9 @@ class _RequestCard extends StatelessWidget {
                 ],
               ],
             ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -938,12 +977,13 @@ class _LaborRequestFormSheetState
   String? _endDateError;
   final _proposedAmountController = TextEditingController();
   final _negotiatedAmountController = TextEditingController();
-  final _materialsController = TextEditingController();
   final _paymentTermsController = TextEditingController();
   final _notesController = TextEditingController();
   int? _selectedProjectId, _selectedPhaseId, _selectedArtisanId;
   String _currency = 'TZS';
   bool _isLoading = false;
+  bool _materialsIncluded = false;
+  final List<_MaterialItemInput> _materials = [];
 
   @override
   void initState() {
@@ -965,14 +1005,22 @@ class _LaborRequestFormSheetState
           request['proposed_amount']?.toString() ?? '';
       _negotiatedAmountController.text =
           request['negotiated_amount']?.toString() ?? '';
-      _materialsController.text = request['materials_included'] == true
-          ? 'Yes'
-          : '';
+      _materialsIncluded = request['materials_included'] == true;
+      final existingMaterials = request['materials_list'];
+      if (existingMaterials is List) {
+        for (final m in existingMaterials) {
+          if (m is Map) {
+            _materials.add(
+              _MaterialItemInput(
+                name: m['name']?.toString() ?? '',
+                quantity: m['quantity']?.toString() ?? '',
+              ),
+            );
+          }
+        }
+      }
       _paymentTermsController.text = request['payment_terms']?.toString() ?? '';
       _notesController.text = request['artisan_assessment']?.toString() ?? '';
-
-      // Debug: Log the original project_id
-      print('DEBUG: Original project_id: ${request['project_id']}');
 
       _selectedProjectId = _normalizeNullableInt(request['project_id']);
       _selectedPhaseId = _normalizeNullableInt(
@@ -980,9 +1028,6 @@ class _LaborRequestFormSheetState
       );
       _selectedArtisanId = _normalizeNullableInt(request['artisan_id']);
       _currency = request['currency'] as String? ?? 'TZS';
-
-      // Debug: Log the normalized project_id
-      print('DEBUG: Normalized _selectedProjectId: $_selectedProjectId');
 
       if (request['start_date'] != null) {
         try {
@@ -1018,9 +1063,11 @@ class _LaborRequestFormSheetState
     _endDateController.dispose();
     _proposedAmountController.dispose();
     _negotiatedAmountController.dispose();
-    _materialsController.dispose();
     _paymentTermsController.dispose();
     _notesController.dispose();
+    for (final m in _materials) {
+      m.dispose();
+    }
     super.dispose();
   }
 
@@ -1249,14 +1296,7 @@ class _LaborRequestFormSheetState
                             ),
                           ],
                         ),
-                        _textField(
-                          controller: _materialsController,
-                          label: widget.isSwahili
-                              ? 'Vifaa'
-                              : 'Materials Included',
-                          maxLines: 2,
-                          isDarkMode: widget.isDarkMode,
-                        ),
+                        _materialsSection(),
                         _textField(
                           controller: _paymentTermsController,
                           label: widget.isSwahili
@@ -1307,6 +1347,113 @@ class _LaborRequestFormSheetState
           ),
         ),
       ),
+    );
+  }
+
+  Widget _materialsSection() {
+    final isDark = widget.isDarkMode;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            widget.isSwahili ? 'Vifaa Vimejumuishwa' : 'Materials Included',
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? Colors.white : AppColors.textPrimary,
+            ),
+          ),
+          value: _materialsIncluded,
+          activeThumbColor: AppColors.primary,
+          onChanged: (v) => setState(() {
+            _materialsIncluded = v;
+            if (v && _materials.isEmpty) {
+              _materials.add(_MaterialItemInput());
+            }
+          }),
+        ),
+        if (_materialsIncluded) ...[
+          ..._materials.asMap().entries.map((entry) {
+            final i = entry.key;
+            final m = entry.value;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: TextFormField(
+                      controller: m.nameController,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : AppColors.textPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: widget.isSwahili ? 'Jina' : 'Name',
+                        isDense: true,
+                        filled: true,
+                        fillColor: isDark
+                            ? const Color(0xFF2A2A3E)
+                            : Colors.grey[100],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: TextFormField(
+                      controller: m.quantityController,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : AppColors.textPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: widget.isSwahili ? 'Idadi' : 'Qty',
+                        isDense: true,
+                        filled: true,
+                        fillColor: isDark
+                            ? const Color(0xFF2A2A3E)
+                            : Colors.grey[100],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.remove_circle_outline,
+                      color: AppColors.error,
+                    ),
+                    onPressed: () => setState(() {
+                      m.dispose();
+                      _materials.removeAt(i);
+                    }),
+                  ),
+                ],
+              ),
+            );
+          }),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () =>
+                  setState(() => _materials.add(_MaterialItemInput())),
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(
+                widget.isSwahili ? 'Ongeza Kifaa' : 'Add Material',
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 4),
+      ],
     );
   }
 
@@ -1428,11 +1575,6 @@ class _LaborRequestFormSheetState
   Future<void> _submitForm() async {
     // For edit mode, project_id is not required if it wasn't changed
     final isEdit = widget.existingRequest != null;
-
-    // Debug: Log the current state
-    print(
-      'DEBUG: _submitForm - isEdit: $isEdit, _selectedProjectId: $_selectedProjectId',
-    );
 
     if (!isEdit && _selectedProjectId == null) {
       _showError(widget.isSwahili ? 'Chagua mradi' : 'Select project');
@@ -1582,8 +1724,11 @@ class _LaborRequestFormSheetState
           updateData['currency'] = _currency; // Only send if not default
         if (_negotiatedAmountController.text.isNotEmpty)
           updateData['negotiated_amount'] = _negotiatedAmountController.text;
-        if (_materialsController.text.isNotEmpty)
-          updateData['materials_included'] = true;
+        updateData['materials_included'] = _materialsIncluded;
+        final materialsList = _collectMaterials();
+        if (materialsList.isNotEmpty) {
+          updateData['materials_list'] = materialsList;
+        }
         if (_paymentTermsController.text.isNotEmpty)
           updateData['payment_terms'] = _paymentTermsController.text;
         if (_notesController.text.isNotEmpty)
@@ -1613,7 +1758,9 @@ class _LaborRequestFormSheetState
             'negotiated_amount': _negotiatedAmountController.text.isNotEmpty
                 ? _negotiatedAmountController.text
                 : null,
-            'materials_included': _materialsController.text.isNotEmpty,
+            'materials_included': _materialsIncluded,
+            if (_collectMaterials().isNotEmpty)
+              'materials_list': _collectMaterials(),
             'payment_terms': _paymentTermsController.text,
             'artisan_assessment': _notesController.text,
           },
@@ -1666,7 +1813,39 @@ class _LaborRequestFormSheetState
     });
   }
 
+  /// Builds the `materials_list` payload from the repeatable rows.
+  /// Only rows with a non-empty name are included; quantity is parsed to a
+  /// number when provided (the API validates `quantity` as nullable numeric).
+  List<Map<String, dynamic>> _collectMaterials() {
+    if (!_materialsIncluded) return const [];
+    final result = <Map<String, dynamic>>[];
+    for (final m in _materials) {
+      final name = m.nameController.text.trim();
+      if (name.isEmpty) continue;
+      final qtyText = m.quantityController.text.trim();
+      result.add({
+        'name': name,
+        if (qtyText.isNotEmpty) 'quantity': num.tryParse(qtyText) ?? qtyText,
+      });
+    }
+    return result;
+  }
+
   void _showError(String msg) => ScaffoldMessenger.of(
     context,
   ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
+}
+
+class _MaterialItemInput {
+  final TextEditingController nameController;
+  final TextEditingController quantityController;
+
+  _MaterialItemInput({String name = '', String quantity = ''})
+    : nameController = TextEditingController(text: name),
+      quantityController = TextEditingController(text: quantity);
+
+  void dispose() {
+    nameController.dispose();
+    quantityController.dispose();
+  }
 }

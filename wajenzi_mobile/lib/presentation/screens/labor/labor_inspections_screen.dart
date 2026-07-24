@@ -3,11 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../../widgets/common/empty_state_widget.dart';
 import '../../widgets/common/filter_bottom_sheet.dart';
+import 'labor_inspection_create_screen.dart';
+import 'labor_inspection_detail_screen.dart';
 
 class LaborInspectionsScreen extends ConsumerStatefulWidget {
   const LaborInspectionsScreen({super.key});
@@ -306,8 +307,6 @@ class _LaborInspectionsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authStateProvider);
-    final user = authState.valueOrNull?.user;
     final isSwahili = ref.watch(isSwahiliProvider);
 
     return Scaffold(
@@ -333,6 +332,11 @@ class _LaborInspectionsScreenState
             onPressed: () => _loadData(refresh: true),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openCreate,
+        icon: const Icon(Icons.add),
+        label: Text(isSwahili ? 'Ukaguzi' : 'New'),
       ),
       body: RefreshIndicator(
         onRefresh: () => _loadData(refresh: true),
@@ -403,14 +407,7 @@ class _LaborInspectionsScreenState
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
       child: InkWell(
-        onTap: () {
-          // TODO: Navigate to inspection details
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Inspection details feature coming soon'),
-            ),
-          );
-        },
+        onTap: () => _openDetail(inspection),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -560,7 +557,7 @@ class _LaborInspectionsScreenState
                       decoration: BoxDecoration(
                         color: _getQualityColor(
                           inspection['work_quality'],
-                        ).withOpacity(0.2),
+                        ).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -584,7 +581,7 @@ class _LaborInspectionsScreenState
                       decoration: BoxDecoration(
                         color: _getResultColor(
                           inspection['result'],
-                        ).withOpacity(0.2),
+                        ).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -613,6 +610,32 @@ class _LaborInspectionsScreenState
         ),
       ),
     );
+  }
+
+  Future<void> _openCreate() async {
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => const LaborInspectionCreateScreen(),
+      ),
+    );
+    if (created == true) {
+      _loadData(refresh: true);
+    }
+  }
+
+  Future<void> _openDetail(Map<String, dynamic> inspection) async {
+    final id = inspection['id'];
+    if (id == null) return;
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => LaborInspectionDetailScreen(
+          inspectionId: id is int ? id : int.parse(id.toString()),
+        ),
+      ),
+    );
+    if (changed == true) {
+      _loadData(refresh: true);
+    }
   }
 
   String _getFilterLabel(String key, dynamic value) {

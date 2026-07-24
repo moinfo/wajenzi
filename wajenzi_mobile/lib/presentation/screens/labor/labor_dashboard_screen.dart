@@ -1,6 +1,13 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
@@ -40,6 +47,13 @@ class LaborDashboardScreen extends ConsumerWidget {
               ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
         ),
         title: Text(isSwahili ? 'Dashibodi ya Labor' : 'Labor Dashboard'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.menu_book_rounded),
+            tooltip: isSwahili ? 'Mwongozo wa Mafunzo' : 'Training Guide',
+            onPressed: () => _openTrainingGuide(context, ref, isSwahili),
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_laborDashboardProvider),
@@ -150,6 +164,7 @@ class LaborDashboardScreen extends ConsumerWidget {
                         icon: Icons.assignment_turned_in,
                         color: const Color(0xFF2563EB),
                         isDarkMode: isDarkMode,
+                        onTap: () => context.go('/labor-contracts'),
                       ),
                     ),
                     SizedBox(
@@ -165,6 +180,7 @@ class LaborDashboardScreen extends ConsumerWidget {
                         icon: Icons.pending_actions,
                         color: const Color(0xFFF59E0B),
                         isDarkMode: isDarkMode,
+                        onTap: () => context.go('/labor-requests'),
                       ),
                     ),
                     SizedBox(
@@ -177,6 +193,7 @@ class LaborDashboardScreen extends ConsumerWidget {
                         icon: Icons.payments_outlined,
                         color: const Color(0xFF0891B2),
                         isDarkMode: isDarkMode,
+                        onTap: () => context.go('/labor-payments'),
                       ),
                     ),
                     SizedBox(
@@ -189,6 +206,7 @@ class LaborDashboardScreen extends ConsumerWidget {
                         icon: Icons.task_alt,
                         color: const Color(0xFF16A34A),
                         isDarkMode: isDarkMode,
+                        onTap: () => context.go('/labor-contracts'),
                       ),
                     ),
                   ],
@@ -206,6 +224,7 @@ class LaborDashboardScreen extends ConsumerWidget {
                         count: '${actions['pending_requests'] ?? 0}',
                         color: const Color(0xFFF59E0B),
                         isDarkMode: isDarkMode,
+                        onTap: () => context.go('/labor-requests'),
                       ),
                       _ActionRow(
                         label: isSwahili
@@ -214,6 +233,7 @@ class LaborDashboardScreen extends ConsumerWidget {
                         count: '${actions['pending_inspections'] ?? 0}',
                         color: const Color(0xFF0891B2),
                         isDarkMode: isDarkMode,
+                        onTap: () => context.go('/labor-inspections'),
                       ),
                       _ActionRow(
                         label: isSwahili ? 'Malipo Due' : 'Payments Due',
@@ -221,6 +241,7 @@ class LaborDashboardScreen extends ConsumerWidget {
                         color: const Color(0xFF2563EB),
                         isDarkMode: isDarkMode,
                         isLast: true,
+                        onTap: () => context.go('/labor-payments'),
                       ),
                     ],
                   ),
@@ -242,6 +263,7 @@ class LaborDashboardScreen extends ConsumerWidget {
                                   '${item['days_remaining'] ?? 0} ${isSwahili ? 'days' : 'days'}',
                               color: const Color(0xFFF59E0B),
                               isDarkMode: isDarkMode,
+                              onTap: () => context.go('/labor-contracts'),
                             ),
                           )
                           .toList(),
@@ -265,6 +287,7 @@ class LaborDashboardScreen extends ConsumerWidget {
                                   '${item['days_overdue'] ?? 0} ${isSwahili ? 'days overdue' : 'days overdue'}',
                               color: const Color(0xFFDC2626),
                               isDarkMode: isDarkMode,
+                              onTap: () => context.go('/labor-contracts'),
                             ),
                           )
                           .toList(),
@@ -298,6 +321,7 @@ class LaborDashboardScreen extends ConsumerWidget {
                                     item['status_badge_class'] as String?,
                                   ),
                                   isDarkMode: isDarkMode,
+                                  onTap: () => context.go('/labor-requests'),
                                 ),
                               )
                               .toList(),
@@ -320,6 +344,7 @@ class LaborDashboardScreen extends ConsumerWidget {
                                 (item) => _ContractRow(
                                   item: Map<String, dynamic>.from(item as Map),
                                   isDarkMode: isDarkMode,
+                                  onTap: () => context.go('/labor-contracts'),
                                 ),
                               )
                               .toList(),
@@ -344,6 +369,7 @@ class LaborDashboardScreen extends ConsumerWidget {
                                 (item) => _InspectionRow(
                                   item: Map<String, dynamic>.from(item as Map),
                                   isDarkMode: isDarkMode,
+                                  onTap: () => context.go('/labor-inspections'),
                                 ),
                               )
                               .toList(),
@@ -413,6 +439,7 @@ class _StatCard extends StatelessWidget {
   final IconData icon;
   final Color color;
   final bool isDarkMode;
+  final VoidCallback? onTap;
 
   const _StatCard({
     required this.title,
@@ -421,17 +448,24 @@ class _StatCard extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.isDarkMode,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: color),
@@ -461,7 +495,9 @@ class _StatCard extends StatelessWidget {
               color: isDarkMode ? Colors.white54 : AppColors.textHint,
             ),
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -473,6 +509,7 @@ class _ActionRow extends StatelessWidget {
   final Color color;
   final bool isDarkMode;
   final bool isLast;
+  final VoidCallback? onTap;
 
   const _ActionRow({
     required this.label,
@@ -480,12 +517,12 @@ class _ActionRow extends StatelessWidget {
     required this.color,
     required this.isDarkMode,
     this.isLast = false,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
       margin: EdgeInsets.only(bottom: isLast ? 0 : 12),
       decoration: BoxDecoration(
         border: isLast
@@ -496,26 +533,41 @@ class _ActionRow extends StatelessWidget {
                 ),
               ),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                color: isDarkMode ? Colors.white : AppColors.textPrimary,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: EdgeInsets.only(bottom: isLast ? 0 : 12, top: 2),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                  ),
+                ),
               ),
-            ),
+              Text(
+                count,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+              ),
+              if (onTap != null) ...[
+                const SizedBox(width: 6),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: isDarkMode ? Colors.white38 : Colors.black26,
+                ),
+              ],
+            ],
           ),
-          Text(
-            count,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -527,6 +579,7 @@ class _TimelineRow extends StatelessWidget {
   final String meta;
   final Color color;
   final bool isDarkMode;
+  final VoidCallback? onTap;
 
   const _TimelineRow({
     required this.title,
@@ -534,12 +587,16 @@ class _TimelineRow extends StatelessWidget {
     required this.meta,
     required this.color,
     required this.isDarkMode,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+      padding: const EdgeInsets.only(bottom: 12, top: 2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -588,6 +645,7 @@ class _TimelineRow extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -598,6 +656,7 @@ class _StatusListRow extends StatelessWidget {
   final String trailing;
   final Color badgeColor;
   final bool isDarkMode;
+  final VoidCallback? onTap;
 
   const _StatusListRow({
     required this.title,
@@ -605,12 +664,16 @@ class _StatusListRow extends StatelessWidget {
     required this.trailing,
     required this.badgeColor,
     required this.isDarkMode,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+      padding: const EdgeInsets.only(bottom: 12, top: 2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -658,6 +721,7 @@ class _StatusListRow extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -665,13 +729,21 @@ class _StatusListRow extends StatelessWidget {
 class _ContractRow extends StatelessWidget {
   final Map<String, dynamic> item;
   final bool isDarkMode;
+  final VoidCallback? onTap;
 
-  const _ContractRow({required this.item, required this.isDarkMode});
+  const _ContractRow({
+    required this.item,
+    required this.isDarkMode,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+      padding: const EdgeInsets.only(bottom: 12, top: 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -739,6 +811,7 @@ class _ContractRow extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -746,13 +819,21 @@ class _ContractRow extends StatelessWidget {
 class _InspectionRow extends StatelessWidget {
   final Map<String, dynamic> item;
   final bool isDarkMode;
+  final VoidCallback? onTap;
 
-  const _InspectionRow({required this.item, required this.isDarkMode});
+  const _InspectionRow({
+    required this.item,
+    required this.isDarkMode,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+      padding: const EdgeInsets.only(bottom: 14, top: 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -799,6 +880,7 @@ class _InspectionRow extends StatelessWidget {
             ],
           ),
         ],
+      ),
       ),
     );
   }
@@ -924,6 +1006,74 @@ class _LaborErrorView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+Future<void> _openTrainingGuide(
+  BuildContext context,
+  WidgetRef ref,
+  bool isSwahili,
+) async {
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(isSwahili ? 'Inapakua mwongozo...' : 'Loading guide...'),
+      duration: const Duration(seconds: 1),
+    ),
+  );
+
+  try {
+    final api = ref.read(apiClientProvider);
+    final response = await api.get('/labor/training-guide');
+    final data = response.data['data'] as Map<String, dynamic>? ?? const {};
+    final base64Str = data['pdf_base64'] as String?;
+    final fileName =
+        (data['filename'] as String?) ?? 'Labor_Training_Guide.pdf';
+
+    if (base64Str == null || base64Str.isEmpty) {
+      throw StateError('Empty PDF response');
+    }
+
+    final bytes = base64Decode(base64Str);
+
+    if (kIsWeb) {
+      final uri = Uri.parse(
+        'data:application/pdf;base64,$base64Str',
+      );
+      final opened = await launchUrl(uri, mode: LaunchMode.platformDefault);
+      if (!opened) {
+        throw StateError('Could not open generated PDF');
+      }
+      return;
+    }
+
+    final dir = await getTemporaryDirectory();
+    final filePath = '${dir.path}/$fileName';
+    final file = File(filePath);
+    await file.writeAsBytes(bytes, flush: true);
+
+    final uri = Uri.file(filePath);
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            isSwahili ? 'Imehifadhiwa: $fileName' : 'Saved: $fileName',
+          ),
+        ),
+      );
+    }
+  } catch (e) {
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          isSwahili
+              ? 'Imeshindwa kufungua mwongozo'
+              : 'Failed to open training guide',
+        ),
+        backgroundColor: AppColors.error,
+      ),
     );
   }
 }
