@@ -36,7 +36,9 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        // Google Play requires targetSdk 36+ from Aug 31, 2026 — pinned so
+        // builds from machines with an older Flutter SDK stay compliant.
+        targetSdk = maxOf(36, flutter.targetSdkVersion)
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
