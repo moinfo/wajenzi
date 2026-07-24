@@ -189,7 +189,7 @@ class LaborInspectionApiController extends Controller
                 'payment_phase_id' => 'nullable|exists:labor_payment_phases,id',
                 'notes' => 'nullable|string',
                 'photos' => 'nullable|array',
-                'photos.*' => 'file|image|max:5120',
+                'photos.*' => 'file|mimes:jpg,jpeg,png,webp|max:5120',
             ]);
 
             $photos = $this->persistPhotos($request);
@@ -286,7 +286,7 @@ class LaborInspectionApiController extends Controller
                 'payment_phase_id' => 'nullable|exists:labor_payment_phases,id',
                 'notes' => 'nullable|string',
                 'photos' => 'nullable|array',
-                'photos.*' => 'file|image|max:5120',
+                'photos.*' => 'file|mimes:jpg,jpeg,png,webp|max:5120',
             ]);
 
             // Preserve existing photos and append any newly uploaded ones.
@@ -615,8 +615,18 @@ class LaborInspectionApiController extends Controller
                 if (!$photo || !$photo->isValid()) {
                     continue;
                 }
-                $fileName = time() . '_' . uniqid() . '_' . $photo->getClientOriginalName();
-                $filePath = $photo->storeAs('uploads/labor_inspections', $fileName, 'public');
+                // Verify the decoded bytes are a real raster image (blocks SVG
+                // and other XSS-capable payloads) and use a random, non-client
+                // filename.
+                $ext = $this->safeImageExtension(@file_get_contents($photo->getRealPath()));
+                if ($ext === null) {
+                    continue;
+                }
+                $filePath = $photo->storeAs(
+                    'uploads/labor_inspections',
+                    time() . '_' . uniqid() . '.' . $ext,
+                    'public'
+                );
                 $photos[] = '/storage/' . $filePath;
             }
         }
@@ -632,13 +642,17 @@ class LaborInspectionApiController extends Controller
                 if (!is_string($b64) || trim($b64) === '') {
                     continue;
                 }
-                $ext = 'jpg';
-                if (preg_match('/^data:image\/(\w+);base64,/', $b64, $m)) {
-                    $ext = strtolower($m[1]) === 'jpeg' ? 'jpg' : strtolower($m[1]);
+                if (preg_match('/^data:image\/\w+;base64,/', $b64)) {
                     $b64 = substr($b64, strpos($b64, ',') + 1);
                 }
                 $decoded = base64_decode($b64, true);
                 if ($decoded === false) {
+                    continue;
+                }
+                // Never trust the data-URI mime; derive the extension from the
+                // actual decoded bytes and reject non-raster payloads (SVG etc).
+                $ext = $this->safeImageExtension($decoded);
+                if ($ext === null) {
                     continue;
                 }
                 $filePath = 'uploads/labor_inspections/' . time() . '_' . uniqid() . '.' . $ext;
@@ -648,6 +662,29 @@ class LaborInspectionApiController extends Controller
         }
 
         return $photos;
+    }
+
+    /**
+     * Return a safe file extension for the given image bytes, or null when the
+     * bytes are not a recognised raster image. Blocks SVG and other
+     * XSS-capable formats regardless of the client-declared mime/extension.
+     */
+    private function safeImageExtension(?string $bytes): ?string
+    {
+        if ($bytes === null || $bytes === '') {
+            return null;
+        }
+        $info = @getimagesizefromstring($bytes);
+        if ($info === false) {
+            return null;
+        }
+        return match ($info[2]) {
+            IMAGETYPE_JPEG => 'jpg',
+            IMAGETYPE_PNG => 'png',
+            IMAGETYPE_WEBP => 'webp',
+            IMAGETYPE_GIF => 'gif',
+            default => null,
+        };
     }
 
     private function formatInspection($inspection, bool $detailed = false)

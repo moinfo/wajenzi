@@ -137,7 +137,7 @@ class LaborWorkLogApiController extends Controller
                 'weather_conditions' => 'nullable|string|in:sunny,cloudy,rainy,stormy',
                 'notes' => 'nullable|string',
                 'photos' => 'nullable|array',
-                'photos.*' => 'file|image|max:10240',
+                'photos.*' => 'file|mimes:jpg,jpeg,png,webp|max:10240',
             ]);
 
             // Persist uploaded photos to the public disk (mirrors web
@@ -145,7 +145,7 @@ class LaborWorkLogApiController extends Controller
             $photos = [];
             if ($request->hasFile('photos')) {
                 foreach ($request->file('photos') as $photo) {
-                    $fileName = time() . '_' . $photo->getClientOriginalName();
+                    $fileName = time() . '_' . $photo->hashName();
                     $filePath = $photo->storeAs('uploads/labor_logs', $fileName, 'public');
                     $photos[] = '/storage/' . $filePath;
                 }
@@ -232,7 +232,7 @@ class LaborWorkLogApiController extends Controller
                 'weather_conditions' => 'nullable|string|in:sunny,cloudy,rainy,stormy',
                 'notes' => 'nullable|string',
                 'photos' => 'nullable|array',
-                'photos.*' => 'file|image|max:10240',
+                'photos.*' => 'file|mimes:jpg,jpeg,png,webp|max:10240',
             ]);
 
             // Newly uploaded photos are appended to the existing set (mirrors web
@@ -240,7 +240,7 @@ class LaborWorkLogApiController extends Controller
             if ($request->hasFile('photos')) {
                 $photos = $log->photos ?? [];
                 foreach ($request->file('photos') as $photo) {
-                    $fileName = time() . '_' . $photo->getClientOriginalName();
+                    $fileName = time() . '_' . $photo->hashName();
                     $filePath = $photo->storeAs('uploads/labor_logs', $fileName, 'public');
                     $photos[] = '/storage/' . $filePath;
                 }

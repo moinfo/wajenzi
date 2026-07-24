@@ -421,7 +421,7 @@ class LaborContractApiController extends Controller
             }
 
             $request->validate([
-                'contract_file' => 'nullable|file|max:10240',
+                'contract_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             ]);
 
             DB::transaction(function () use ($request, $contract) {
@@ -437,7 +437,7 @@ class LaborContractApiController extends Controller
                 // Handle optional uploaded signed-contract file
                 if ($request->hasFile('contract_file')) {
                     $file = $request->file('contract_file');
-                    $fileName = time() . '_contract_' . $file->getClientOriginalName();
+                    $fileName = time() . '_contract_' . $file->hashName();
                     $filePath = $file->storeAs('uploads/labor_contracts', $fileName, 'public');
                     $contract->contract_file = '/storage/' . $filePath;
                 }
