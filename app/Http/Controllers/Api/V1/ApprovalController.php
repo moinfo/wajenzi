@@ -120,6 +120,15 @@ class ApprovalController extends Controller
      */
     public function approve(Request $request, string $type, int $id): JsonResponse
     {
+        // Material requests carry a RingleSoft approval workflow. Route them
+        // through the trait so the step-role gate is enforced and the
+        // onApprovalCompleted side effects (status -> APPROVED, BOQ
+        // quantity_requested rollups, procurement status recompute) fire.
+        // Other document types keep the simple status-column flip below.
+        if (in_array($type, ['material_request', 'material-request'], true)) {
+            return $this->approveMaterialRequest($request, $id);
+        }
+
         $model = $this->getModel($type, $id);
 
         if (!$model) {
@@ -157,6 +166,13 @@ class ApprovalController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
+        // Material requests reject through the RingleSoft trait (parent status
+        // column intentionally stays 'pending' on the web; the rejection lives
+        // on the approval status). Other types keep the simple flip below.
+        if (in_array($type, ['material_request', 'material-request'], true)) {
+            return $this->rejectMaterialRequest($request, $id);
+        }
+
         $model = $this->getModel($type, $id);
 
         if (!$model) {
@@ -181,6 +197,83 @@ class ApprovalController extends Controller
         return response()->json([
             'success' => true,
             'message' => ucfirst(str_replace('_', ' ', $type)) . ' rejected.',
+        ]);
+    }
+
+    /**
+     * Approve a material request through the RingleSoft approval trait.
+     * Completing the (single-step) flow runs onApprovalCompleted, which sets
+     * the parent status to APPROVED and rolls the approved quantities up into
+     * each linked BOQ item's quantity_requested.
+     */
+    private function approveMaterialRequest(Request $request, int $id): JsonResponse
+    {
+        $materialRequest = ProjectMaterialRequest::with(['approvalStatus', 'items.boqItem'])->find($id);
+
+        if (!$materialRequest) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item not found.',
+            ], 404);
+        }
+
+        if (!$materialRequest->canBeApprovedBy($request->user())) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not allowed to approve this material request at the current step.',
+            ], 403);
+        }
+
+        $ok = $materialRequest->approve($request->input('reason') ?? $request->input('comment'), $request->user());
+
+        if ($ok === false) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not allowed to approve this material request at the current step.',
+            ], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Material request approved successfully.',
+        ]);
+    }
+
+    /**
+     * Reject a material request through the RingleSoft approval trait. The
+     * reason is persisted as the approval comment; the parent status column
+     * stays 'pending' (web parity).
+     */
+    private function rejectMaterialRequest(Request $request, int $id): JsonResponse
+    {
+        $materialRequest = ProjectMaterialRequest::with('approvalStatus')->find($id);
+
+        if (!$materialRequest) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item not found.',
+            ], 404);
+        }
+
+        if (!$materialRequest->canBeApprovedBy($request->user())) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not allowed to reject this material request at the current step.',
+            ], 403);
+        }
+
+        $ok = $materialRequest->reject($request->reason, $request->user());
+
+        if ($ok === false) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not allowed to reject this material request at the current step.',
+            ], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Material request rejected.',
         ]);
     }
 

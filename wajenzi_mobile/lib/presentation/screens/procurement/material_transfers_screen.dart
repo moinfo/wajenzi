@@ -6,6 +6,7 @@ import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+import 'procurement_shared.dart';
 
 final _searchProvider = StateProvider.autoDispose<String>((_) => '');
 final _statusFilterProvider = StateProvider.autoDispose<String?>((_) => null);
@@ -60,6 +61,7 @@ class MaterialTransfersScreen extends ConsumerWidget {
     final transfersAsync = ref.watch(_materialTransfersProvider);
     final search = ref.watch(_searchProvider);
     final status = ref.watch(_statusFilterProvider);
+    final canAdd = hasPermission(ref, 'Add Material Transfer');
 
     return Scaffold(
       appBar: AppBar(
@@ -69,11 +71,13 @@ class MaterialTransfersScreen extends ConsumerWidget {
         ),
         title: Text(isSwahili ? 'Uhamishaji wa Vifaa' : 'Material Transfers'),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openCreateSheet(context, ref, isSwahili),
-        icon: const Icon(Icons.add),
-        label: Text(isSwahili ? 'Mpya' : 'New'),
-      ),
+      floatingActionButton: canAdd
+          ? FloatingActionButton.extended(
+              onPressed: () => _openCreateSheet(context, ref, isSwahili),
+              icon: const Icon(Icons.add),
+              label: Text(isSwahili ? 'Mpya' : 'New'),
+            )
+          : null,
       body: Column(
         children: [
           _SearchAndFilter(
@@ -348,7 +352,6 @@ class _TransferCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final status =
         (transfer['approval_status'] ?? transfer['status'] ?? '').toString();
-    final statusColor = _statusColor(status);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -385,24 +388,7 @@ class _TransferCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      status.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: statusColor,
-                      ),
-                    ),
-                  ),
+                  ProcurementStatusChip(status: status),
                 ],
               ),
               const SizedBox(height: 10),
@@ -511,9 +497,29 @@ class MaterialTransferDetailScreen extends ConsumerWidget {
     final isDarkMode = ref.watch(isDarkModeProvider);
     final detailAsync = ref.watch(_transferDetailProvider(id));
 
+    // Delete is only offered while the transfer is not yet approved
+    // (mirrors the web guard) and the user holds the delete permission.
+    // The API enforces both again server-side.
+    final detail = detailAsync.valueOrNull;
+    final detailStatus = normalizeStatus(
+      (detail?['approval_status'] ?? detail?['status'])?.toString(),
+    );
+    final canDelete = detail != null &&
+        detailStatus != 'APPROVED' &&
+        detailStatus != 'COMPLETED' &&
+        hasPermission(ref, 'Delete Material Transfer');
+
     return Scaffold(
       appBar: AppBar(
         title: Text(isSwahili ? 'Maelezo' : 'Transfer Detail'),
+        actions: [
+          if (canDelete)
+            IconButton(
+              tooltip: isSwahili ? 'Futa' : 'Delete',
+              icon: Icon(Icons.delete_outline, color: AppColors.error),
+              onPressed: () => _confirmDelete(context, ref, isSwahili),
+            ),
+        ],
       ),
       body: detailAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -534,6 +540,67 @@ class MaterialTransferDetailScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    bool isSwahili,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(isSwahili ? 'Futa Uhamishaji' : 'Delete Transfer'),
+          content: Text(
+            isSwahili
+                ? 'Una uhakika unataka kufuta uhamishaji huu? '
+                    'Kitendo hiki hakiwezi kutenduliwa.'
+                : 'Are you sure you want to delete this transfer? '
+                    'This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(isSwahili ? 'Futa' : 'Delete'),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true) return;
+
+    try {
+      final api = ref.read(apiClientProvider);
+      await api.delete('/material-transfers/$id');
+      ref.invalidate(_materialTransfersProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isSwahili ? 'Imefutwa' : 'Transfer deleted'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(procurementErrorMessage(e)),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }
 

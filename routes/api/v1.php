@@ -76,6 +76,7 @@ use App\Http\Controllers\Api\V1\PayrollAdministrationApiController;
 use App\Http\Controllers\Api\V1\AdjustmentController;
 use App\Http\Controllers\Api\V1\ProcurementController;
 use App\Http\Controllers\Api\V1\SupplierQuotationController;
+use App\Http\Controllers\Api\V1\QuotationComparisonApiController;
 use App\Http\Controllers\Api\V1\PurchaseApiController;
 use App\Http\Controllers\Api\V1\MaterialInspectionController;
 use App\Http\Controllers\Api\V1\MaterialInventoryApiController;
@@ -910,11 +911,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Material Requests
     Route::prefix('material-requests')->group(function () {
+        Route::get('reference-data', [MaterialRequestController::class, 'referenceData']);
         Route::get('/', [MaterialRequestController::class, 'index']);
         Route::post('/', [MaterialRequestController::class, 'store']);
+        Route::post('bulk', [MaterialRequestController::class, 'storeBulk']);
         Route::get('{id}', [MaterialRequestController::class, 'show']);
         Route::put('{id}', [MaterialRequestController::class, 'update']);
         Route::delete('{id}', [MaterialRequestController::class, 'destroy']);
+        Route::post('{id}/quantities', [MaterialRequestController::class, 'updateQuantities']);
         Route::post('{id}/submit', [MaterialRequestController::class, 'submit']);
         Route::post('{id}/approve', [MaterialRequestController::class, 'approve']);
         Route::post('{id}/reject', [MaterialRequestController::class, 'reject']);
@@ -1098,22 +1102,50 @@ Route::middleware('auth:sanctum')->group(function () {
     // Procurement
     Route::prefix('procurement')->group(function () {
         Route::get('dashboard', [ProcurementController::class, 'dashboard']);
+
+        // Quotation Comparisons — reads via ProcurementController, writes via QuotationComparisonApiController.
+        // Specific literal segments must precede the {id} route.
         Route::get('quotation-comparisons', [ProcurementController::class, 'quotationComparisons']);
+        Route::get('quotation-comparisons/create-eligibility/{materialRequestId}', [QuotationComparisonApiController::class, 'createEligibility']);
+        Route::post('quotation-comparisons', [QuotationComparisonApiController::class, 'store']);
         Route::get('quotation-comparisons/{id}', [ProcurementController::class, 'showQuotationComparison']);
+        Route::post('quotation-comparisons/{id}/approve', [QuotationComparisonApiController::class, 'approve']);
+        Route::post('quotation-comparisons/{id}/reject', [QuotationComparisonApiController::class, 'reject']);
+        Route::post('quotation-comparisons/{id}/create-purchase', [QuotationComparisonApiController::class, 'createPurchase']);
+
+        // Record Deliveries + Supplier Receivings
         Route::get('pending-deliveries', [PurchaseApiController::class, 'pendingDeliveries']);
         Route::get('receivings', [PurchaseApiController::class, 'receivings']);
         Route::get('receivings/{id}', [PurchaseApiController::class, 'showReceiving']);
+        Route::post('receivings/{id}/overheads', [PurchaseApiController::class, 'storeReceivingOverheads']);
+
+        // Supplier Quotations — literal segments before {id}
         Route::get('supplier-quotations/reference-data', [SupplierQuotationController::class, 'referenceData']);
+        Route::get('supplier-quotations/available-suppliers/{materialRequestId}', [SupplierQuotationController::class, 'availableSuppliers']);
         Route::get('supplier-quotations', [SupplierQuotationController::class, 'index']);
         Route::post('supplier-quotations', [SupplierQuotationController::class, 'store']);
         Route::get('supplier-quotations/{id}', [SupplierQuotationController::class, 'show']);
         Route::put('supplier-quotations/{id}', [SupplierQuotationController::class, 'update']);
         Route::delete('supplier-quotations/{id}', [SupplierQuotationController::class, 'destroy']);
+
+        // Purchase Orders + Record Deliveries actions
         Route::get('purchases', [PurchaseApiController::class, 'index']);
         Route::get('purchases/{id}', [PurchaseApiController::class, 'show']);
         Route::post('purchases/{id}/deliveries', [PurchaseApiController::class, 'storeDelivery']);
+        Route::post('purchases/{id}/submit', [PurchaseApiController::class, 'submit']);
+        Route::post('purchases/{id}/approve', [PurchaseApiController::class, 'approve']);
+        Route::post('purchases/{id}/reject', [PurchaseApiController::class, 'reject']);
+        Route::post('purchases/{id}/payment', [PurchaseApiController::class, 'storePayment']);
+        Route::post('purchases/{id}/close', [PurchaseApiController::class, 'close']);
+
+        // Material Inspections — literal segments before {id}
         Route::get('inspections', [MaterialInspectionController::class, 'index']);
+        Route::get('inspections/receivings/{receivingId}/create-data', [MaterialInspectionController::class, 'createData']);
+        Route::post('inspections', [MaterialInspectionController::class, 'store']);
         Route::get('inspections/{id}', [MaterialInspectionController::class, 'show']);
+        Route::post('inspections/{id}/approve', [MaterialInspectionController::class, 'approve']);
+        Route::post('inspections/{id}/reject', [MaterialInspectionController::class, 'reject']);
+        Route::post('inspections/{id}/update-stock', [MaterialInspectionController::class, 'updateStock']);
     });
 
     // ───────────────────────────────────────────────────────────────────

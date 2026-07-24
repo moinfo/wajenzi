@@ -89,6 +89,13 @@ import '../../presentation/screens/billing/billing_payments_screen.dart';
 import '../../presentation/screens/billing/billing_emails_screen.dart';
 import '../../presentation/screens/billing/billing_products_screen.dart';
 import '../../presentation/screens/procurement/procurement_screen.dart';
+import '../../presentation/screens/procurement/material_requests_screen.dart';
+import '../../presentation/screens/procurement/supplier_quotations_screen.dart';
+import '../../presentation/screens/procurement/quotation_comparisons_screen.dart';
+import '../../presentation/screens/procurement/purchase_orders_screen.dart';
+import '../../presentation/screens/procurement/record_deliveries_screen.dart';
+import '../../presentation/screens/procurement/supplier_receivings_screen.dart';
+import '../../presentation/screens/procurement/material_inspections_screen.dart';
 import '../../presentation/screens/employee_profile/employee_profile_screen.dart';
 import '../../presentation/screens/reports/architect_bonus_report_screen.dart';
 import '../../presentation/screens/reports/reports_hub_screen.dart';
@@ -452,44 +459,37 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/material-requests',
             name: 'material-requests',
-            builder: (context, state) =>
-                const ProcurementScreen(materialRequestsOnly: true),
+            builder: (context, state) => const MaterialRequestsScreen(),
           ),
           GoRoute(
             path: '/supplier-quotations',
             name: 'supplier-quotations',
-            builder: (context, state) =>
-                const ProcurementScreen(supplierQuotationsOnly: true),
+            builder: (context, state) => const SupplierQuotationsScreen(),
           ),
           GoRoute(
             path: '/quotation-comparisons',
             name: 'quotation-comparisons',
-            builder: (context, state) =>
-                const ProcurementScreen(quotationComparisonsOnly: true),
+            builder: (context, state) => const QuotationComparisonsScreen(),
           ),
           GoRoute(
             path: '/purchase-orders',
             name: 'purchase-orders',
-            builder: (context, state) =>
-                const ProcurementScreen(purchaseOrdersOnly: true),
+            builder: (context, state) => const PurchaseOrdersScreen(),
           ),
           GoRoute(
             path: '/record-deliveries',
             name: 'record-deliveries',
-            builder: (context, state) =>
-                const ProcurementScreen(recordDeliveriesOnly: true),
+            builder: (context, state) => const RecordDeliveriesScreen(),
           ),
           GoRoute(
             path: '/supplier-receivings',
             name: 'supplier-receivings',
-            builder: (context, state) =>
-                const ProcurementScreen(supplierReceivingsOnly: true),
+            builder: (context, state) => const SupplierReceivingsScreen(),
           ),
           GoRoute(
             path: '/material-inspections',
             name: 'material-inspections',
-            builder: (context, state) =>
-                const ProcurementScreen(materialInspectionsOnly: true),
+            builder: (context, state) => const MaterialInspectionsScreen(),
           ),
           GoRoute(
             path: '/attendance',

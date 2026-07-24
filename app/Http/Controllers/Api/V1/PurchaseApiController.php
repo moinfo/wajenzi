@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\CostCategory;
+use App\Models\ProjectExpense;
 use App\Models\Purchase;
 use App\Models\User;
 use App\Models\SupplierReceiving;
@@ -15,8 +17,33 @@ use Illuminate\Support\Facades\Log;
 
 class PurchaseApiController extends Controller
 {
+    /**
+     * Standard 403 envelope used for all permission denials.
+     */
+    private function permissionDenied(): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'You do not have permission to perform this action.',
+        ], 403);
+    }
+
+    /**
+     * Purchases are served to two menus: procurement 'Purchase Orders' and
+     * the accounting 'Purchases' screen. Either menu permission grants reads.
+     */
+    private function canViewPurchases(Request $request): bool
+    {
+        $user = $request->user();
+        return $user && ($user->can('Purchase Orders') || $user->can('Purchases'));
+    }
+
     public function index(Request $request): JsonResponse
     {
+        if (!$this->canViewPurchases($request)) {
+            return $this->permissionDenied();
+        }
+
         try {
             $query = Purchase::with([
                 'supplier',
@@ -92,19 +119,14 @@ class PurchaseApiController extends Controller
         }
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
+        if (!$this->canViewPurchases($request)) {
+            return $this->permissionDenied();
+        }
+
         try {
-            $purchase = Purchase::with([
-                'supplier',
-                'item',
-                'project',
-                'materialRequest',
-                'quotationComparison',
-                'purchaseItems.boqItem',
-                'user',
-                'approvalStatus',
-            ])->findOrFail($id);
+            $purchase = $this->loadPurchaseDetail($id);
 
             return response()->json([
                 'success' => true,
@@ -121,6 +143,10 @@ class PurchaseApiController extends Controller
 
     public function pendingDeliveries(Request $request): JsonResponse
     {
+        if (!$request->user() || !$request->user()->can('Record Deliveries')) {
+            return $this->permissionDenied();
+        }
+
         try {
             $perPage = min((int) $request->integer('per_page', 100), 200);
 
@@ -216,6 +242,10 @@ class PurchaseApiController extends Controller
 
     public function storeDelivery(Request $request, int $id): JsonResponse
     {
+        if (!$request->user() || !$request->user()->can('Record Deliveries')) {
+            return $this->permissionDenied();
+        }
+
         try {
             $purchase = Purchase::with(['purchaseItems', 'supplier', 'project'])->findOrFail($id);
 
@@ -549,10 +579,25 @@ class PurchaseApiController extends Controller
         }
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
+        if (!$this->canViewPurchases($request)) {
+            return $this->permissionDenied();
+        }
+
         try {
             $purchase = Purchase::findOrFail($id);
+
+            // Web only allows deletion while the PO is not APPROVED; approved
+            // POs have BOQ rollups + downstream receivings so deletion is blocked.
+            $status = strtoupper($purchase->approvalStatus?->status ?? $purchase->status ?? 'PENDING');
+            if ($status === 'APPROVED') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Approved purchase orders cannot be deleted.',
+                ], 403);
+            }
+
             $purchase->delete();
 
             return response()->json([
@@ -566,6 +611,329 @@ class PurchaseApiController extends Controller
                 'message' => 'Failed to delete purchase: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * POST /procurement/purchases/{id}/submit
+     * Creator submits the PO into the RingleSoft approval workflow.
+     */
+    public function submit(Request $request, int $id): JsonResponse
+    {
+        try {
+            $purchase = Purchase::findOrFail($id);
+
+            $ok = $purchase->submit();
+            if ($ok === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not allowed to submit this purchase order.',
+                ], 403);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Purchase order submitted for approval.',
+                'data' => $this->formatPurchase($this->loadPurchaseDetail($id), true),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Purchase submit error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to submit purchase order: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /procurement/purchases/{id}/approve
+     * Approves the next pending step; completing the flow triggers
+     * onApprovalCompleted (status APPROVED + BOQ rollups).
+     */
+    public function approve(Request $request, int $id): JsonResponse
+    {
+        try {
+            $purchase = Purchase::findOrFail($id);
+
+            $ok = $purchase->approve($request->input('comment'));
+            if ($ok === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not allowed to approve this purchase order at the current step.',
+                ], 403);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Purchase order approved.',
+                'data' => $this->formatPurchase($this->loadPurchaseDetail($id), true),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Purchase approve error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to approve purchase order: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /procurement/purchases/{id}/reject
+     */
+    public function reject(Request $request, int $id): JsonResponse
+    {
+        try {
+            $request->validate(['reason' => 'required|string|max:500']);
+
+            $purchase = Purchase::findOrFail($id);
+
+            $ok = $purchase->reject($request->reason);
+            if ($ok === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not allowed to reject this purchase order at the current step.',
+                ], 403);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Purchase order rejected.',
+                'data' => $this->formatPurchase($this->loadPurchaseDetail($id), true),
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('Purchase reject error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reject purchase order: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /procurement/purchases/{id}/payment
+     * Finance uploads the payment proof (multipart). Sets payment_status 'paid'.
+     */
+    public function storePayment(Request $request, int $id): JsonResponse
+    {
+        if (!$request->user() || !$request->user()->can('Upload Payment Attachment')) {
+            return $this->permissionDenied();
+        }
+
+        try {
+            $purchase = Purchase::findOrFail($id);
+
+            $status = strtoupper($purchase->approvalStatus?->status ?? $purchase->status ?? 'PENDING');
+            if ($status !== 'APPROVED') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only approved purchase orders can have payment recorded.',
+                ], 422);
+            }
+
+            if (strtolower($purchase->payment_status ?? '') === 'paid' || $purchase->isClosed()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment for this purchase order has already been recorded.',
+                ], 422);
+            }
+
+            $request->validate([
+                'payment_date'       => 'required|date',
+                'payment_reference'  => 'required|string|max:100',
+                'payment_attachment' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+                'payment_note'       => 'nullable|string|max:500',
+            ]);
+
+            $path = $request->file('payment_attachment')->store('payment_attachments', 'public');
+
+            $purchase->update([
+                'payment_status'      => 'paid',
+                'payment_date'        => $request->payment_date,
+                'payment_reference'   => $request->payment_reference,
+                'payment_attachment'  => $path,
+                'payment_note'        => $request->payment_note,
+                'payment_uploaded_by' => $request->user()->id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment attachment uploaded successfully.',
+                'data' => $this->formatPurchase($this->loadPurchaseDetail($id), true),
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('Purchase storePayment error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to upload payment attachment: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /procurement/purchases/{id}/close
+     * Procurement closes a paid PO. Terminal (payment_status 'closed').
+     */
+    public function close(Request $request, int $id): JsonResponse
+    {
+        if (!$request->user() || !$request->user()->can('Close Purchase Order')) {
+            return $this->permissionDenied();
+        }
+
+        try {
+            $purchase = Purchase::findOrFail($id);
+
+            if (!$purchase->isPaymentUploaded()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot close a purchase order without payment proof.',
+                ], 422);
+            }
+
+            $purchase->update(['payment_status' => 'closed']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Purchase order marked as closed.',
+                'data' => $this->formatPurchase($this->loadPurchaseDetail($id), true),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Purchase close error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to close purchase order: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /procurement/receivings/{id}/overheads
+     * Upserts one ProjectExpense per subtype (loading/offloading/transportation)
+     * under the "Overhead Expense" cost category. Zero/blank removes the row.
+     */
+    public function storeReceivingOverheads(Request $request, int $id): JsonResponse
+    {
+        if (!$request->user() || !$request->user()->can('Supplier Receivings')) {
+            return $this->permissionDenied();
+        }
+
+        try {
+            $receiving = SupplierReceiving::with('project')->findOrFail($id);
+
+            $request->validate([
+                'loading_amount'        => 'nullable|numeric|min:0',
+                'offloading_amount'     => 'nullable|numeric|min:0',
+                'transportation_amount' => 'nullable|numeric|min:0',
+                'overhead_notes'        => 'nullable|string|max:500',
+                'expense_date'          => 'nullable|date',
+            ]);
+
+            if (!$receiving->project_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot save overheads — this receiving has no linked project.',
+                ], 422);
+            }
+
+            $category = CostCategory::firstOrCreate(['name' => 'Overhead Expense']);
+            $expenseDate = $request->input('expense_date')
+                ?: ($receiving->date?->toDateString() ?? now()->toDateString());
+            $notes = $request->input('overhead_notes');
+
+            $types = [
+                'loading'        => $request->input('loading_amount'),
+                'offloading'     => $request->input('offloading_amount'),
+                'transportation' => $request->input('transportation_amount'),
+            ];
+
+            foreach ($types as $subtype => $amount) {
+                $amount = ($amount === null || $amount === '') ? null : (float) $amount;
+
+                $existing = ProjectExpense::where('supplier_receiving_id', $receiving->id)
+                    ->where('expense_subtype', $subtype)
+                    ->first();
+
+                if ($amount === null || $amount <= 0) {
+                    $existing?->delete();
+                    continue;
+                }
+
+                $payload = [
+                    'project_id'            => $receiving->project_id,
+                    'cost_category_id'      => $category->id,
+                    'supplier_receiving_id' => $receiving->id,
+                    'expense_subtype'       => $subtype,
+                    'amount'                => $amount,
+                    'description'           => ucfirst($subtype) . ' for receiving ' . ($receiving->receiving_number ?? '#' . $receiving->id),
+                    'remarks'               => $notes,
+                    'expense_date'          => $expenseDate,
+                    'created_by'            => $request->user()->id,
+                    'status'                => 'draft',
+                ];
+
+                if ($existing) {
+                    $existing->update($payload);
+                } else {
+                    ProjectExpense::create($payload);
+                }
+            }
+
+            $updated = SupplierReceiving::with([
+                'purchase.purchaseItems.boqItem',
+                'supplier',
+                'project',
+                'receivedBy',
+                'inspections',
+            ])->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Delivery overheads saved.',
+                'data' => $this->formatReceiving($updated, true),
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('Receiving overheads error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save overheads: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Eager-load a purchase with everything the detail formatter + approval
+     * flow builder need (including the payment uploader + approval records).
+     */
+    private function loadPurchaseDetail(int $id): Purchase
+    {
+        return Purchase::with([
+            'supplier',
+            'item',
+            'project',
+            'materialRequest',
+            'quotationComparison',
+            'purchaseItems.boqItem',
+            'user',
+            'paymentUploadedBy',
+            'approvals',
+            'approvalStatus',
+        ])->findOrFail($id);
     }
 
     private function formatPurchase($purchase, bool $detailed = false)
@@ -588,6 +956,9 @@ class PurchaseApiController extends Controller
             'status' => $status,
             'approval_status' => $status,
             'approval_summary' => $this->approvalSummary($status),
+            'payment_status' => $purchase->payment_status,
+            'is_payment_uploaded' => $purchase->isPaymentUploaded(),
+            'is_closed' => $purchase->isClosed(),
             'document_number' => $purchase->document_number,
             'is_expense' => $purchase->is_expense,
             'has_attachment' => !empty($purchase->file),
@@ -654,6 +1025,33 @@ class PurchaseApiController extends Controller
             $data['delivery_address'] = $purchase->delivery_address;
             $data['payment_terms'] = $purchase->payment_terms;
             $data['approval_flow'] = $this->buildApprovalFlow($purchase);
+
+            // Payment lifecycle (null -> paid -> closed). Finance uploads the
+            // payment proof; Procurement then closes the PO.
+            $data['payment_date'] = optional($purchase->payment_date)->format('Y-m-d')
+                ?? ($purchase->payment_date ? (string) $purchase->payment_date : null);
+            $data['payment_reference'] = $purchase->payment_reference;
+            $data['payment_note'] = $purchase->payment_note;
+            $data['payment_attachment_url'] = $purchase->payment_attachment_url;
+            $data['has_payment_attachment'] = !empty($purchase->payment_attachment);
+            $data['payment_uploaded_by'] = null;
+            if ($purchase->relationLoaded('paymentUploadedBy') && $purchase->paymentUploadedBy) {
+                $data['payment_uploaded_by'] = [
+                    'id' => $purchase->paymentUploadedBy->id,
+                    'name' => $purchase->paymentUploadedBy->name,
+                ];
+            }
+
+            // Action gating flags mirror the web @can + status guards so the
+            // mobile UI can hide buttons it cannot use (server still enforces).
+            $user = auth()->user();
+            $isApproved = $status === 'APPROVED';
+            $data['can_upload_payment'] = $isApproved
+                && empty($purchase->payment_status)
+                && $user && $user->can('Upload Payment Attachment');
+            $data['can_close'] = $isApproved
+                && $purchase->isPaymentUploaded()
+                && $user && $user->can('Close Purchase Order');
             $data['purchase_items'] = $purchase->relationLoaded('purchaseItems')
                 ? $purchase->purchaseItems->map(fn ($item) => [
                     'id' => $item->id,
@@ -678,7 +1076,7 @@ class PurchaseApiController extends Controller
 
     private function buildApprovalFlow(Purchase $purchase): array
     {
-        $steps = collect($purchase->approvalStatus?->steps ?? [])->map(function ($step) {
+        $steps = collect($purchase->approvalStatus?->steps ?? [])->map(function ($step) use ($purchase) {
             $flowStep = ProcessApprovalFlowStep::with('role')->find($step['id']);
             $approval = null;
             if (!empty($step['process_approval_id']) && $purchase->relationLoaded('approvals')) {
@@ -805,6 +1203,19 @@ class PurchaseApiController extends Controller
                     'status' => $inspection->status,
                 ])->values()
                 : [];
+
+            // Existing delivery overheads keyed by subtype so the mobile form
+            // can prefill loading/offloading/transportation amounts.
+            $overheads = ProjectExpense::where('supplier_receiving_id', $receiving->id)
+                ->get()
+                ->keyBy('expense_subtype');
+            $data['overheads'] = [
+                'loading' => (float) ($overheads['loading']->amount ?? 0),
+                'offloading' => (float) ($overheads['offloading']->amount ?? 0),
+                'transportation' => (float) ($overheads['transportation']->amount ?? 0),
+                'notes' => $overheads->first()->remarks ?? null,
+                'expense_date' => optional($overheads->first()?->expense_date)->format('Y-m-d'),
+            ];
         }
 
         return $data;

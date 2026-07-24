@@ -27,6 +27,10 @@ class MaterialTransferController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        if (!$request->user()->can('Material Transfers')) {
+            return $this->permissionDenied();
+        }
+
         try {
             $query = MaterialTransfer::with([
                     'fromProject:id,project_name,document_number',
@@ -94,6 +98,10 @@ class MaterialTransferController extends Controller
      */
     public function referenceData(Request $request): JsonResponse
     {
+        if (!$request->user()->can('Material Transfers')) {
+            return $this->permissionDenied();
+        }
+
         $fromProjectId = $request->query('from_project_id');
 
         $sourceBoqItems = $fromProjectId
@@ -156,8 +164,12 @@ class MaterialTransferController extends Controller
     /**
      * GET /api/v1/material-transfers/{id}
      */
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
+        if (!$request->user()->can('Material Transfers')) {
+            return $this->permissionDenied();
+        }
+
         try {
             $transfer = MaterialTransfer::with([
                 'fromProject:id,project_name,document_number',
@@ -190,6 +202,10 @@ class MaterialTransferController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        if (!$request->user()->can('Add Material Transfer')) {
+            return $this->permissionDenied();
+        }
+
         try {
             $validated = $request->validate([
                 'from_project_id' => 'required|exists:projects,id|different:to_project_id',
@@ -295,8 +311,12 @@ class MaterialTransferController extends Controller
      * DELETE /api/v1/material-transfers/{id}
      * Only allowed while the transfer is still pending and not approved.
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
+        if (!$request->user()->can('Delete Material Transfer')) {
+            return $this->permissionDenied();
+        }
+
         try {
             $transfer = MaterialTransfer::findOrFail($id);
             if ($transfer->isApproved()) {
@@ -388,6 +408,19 @@ class MaterialTransferController extends Controller
                 'message' => 'Failed to reject material transfer: '.$e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Standard 403 envelope for missing Spatie permissions. Approval actions
+     * (approve/reject) are intentionally NOT gated here — they defer to the
+     * RingleSoft step-role check, mirroring the web behaviour.
+     */
+    private function permissionDenied(): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'You do not have permission to perform this action.',
+        ], 403);
     }
 
     /**

@@ -11,24 +11,33 @@ use App\Models\SupplierQuotationItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
+/**
+ * Mobile API for supplier quotations.
+ * Mirrors web {@see \App\Http\Controllers\SupplierQuotationController}.
+ */
 class SupplierQuotationController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        try {
-            $query = SupplierQuotation::with(['supplier', 'materialRequest.project'])
-                ->orderBy('created_at', 'desc');
+        if (!$request->user()->can('Supplier Quotations')) {
+            return $this->permissionDenied();
+        }
 
-            if ($request->material_request_id) {
+        try {
+            $query = SupplierQuotation::with(['supplier', 'materialRequest.project', 'items'])
+                ->orderByDesc('created_at');
+
+            if ($request->filled('material_request_id')) {
                 $query->where('material_request_id', $request->material_request_id);
             }
 
-            if ($request->status) {
+            if ($request->filled('status')) {
                 $query->where('status', $request->status);
             }
 
-            if ($request->search) {
+            if ($request->filled('search')) {
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
                     $q->where('quotation_number', 'like', "%{$search}%")
@@ -41,43 +50,49 @@ class SupplierQuotationController extends Controller
                 });
             }
 
-            $quotations = $query->paginate($request->per_page ?? 20);
+            $quotations = $query->paginate((int) ($request->per_page ?? 100));
 
             return response()->json([
                 'success' => true,
-                'data' => SupplierQuotationResource::collection($quotations),
-                'meta' => [
-                    'current_page' => $quotations->currentPage(),
-                    'last_page' => $quotations->lastPage(),
-                    'per_page' => $quotations->perPage(),
-                    'total' => $quotations->total(),
+                'data' => [
+                    'data' => SupplierQuotationResource::collection($quotations->getCollection()),
+                    'meta' => [
+                        'current_page' => $quotations->currentPage(),
+                        'last_page' => $quotations->lastPage(),
+                        'per_page' => $quotations->perPage(),
+                        'total' => $quotations->total(),
+                    ],
                 ],
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
-                'data' => [],
+                'message' => 'Failed to fetch supplier quotations: '.$e->getMessage(),
             ], 500);
         }
     }
 
-    public function referenceData(): JsonResponse
+    public function referenceData(Request $request): JsonResponse
     {
+        if (!$request->user()->can('Supplier Quotations')) {
+            return $this->permissionDenied();
+        }
+
         $suppliers = Supplier::orderBy('name')->get(['id', 'name', 'vrn']);
         $materialRequests = ProjectMaterialRequest::with(['project', 'items'])
-            ->whereIn(DB::raw('LOWER(status)'), ['approved', 'pending', 'draft', 'rejected'])
-            ->orderBy('created_at', 'desc')
+            ->whereRaw('UPPER(status) = ?', ['APPROVED'])
+            ->orderByDesc('created_at')
             ->get()
-            ->map(fn ($request) => [
-                'id' => $request->id,
-                'request_number' => $request->request_number,
-                'project_name' => $request->project?->project_name ?? $request->project?->name,
-                'status' => $request->status,
-                'items' => $request->items->map(fn ($item) => [
+            ->map(fn ($mr) => [
+                'id' => $mr->id,
+                'request_number' => $mr->request_number,
+                'project_name' => $mr->project?->project_name ?? $mr->project?->name,
+                'status' => $mr->status,
+                'items' => $mr->items->map(fn ($item) => [
                     'id' => $item->id,
                     'description' => $item->description,
-                    'quantity_requested' => $item->quantity_requested,
+                    'quantity_requested' => (float) $item->quantity_requested,
+                    'quantity_approved' => $item->quantity_approved !== null ? (float) $item->quantity_approved : null,
                     'unit' => $item->unit,
                     'boq_item_id' => $item->boq_item_id,
                 ])->values(),
@@ -92,8 +107,36 @@ class SupplierQuotationController extends Controller
         ]);
     }
 
-    public function show(int $id): JsonResponse
+    /**
+     * GET /procurement/supplier-quotations/available-suppliers/{materialRequestId}
+     * Suppliers that do NOT yet have a quotation for the given request.
+     */
+    public function availableSuppliers(Request $request, int $materialRequestId): JsonResponse
     {
+        if (!$request->user()->can('Supplier Quotations')) {
+            return $this->permissionDenied();
+        }
+
+        $existingSupplierIds = SupplierQuotation::where('material_request_id', $materialRequestId)
+            ->pluck('supplier_id')
+            ->all();
+
+        $suppliers = Supplier::when(!empty($existingSupplierIds), fn ($q) => $q->whereNotIn('id', $existingSupplierIds))
+            ->orderBy('name')
+            ->get(['id', 'name', 'vrn']);
+
+        return response()->json([
+            'success' => true,
+            'data' => ['suppliers' => $suppliers],
+        ]);
+    }
+
+    public function show(Request $request, int $id): JsonResponse
+    {
+        if (!$request->user()->can('Supplier Quotations')) {
+            return $this->permissionDenied();
+        }
+
         $quotation = SupplierQuotation::with(['supplier', 'materialRequest.project', 'items'])
             ->findOrFail($id);
 
@@ -105,10 +148,22 @@ class SupplierQuotationController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if (!$request->user()->can('Add Supplier Quotation')) {
+            return $this->permissionDenied();
+        }
+
         $validated = $this->validatePayload($request);
-        $quotation = DB::transaction(function () use ($request, $validated) {
-            return $this->persistQuotation(new SupplierQuotation(), $request, $validated);
-        });
+
+        try {
+            $quotation = DB::transaction(function () use ($request, $validated) {
+                return $this->persistQuotation(new SupplierQuotation(), $request, $validated);
+            });
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create supplier quotation: '.$e->getMessage(),
+            ], 500);
+        }
 
         return response()->json([
             'success' => true,
@@ -119,12 +174,31 @@ class SupplierQuotationController extends Controller
 
     public function update(Request $request, int $id): JsonResponse
     {
+        if (!$request->user()->can('Edit Supplier Quotation')) {
+            return $this->permissionDenied();
+        }
+
         $quotation = SupplierQuotation::with('items')->findOrFail($id);
+
+        if ($quotation->status !== 'received') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only quotations with status "received" can be edited.',
+            ], 422);
+        }
+
         $validated = $this->validatePayload($request);
 
-        $quotation = DB::transaction(function () use ($quotation, $request, $validated) {
-            return $this->persistQuotation($quotation, $request, $validated);
-        });
+        try {
+            $quotation = DB::transaction(function () use ($quotation, $request, $validated) {
+                return $this->persistQuotation($quotation, $request, $validated);
+            });
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update supplier quotation: '.$e->getMessage(),
+            ], 500);
+        }
 
         return response()->json([
             'success' => true,
@@ -133,9 +207,21 @@ class SupplierQuotationController extends Controller
         ]);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
+        if (!$request->user()->can('Delete Supplier Quotation')) {
+            return $this->permissionDenied();
+        }
+
         $quotation = SupplierQuotation::findOrFail($id);
+
+        if ($quotation->status !== 'received') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only quotations with status "received" can be deleted.',
+            ], 422);
+        }
+
         $quotation->items()->delete();
         $quotation->delete();
 
@@ -156,6 +242,7 @@ class SupplierQuotationController extends Controller
             'payment_terms' => 'nullable|string|max:255',
             'vat_amount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
+            'file' => 'nullable|file|max:10240',
             'items' => 'required|array|min:1',
             'items.*.material_request_item_id' => 'required|exists:project_material_request_items,id',
             'items.*.description' => 'nullable|string|max:255',
@@ -191,6 +278,11 @@ class SupplierQuotationController extends Controller
             'status' => $quotation->exists ? $quotation->status : 'received',
         ];
 
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('quotations', 'public');
+            $data['file'] = '/storage/'.$path;
+        }
+
         if (!$quotation->exists) {
             $data['created_by'] = $request->user()->id;
             $quotation = SupplierQuotation::create($data);
@@ -214,5 +306,13 @@ class SupplierQuotationController extends Controller
         }
 
         return $quotation;
+    }
+
+    private function permissionDenied(): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'You do not have permission to perform this action.',
+        ], 403);
     }
 }
