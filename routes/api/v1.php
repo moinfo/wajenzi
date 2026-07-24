@@ -77,6 +77,7 @@ use App\Http\Controllers\Api\V1\AdjustmentController;
 use App\Http\Controllers\Api\V1\ProcurementController;
 use App\Http\Controllers\Api\V1\SupplierQuotationController;
 use App\Http\Controllers\Api\V1\QuotationComparisonApiController;
+use App\Http\Controllers\Api\V1\SitePaylogApiController;
 use App\Http\Controllers\Api\V1\PurchaseApiController;
 use App\Http\Controllers\Api\V1\MaterialInspectionController;
 use App\Http\Controllers\Api\V1\MaterialInventoryApiController;
@@ -1146,6 +1147,36 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('inspections/{id}/approve', [MaterialInspectionController::class, 'approve']);
         Route::post('inspections/{id}/reject', [MaterialInspectionController::class, 'reject']);
         Route::post('inspections/{id}/update-stock', [MaterialInspectionController::class, 'updateStock']);
+    });
+
+    // ── Site Paylog (daily site payments: material + labour) ──────────────
+    // Literal/reference segments MUST precede requests/{id}.
+    Route::prefix('site-paylog')->group(function () {
+        Route::get('reference-data', [SitePaylogApiController::class, 'referenceData']);
+
+        // Payment Channels
+        Route::get('channels', [SitePaylogApiController::class, 'channels']);
+        Route::post('channels', [SitePaylogApiController::class, 'storeChannel']);
+        Route::delete('channels/{id}', [SitePaylogApiController::class, 'destroyChannel']);
+
+        // Reports (read site_paylogs line rows)
+        Route::get('reports/daily', [SitePaylogApiController::class, 'dailyReport']);
+        Route::get('reports/monthly', [SitePaylogApiController::class, 'monthlyReport']);
+
+        // Daily Payments screen summary (that site+date's requests + totals)
+        Route::get('daily-summary', [SitePaylogApiController::class, 'dailySummary']);
+
+        // Payment Requests
+        Route::get('requests', [SitePaylogApiController::class, 'index']);
+        Route::post('requests', [SitePaylogApiController::class, 'storeBulk']);
+        Route::get('requests/{id}', [SitePaylogApiController::class, 'show']);
+        Route::delete('requests/{id}', [SitePaylogApiController::class, 'destroyRequest']);
+        Route::post('requests/{id}/submit', [SitePaylogApiController::class, 'submit']);
+        Route::post('requests/{id}/approve', [SitePaylogApiController::class, 'approve']);
+        Route::post('requests/{id}/reject', [SitePaylogApiController::class, 'reject']);
+        Route::post('requests/{id}/return', [SitePaylogApiController::class, 'returnRequest']);
+        Route::post('requests/{id}/discard', [SitePaylogApiController::class, 'discard']);
+        Route::post('requests/{id}/pay', [SitePaylogApiController::class, 'recordPayment']);
     });
 
     // ───────────────────────────────────────────────────────────────────

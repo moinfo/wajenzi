@@ -96,6 +96,11 @@ import '../../presentation/screens/procurement/purchase_orders_screen.dart';
 import '../../presentation/screens/procurement/record_deliveries_screen.dart';
 import '../../presentation/screens/procurement/supplier_receivings_screen.dart';
 import '../../presentation/screens/procurement/material_inspections_screen.dart';
+import '../../presentation/screens/paylog/daily_payments_screen.dart';
+import '../../presentation/screens/paylog/daily_payment_report_screen.dart';
+import '../../presentation/screens/paylog/monthly_payment_report_screen.dart';
+import '../../presentation/screens/paylog/payment_channels_screen.dart';
+import '../../presentation/screens/paylog/payment_requests_screen.dart';
 import '../../presentation/screens/employee_profile/employee_profile_screen.dart';
 import '../../presentation/screens/reports/architect_bonus_report_screen.dart';
 import '../../presentation/screens/reports/reports_hub_screen.dart';
@@ -1507,6 +1512,32 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/material-transfers',
             name: 'material-transfers',
             builder: (context, state) => const MaterialTransfersScreen(),
+          ),
+          // ── Site Paylog ────────────────────────────────────────────────
+          GoRoute(
+            path: '/site-paylog',
+            name: 'site-paylog',
+            builder: (context, state) => const DailyPaymentsScreen(),
+          ),
+          GoRoute(
+            path: '/site-paylog/daily-report',
+            name: 'site-paylog-daily-report',
+            builder: (context, state) => const DailyPaymentReportScreen(),
+          ),
+          GoRoute(
+            path: '/site-paylog/monthly-report',
+            name: 'site-paylog-monthly-report',
+            builder: (context, state) => const MonthlyPaymentReportScreen(),
+          ),
+          GoRoute(
+            path: '/site-paylog/channels',
+            name: 'site-paylog-channels',
+            builder: (context, state) => const PaymentChannelsScreen(),
+          ),
+          GoRoute(
+            path: '/site-paylog/requests',
+            name: 'site-paylog-requests',
+            builder: (context, state) => const PaymentRequestsScreen(),
           ),
         ],
       ),
@@ -3066,6 +3097,17 @@ String? _mapWebRoute(String webRoute) {
     'content_creator.index': '/content-creator',
     'content_creator': '/content-creator',
     'content-creator': '/content-creator',
+    // ── Site Paylog (menu route names + resolved-URL spellings) ────────
+    'site_paylog': '/site-paylog',
+    'site-paylog': '/site-paylog',
+    'site_paylog.daily_report': '/site-paylog/daily-report',
+    'site-paylog/daily-report': '/site-paylog/daily-report',
+    'site_paylog.monthly_report': '/site-paylog/monthly-report',
+    'site-paylog/monthly-report': '/site-paylog/monthly-report',
+    'site_paylog.channels': '/site-paylog/channels',
+    'site-paylog/channels': '/site-paylog/channels',
+    'site_paylog.requests': '/site-paylog/requests',
+    'site-paylog/requests': '/site-paylog/requests',
     // ── Cluster C: Engineering Design ──────────────────────────────────
     'structural_design': '/structural-design',
     'structural-design': '/structural-design',
