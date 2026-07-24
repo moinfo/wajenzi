@@ -480,7 +480,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('labor')->group(function () {
         Route::get('dashboard', [LaborDashboardApiController::class, 'index']);
-        
+        Route::get('training-guide', [LaborDashboardApiController::class, 'trainingGuide']);
+
         // Labor Requests CRUD
         Route::get('requests/reference-data', [LaborRequestApiController::class, 'referenceData']);
         Route::get('requests/construction-phases/{projectId}', [LaborRequestApiController::class, 'getConstructionPhases']);
@@ -502,6 +503,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('contracts', [LaborContractApiController::class, 'index']);
         Route::post('contracts', [LaborContractApiController::class, 'store']);
         Route::get('contracts/{id}', [LaborContractApiController::class, 'show']);
+        Route::get('contracts/{id}/pdf', [LaborContractApiController::class, 'generatePDF']);
         Route::put('contracts/{id}', [LaborContractApiController::class, 'update']);
         Route::post('contracts/{id}/hold', [LaborContractApiController::class, 'putOnHold']);
         Route::post('contracts/{id}/resume', [LaborContractApiController::class, 'resume']);
@@ -527,11 +529,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('inspections/{id}', [LaborInspectionApiController::class, 'update']);
         Route::delete('inspections/{id}', [LaborInspectionApiController::class, 'destroy']);
         Route::post('inspections/{id}/submit', [LaborInspectionApiController::class, 'submit']);
+        Route::post('inspections/{id}/approve', [LaborInspectionApiController::class, 'approve']);
+        Route::post('inspections/{id}/reject', [LaborInspectionApiController::class, 'reject']);
         Route::get('inspections/contract/{contractId}', [LaborInspectionApiController::class, 'contractInspections']);
 
         // Labor Payments CRUD
         Route::get('payments/reference-data', [LaborPaymentApiController::class, 'referenceData']);
         Route::get('payments/dashboard', [LaborPaymentApiController::class, 'dashboard']);
+        Route::get('payments/report', [LaborPaymentApiController::class, 'report']);
+        Route::get('payments/contract/{contractId}', [LaborPaymentApiController::class, 'contractPayments']);
+        Route::post('payments/bulk-approve', [LaborPaymentApiController::class, 'bulkApprove']);
         Route::get('payments', [LaborPaymentApiController::class, 'index']);
         Route::post('payments', [LaborPaymentApiController::class, 'store']);
         Route::get('payments/{id}', [LaborPaymentApiController::class, 'show']);
@@ -539,6 +546,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('payments/{id}', [LaborPaymentApiController::class, 'destroy']);
         Route::post('payments/{id}/approve', [LaborPaymentApiController::class, 'approve']);
         Route::post('payments/{id}/process', [LaborPaymentApiController::class, 'processPayment']);
+        Route::post('payments/{id}/hold', [LaborPaymentApiController::class, 'hold']);
+        Route::post('payments/{id}/release', [LaborPaymentApiController::class, 'release']);
     });
 
     // Architect Bonus CRUD

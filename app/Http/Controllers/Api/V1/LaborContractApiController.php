@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Classes\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\LaborContract;
 use App\Models\LaborRequest;
 use App\Models\Project;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -137,6 +139,10 @@ class LaborContractApiController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
+            $request->merge([
+                'total_amount' => Utility::strip_commas($request->input('total_amount')),
+            ]);
+
             $validated = $request->validate([
                 'labor_request_id' => 'required|exists:labor_requests,id',
                 'start_date' => 'required|date',
@@ -161,36 +167,41 @@ class LaborContractApiController extends Controller
                 ], 400);
             }
 
-            $contract = LaborContract::create([
-                'labor_request_id' => $validated['labor_request_id'],
-                'project_id' => $laborRequest->project_id,
-                'artisan_id' => $laborRequest->artisan_id,
-                'supervisor_id' => $validated['supervisor_id'] ?? null,
-                'start_date' => $validated['start_date'],
-                'end_date' => $validated['end_date'],
-                'scope_of_work' => $validated['scope_of_work'],
-                'terms_conditions' => $validated['terms_conditions'] ?? null,
-                'total_amount' => $validated['total_amount'],
-                'currency' => $laborRequest->currency,
-                'status' => 'draft',
-            ]);
+            $contract = DB::transaction(function () use ($validated, $laborRequest) {
+                $contract = LaborContract::create([
+                    'labor_request_id' => $validated['labor_request_id'],
+                    'project_id' => $laborRequest->project_id,
+                    'artisan_id' => $laborRequest->artisan_id,
+                    'supervisor_id' => $validated['supervisor_id'] ?? null,
+                    'contract_date' => now(),
+                    'start_date' => $validated['start_date'],
+                    'end_date' => $validated['end_date'],
+                    'scope_of_work' => $validated['scope_of_work'],
+                    'terms_conditions' => $validated['terms_conditions'] ?? null,
+                    'total_amount' => $validated['total_amount'],
+                    'currency' => $laborRequest->currency,
+                    'status' => 'draft',
+                ]);
 
-            if (!empty($validated['phases'])) {
-                foreach ($validated['phases'] as $phaseData) {
-                    $contract->paymentPhases()->create([
-                        'phase_number' => $phaseData['phase_number'],
-                        'phase_name' => $phaseData['phase_name'],
-                        'percentage' => $phaseData['percentage'],
-                        'amount' => ($phaseData['percentage'] / 100) * $contract->total_amount,
-                        'milestone_description' => $phaseData['milestone_description'] ?? null,
-                        'status' => 'pending',
-                    ]);
+                if (!empty($validated['phases'])) {
+                    foreach ($validated['phases'] as $phaseData) {
+                        $contract->paymentPhases()->create([
+                            'phase_number' => $phaseData['phase_number'],
+                            'phase_name' => $phaseData['phase_name'],
+                            'percentage' => $phaseData['percentage'],
+                            'amount' => ($phaseData['percentage'] / 100) * $contract->total_amount,
+                            'milestone_description' => $phaseData['milestone_description'] ?? null,
+                            'status' => 'pending',
+                        ]);
+                    }
+                } else {
+                    $contract->createDefaultPaymentPhases();
                 }
-            } else {
-                $contract->createDefaultPaymentPhases();
-            }
 
-            $laborRequest->update(['status' => 'contracted']);
+                $laborRequest->update(['status' => 'contracted']);
+
+                return $contract;
+            });
 
             $contract->load(['project', 'artisan', 'supervisor', 'paymentPhases']);
 
@@ -231,11 +242,40 @@ class LaborContractApiController extends Controller
                 'end_date' => 'sometimes|required|date|after:start_date',
                 'scope_of_work' => 'sometimes|required|string',
                 'supervisor_id' => 'nullable|exists:users,id',
-                'total_amount' => 'sometimes|required|numeric|min:0',
                 'terms_conditions' => 'nullable|string',
+                'phases' => 'nullable|array',
+                'phases.*.phase_number' => 'required_with:phases|integer',
+                'phases.*.phase_name' => 'required_with:phases|string',
+                'phases.*.percentage' => 'required_with:phases|numeric|min:0|max:100',
+                'phases.*.milestone_description' => 'nullable|string',
             ]);
 
-            $contract->update($validated);
+            // total_amount is locked on edit (mirrors web); only scalar fields + phases change.
+            $scalarFields = array_intersect_key($validated, array_flip([
+                'start_date', 'end_date', 'scope_of_work', 'supervisor_id', 'terms_conditions',
+            ]));
+
+            DB::transaction(function () use ($contract, $scalarFields, $request) {
+                if (!empty($scalarFields)) {
+                    $contract->update($scalarFields);
+                }
+
+                if ($request->has('phases')) {
+                    $contract->paymentPhases()->delete();
+                    foreach ($request->input('phases') as $phaseData) {
+                        $contract->paymentPhases()->create([
+                            'phase_number' => $phaseData['phase_number'],
+                            'phase_name' => $phaseData['phase_name'],
+                            'percentage' => $phaseData['percentage'],
+                            'amount' => ($phaseData['percentage'] / 100) * $contract->total_amount,
+                            'milestone_description' => $phaseData['milestone_description'] ?? null,
+                            'status' => 'pending',
+                        ]);
+                    }
+                }
+            });
+
+            $contract->refresh();
             $contract->load(['project', 'artisan', 'supervisor', 'paymentPhases']);
 
             return response()->json([
@@ -258,7 +298,7 @@ class LaborContractApiController extends Controller
         }
     }
 
-    public function putOnHold(int $id): JsonResponse
+    public function putOnHold(Request $request, int $id): JsonResponse
     {
         try {
             $contract = LaborContract::findOrFail($id);
@@ -270,7 +310,10 @@ class LaborContractApiController extends Controller
                 ], 400);
             }
 
-            $contract->update(['status' => 'on_hold']);
+            $contract->update([
+                'status' => 'on_hold',
+                'notes' => $contract->notes . "\n\nPut on hold: " . ($request->input('reason') ?? 'No reason specified'),
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -314,7 +357,7 @@ class LaborContractApiController extends Controller
         }
     }
 
-    public function terminate(int $id): JsonResponse
+    public function terminate(Request $request, int $id): JsonResponse
     {
         try {
             $contract = LaborContract::findOrFail($id);
@@ -326,13 +369,36 @@ class LaborContractApiController extends Controller
                 ], 400);
             }
 
-            $contract->update(['status' => 'terminated']);
+            $validated = $request->validate([
+                'termination_reason' => 'required|string|min:10',
+            ]);
+
+            DB::transaction(function () use ($contract, $validated) {
+                $contract->update([
+                    'status' => 'terminated',
+                    'actual_end_date' => now(),
+                    'notes' => $contract->notes . "\n\nTermination Reason: " . $validated['termination_reason'],
+                ]);
+
+                // Put all pending/due/approved payment phases on hold
+                $contract->paymentPhases()
+                    ->whereIn('status', ['pending', 'due', 'approved'])
+                    ->update(['status' => 'held']);
+            });
+
+            $contract->load(['project', 'artisan', 'supervisor', 'paymentPhases']);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Contract terminated.',
                 'data' => $this->formatContract($contract),
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
         } catch (\Throwable $e) {
             Log::error('LaborContract terminate error: ' . $e->getMessage());
             return response()->json([
@@ -342,10 +408,10 @@ class LaborContractApiController extends Controller
         }
     }
 
-    public function sign(int $id): JsonResponse
+    public function sign(Request $request, int $id): JsonResponse
     {
         try {
-            $contract = LaborContract::findOrFail($id);
+            $contract = LaborContract::with(['artisan', 'supervisor'])->findOrFail($id);
 
             if (!$contract->isDraft()) {
                 return response()->json([
@@ -354,22 +420,88 @@ class LaborContractApiController extends Controller
                 ], 400);
             }
 
-            $contract->update([
-                'status' => 'active',
-                'artisan_signature' => now()->toISOString(),
-                'supervisor_signature' => now()->toISOString(),
+            $request->validate([
+                'contract_file' => 'nullable|file|max:10240',
             ]);
+
+            DB::transaction(function () use ($request, $contract) {
+                // Use supervisor's / artisan's profile signature if available,
+                // otherwise fall back to a signing timestamp.
+                $contract->supervisor_signature = ($contract->supervisor && $contract->supervisor->profile)
+                    ? $contract->supervisor->profile
+                    : now()->toISOString();
+                $contract->artisan_signature = ($contract->artisan && $contract->artisan->profile)
+                    ? $contract->artisan->profile
+                    : now()->toISOString();
+
+                // Handle optional uploaded signed-contract file
+                if ($request->hasFile('contract_file')) {
+                    $file = $request->file('contract_file');
+                    $fileName = time() . '_contract_' . $file->getClientOriginalName();
+                    $filePath = $file->storeAs('uploads/labor_contracts', $fileName, 'public');
+                    $contract->contract_file = '/storage/' . $filePath;
+                }
+
+                $contract->status = 'active';
+                $contract->save();
+
+                // Mark first payment phase as due (mobilization)
+                $firstPhase = $contract->paymentPhases()->where('phase_number', 1)->first();
+                if ($firstPhase) {
+                    $firstPhase->markAsDue();
+                }
+            });
+
+            $contract->load(['project', 'artisan', 'supervisor', 'paymentPhases']);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Contract signed and activated.',
                 'data' => $this->formatContract($contract),
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
         } catch (\Throwable $e) {
             Log::error('LaborContract sign error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to sign contract: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function generatePDF(int $id): JsonResponse
+    {
+        try {
+            $contract = LaborContract::with([
+                'project',
+                'artisan',
+                'laborRequest.constructionPhase',
+                'supervisor',
+                'paymentPhases',
+            ])->findOrFail($id);
+
+            $pdf = Pdf::loadView('labor.contracts.pdf', ['contract' => $contract]);
+            $pdf->setPaper('A4');
+
+            $filename = 'Labor_Contract_' . $contract->contract_number . '.pdf';
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'pdf_base64' => base64_encode($pdf->output()),
+                    'filename' => $filename,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('LaborContract generatePDF error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate contract PDF: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -504,8 +636,7 @@ class LaborContractApiController extends Controller
                     'id' => $w->id,
                     'log_date' => $w->log_date?->format('Y-m-d'),
                     'progress_percentage' => round((float) ($w->progress_percentage ?? 0), 2),
-                    'description' => $w->description,
-                    'status' => $w->status,
+                    'work_done' => $w->work_done,
                 ])->toArray();
             }
 

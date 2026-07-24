@@ -10,6 +10,7 @@ use App\Models\LaborRequest;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use PDF;
 
 class LaborDashboardApiController extends Controller
 {
@@ -26,32 +27,23 @@ class LaborDashboardApiController extends Controller
         $activeContractValue = (clone $contractsQuery)->where('status', 'active')->sum('total_amount');
         $completedContracts = (clone $contractsQuery)->where('status', 'completed')->count();
 
+        // NOTE: To match web LaborDashboardController@index semantics, the
+        // pending/inspection/payment stats and the recent/nearing/overdue lists
+        // below are NOT project-filtered. Only the contract stats (above) and
+        // paid_amount (below) are filtered by the selected project on web.
         $pendingRequests = LaborRequest::query()
-            ->when($projectId, fn ($q) => $q->where('project_id', $projectId))
             ->where('status', 'pending')
             ->count();
 
         $pendingInspections = LaborInspection::query()
-            ->when(
-                $projectId,
-                fn ($q) => $q->whereHas('contract', fn ($c) => $c->where('project_id', $projectId))
-            )
             ->whereIn('status', ['pending', 'verified'])
             ->count();
 
         $pendingPaymentPhases = LaborPaymentPhase::query()
-            ->when(
-                $projectId,
-                fn ($q) => $q->whereHas('contract', fn ($c) => $c->where('project_id', $projectId))
-            )
             ->whereIn('status', ['due', 'approved'])
             ->count();
 
         $pendingPaymentAmount = LaborPaymentPhase::query()
-            ->when(
-                $projectId,
-                fn ($q) => $q->whereHas('contract', fn ($c) => $c->where('project_id', $projectId))
-            )
             ->whereIn('status', ['due', 'approved'])
             ->sum('amount');
 
@@ -64,35 +56,27 @@ class LaborDashboardApiController extends Controller
             ->sum('amount');
 
         $recentRequests = LaborRequest::with(['project', 'artisan', 'requester'])
-            ->when($projectId, fn ($q) => $q->where('project_id', $projectId))
             ->latest()
             ->limit(5)
             ->get();
 
         $recentContracts = LaborContract::with(['project', 'artisan'])
-            ->when($projectId, fn ($q) => $q->where('project_id', $projectId))
             ->latest()
             ->limit(5)
             ->get();
 
         $recentInspections = LaborInspection::with(['contract.project', 'contract.artisan', 'inspector'])
-            ->when(
-                $projectId,
-                fn ($q) => $q->whereHas('contract', fn ($c) => $c->where('project_id', $projectId))
-            )
             ->latest()
             ->limit(5)
             ->get();
 
         $contractsNearingEnd = LaborContract::with(['project', 'artisan'])
-            ->when($projectId, fn ($q) => $q->where('project_id', $projectId))
             ->where('status', 'active')
             ->whereBetween('end_date', [now(), now()->addDays(7)])
             ->orderBy('end_date')
             ->get();
 
         $overdueContracts = LaborContract::with(['project', 'artisan'])
-            ->when($projectId, fn ($q) => $q->where('project_id', $projectId))
             ->where('status', 'active')
             ->where('end_date', '<', now())
             ->orderBy('end_date')
@@ -181,6 +165,29 @@ class LaborDashboardApiController extends Controller
                 ])->values(),
                 'selected_project' => $projectId,
             ],
+        ]);
+    }
+
+    /**
+     * Return the Labor Procurement training guide as a base64-encoded PDF.
+     *
+     * Mirrors web LaborDashboardController@trainingGuide, which streams the
+     * `labor.training-guide-pdf` view as `Labor_Procurement_Training_Guide.pdf`.
+     */
+    public function trainingGuide(): JsonResponse
+    {
+        $filename = 'Labor_Procurement_Training_Guide.pdf';
+
+        $pdf = PDF::loadView('labor.training-guide-pdf');
+        $pdf->setPaper('A4', 'portrait');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'pdf_base64' => base64_encode($pdf->output()),
+                'filename' => $filename,
+            ],
+            'message' => 'Training guide generated successfully.',
         ]);
     }
 }

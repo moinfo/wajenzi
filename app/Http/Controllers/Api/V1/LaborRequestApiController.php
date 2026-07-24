@@ -349,27 +349,28 @@ class LaborRequestApiController extends Controller
 
             $laborRequest = LaborRequest::findOrFail($id);
 
-            if (!$laborRequest->isPending()) {
+            // If an override amount is supplied, persist it first so the model's
+            // onApprovalCompleted() hook keeps it — that hook only falls back to
+            // negotiated_amount ?? proposed_amount when approved_amount is null.
+            if (isset($validated['approved_amount'])) {
+                $laborRequest->approved_amount = $validated['approved_amount'];
+                $laborRequest->save();
+            }
+
+            // Drive the RingleSoft approval flow. Its approve() fires
+            // onApprovalCompleted(), which sets status=approved, approved_by,
+            // approved_at and approved_amount. Hand-setting the status column
+            // here would desync process_approvals and short-circuit that hook.
+            $ok = $laborRequest->approve($validated['comment'] ?? null);
+
+            if ($ok === false) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Only pending requests can be approved',
-                ], 400);
+                    'message' => 'You are not allowed to approve this labor request at the current step.',
+                ], 403);
             }
 
-            $updateData = [
-                'status' => 'approved',
-                'approved_by' => auth()->id(),
-                'approved_at' => now(),
-            ];
-
-            if (isset($validated['approved_amount'])) {
-                $updateData['approved_amount'] = $validated['approved_amount'];
-            }
-
-            $laborRequest->update($updateData);
-            $laborRequest->submitApproval();
-
-            $laborRequest->load(['project', 'artisan', 'requester', 'approver', 'constructionPhase']);
+            $laborRequest->refresh()->load(['project', 'artisan', 'requester', 'approver', 'constructionPhase']);
 
             return response()->json([
                 'success' => true,
@@ -401,19 +402,21 @@ class LaborRequestApiController extends Controller
 
             $laborRequest = LaborRequest::findOrFail($id);
 
-            if (!$laborRequest->isPending()) {
+            $reason = $validated['rejection_reason'] ?? $validated['comment'];
+
+            // Drive the RingleSoft flow so process_approvals stays in sync and the
+            // rejection event fires. Mirror the web (approval is via the flow, not
+            // a hand-set status column).
+            $ok = $laborRequest->reject($reason);
+
+            if ($ok === false) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Only pending requests can be rejected',
-                ], 400);
+                    'message' => 'You are not allowed to reject this labor request at the current step.',
+                ], 403);
             }
 
-            $laborRequest->update([
-                'status' => 'rejected',
-                'rejection_reason' => $validated['rejection_reason'] ?? $validated['comment'],
-            ]);
-
-            $laborRequest->load(['project', 'artisan', 'requester', 'constructionPhase']);
+            $laborRequest->refresh()->load(['project', 'artisan', 'requester', 'constructionPhase']);
 
             return response()->json([
                 'success' => true,

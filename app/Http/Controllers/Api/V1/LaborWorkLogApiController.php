@@ -137,7 +137,19 @@ class LaborWorkLogApiController extends Controller
                 'weather_conditions' => 'nullable|string|in:sunny,cloudy,rainy,stormy',
                 'notes' => 'nullable|string',
                 'photos' => 'nullable|array',
+                'photos.*' => 'file|image|max:10240',
             ]);
+
+            // Persist uploaded photos to the public disk (mirrors web
+            // LaborWorkLogController::store — uploads/labor_logs, /storage/ prefix).
+            $photos = [];
+            if ($request->hasFile('photos')) {
+                foreach ($request->file('photos') as $photo) {
+                    $fileName = time() . '_' . $photo->getClientOriginalName();
+                    $filePath = $photo->storeAs('uploads/labor_logs', $fileName, 'public');
+                    $photos[] = '/storage/' . $filePath;
+                }
+            }
 
             $workLog = LaborWorkLog::create([
                 'labor_contract_id' => $validated['labor_contract_id'],
@@ -150,6 +162,7 @@ class LaborWorkLogApiController extends Controller
                 'materials_used' => $validated['materials_used'] ?? null,
                 'weather_conditions' => $validated['weather_conditions'] ?? null,
                 'notes' => $validated['notes'] ?? null,
+                'photos' => $photos ?: null,
                 'logged_by' => $request->user()->id,
             ]);
 
@@ -218,7 +231,24 @@ class LaborWorkLogApiController extends Controller
                 'materials_used.*.quantity' => 'nullable|numeric',
                 'weather_conditions' => 'nullable|string|in:sunny,cloudy,rainy,stormy',
                 'notes' => 'nullable|string',
+                'photos' => 'nullable|array',
+                'photos.*' => 'file|image|max:10240',
             ]);
+
+            // Newly uploaded photos are appended to the existing set (mirrors web
+            // LaborWorkLogController::update). Photos are never removed here.
+            if ($request->hasFile('photos')) {
+                $photos = $log->photos ?? [];
+                foreach ($request->file('photos') as $photo) {
+                    $fileName = time() . '_' . $photo->getClientOriginalName();
+                    $filePath = $photo->storeAs('uploads/labor_logs', $fileName, 'public');
+                    $photos[] = '/storage/' . $filePath;
+                }
+                $validated['photos'] = $photos;
+            } else {
+                // Never let the multipart array key wipe stored photos.
+                unset($validated['photos']);
+            }
 
             $log->update($validated);
             $log->load(['contract.project', 'contract.artisan', 'logger']);

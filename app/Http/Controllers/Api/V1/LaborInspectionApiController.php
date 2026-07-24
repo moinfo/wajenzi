@@ -8,6 +8,7 @@ use App\Models\LaborInspection;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -113,13 +114,11 @@ class LaborInspectionApiController extends Controller
                     'latest_progress' => $c->latest_progress,
                 ]);
 
+            // Aligned with web LaborInspectionController (progress/milestone/final only).
             $inspectionTypes = [
-                ['value' => 'routine', 'label' => 'Routine'],
                 ['value' => 'progress', 'label' => 'Progress'],
                 ['value' => 'milestone', 'label' => 'Milestone'],
                 ['value' => 'final', 'label' => 'Final'],
-                ['value' => 'quality', 'label' => 'Quality'],
-                ['value' => 'safety', 'label' => 'Safety'],
             ];
 
             $statuses = [
@@ -180,7 +179,7 @@ class LaborInspectionApiController extends Controller
             $validated = $request->validate([
                 'labor_contract_id' => 'required|exists:labor_contracts,id',
                 'inspection_date' => 'required|date',
-                'inspection_type' => 'required|string|in:routine,progress,milestone,final,quality,safety',
+                'inspection_type' => 'required|string|in:progress,milestone,final',
                 'completion_percentage' => 'required|numeric|min:0|max:100',
                 'work_quality' => 'required|string|in:excellent,good,acceptable,poor,unacceptable',
                 'scope_compliance' => 'required|boolean',
@@ -190,32 +189,43 @@ class LaborInspectionApiController extends Controller
                 'payment_phase_id' => 'nullable|exists:labor_payment_phases,id',
                 'notes' => 'nullable|string',
                 'photos' => 'nullable|array',
+                'photos.*' => 'file|image|max:5120',
             ]);
 
-            // Generate inspection number
-            $inspectionNumber = 'INS-' . date('Y') . '-' . str_pad(LaborInspection::count() + 1, 4, '0', STR_PAD_LEFT);
+            $photos = $this->persistPhotos($request);
 
-            $inspection = LaborInspection::create([
-                'labor_contract_id' => $validated['labor_contract_id'],
-                'inspection_date' => $validated['inspection_date'],
-                'inspection_type' => $validated['inspection_type'],
-                'completion_percentage' => $validated['completion_percentage'],
-                'work_quality' => $validated['work_quality'],
-                'scope_compliance' => $validated['scope_compliance'],
-                'defects_found' => $validated['defects_found'] ?? 0,
-                'rectification_required' => $validated['rectification_required'],
-                'rectification_notes' => $validated['rectification_notes'] ?? null,
-                'payment_phase_id' => $validated['payment_phase_id'] ?? null,
-                'notes' => $validated['notes'] ?? null,
-                'inspector_id' => $request->user()->id,
-                'status' => 'draft',
-            ]);
+            $inspection = DB::transaction(function () use ($validated, $photos, $request) {
+                // Mirrors web LaborInspectionController@store: created as 'pending'
+                // then auto-submitted into the RingleSoft approval flow so the
+                // downstream payment chain (paymentPhase->markAsDue) can fire.
+                $inspection = LaborInspection::create([
+                    'labor_contract_id' => $validated['labor_contract_id'],
+                    'inspection_date' => $validated['inspection_date'],
+                    'inspection_type' => $validated['inspection_type'],
+                    'completion_percentage' => $validated['completion_percentage'],
+                    'work_quality' => $validated['work_quality'],
+                    'scope_compliance' => $validated['scope_compliance'],
+                    'defects_found' => $validated['defects_found'] ?? 0,
+                    'rectification_required' => $validated['rectification_required'],
+                    'rectification_notes' => $validated['rectification_notes'] ?? null,
+                    'payment_phase_id' => $validated['payment_phase_id'] ?? null,
+                    'notes' => $validated['notes'] ?? null,
+                    'photos' => $photos ?: null,
+                    'inspector_id' => $request->user()->id,
+                    'status' => 'pending',
+                ]);
+
+                // Enter the approval workflow (Supervisor VERIFY -> MD APPROVE).
+                $inspection->submit($request->user());
+
+                return $inspection;
+            });
 
             $inspection->load(['contract.project', 'contract.artisan', 'inspector', 'paymentPhase']);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Inspection created successfully.',
+                'message' => 'Inspection created and submitted for approval.',
                 'data' => $this->formatInspection($inspection, true),
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -266,7 +276,7 @@ class LaborInspectionApiController extends Controller
 
             $validated = $request->validate([
                 'inspection_date' => 'sometimes|required|date',
-                'inspection_type' => 'sometimes|required|string|in:routine,progress,milestone,final,quality,safety',
+                'inspection_type' => 'sometimes|required|string|in:progress,milestone,final',
                 'completion_percentage' => 'sometimes|required|numeric|min:0|max:100',
                 'work_quality' => 'sometimes|required|string|in:excellent,good,acceptable,poor,unacceptable',
                 'scope_compliance' => 'sometimes|required|boolean',
@@ -275,7 +285,17 @@ class LaborInspectionApiController extends Controller
                 'rectification_notes' => 'nullable|string',
                 'payment_phase_id' => 'nullable|exists:labor_payment_phases,id',
                 'notes' => 'nullable|string',
+                'photos' => 'nullable|array',
+                'photos.*' => 'file|image|max:5120',
             ]);
+
+            // Preserve existing photos and append any newly uploaded ones.
+            if ($request->hasFile('photos') || $request->filled('photos_base64')) {
+                $validated['photos'] = $this->persistPhotos($request, $inspection->photos ?? []) ?: null;
+            } else {
+                // Never let raw uploaded-file objects leak into the update payload.
+                unset($validated['photos']);
+            }
 
             $inspection->update($validated);
             $inspection->load(['contract.project', 'contract.artisan', 'inspector', 'paymentPhase']);
@@ -335,7 +355,7 @@ class LaborInspectionApiController extends Controller
         }
     }
 
-    public function submit(int $id): JsonResponse
+    public function submit(Request $request, int $id): JsonResponse
     {
         try {
             $inspection = LaborInspection::findOrFail($id);
@@ -347,18 +367,122 @@ class LaborInspectionApiController extends Controller
                 ], 400);
             }
 
-            $inspection->update(['status' => 'pending']);
+            // Mirror web LaborInspectionController@submit: flip status then enter
+            // the RingleSoft approval flow via the Approvable trait. Hand-setting
+            // status alone leaves process_approvals out of sync and never fires
+            // onApprovalCompleted() -> paymentPhase->markAsDue().
+            DB::transaction(function () use ($inspection, $request) {
+                $inspection->status = 'pending';
+                $inspection->save();
+                $inspection->submit($request->user());
+            });
+
+            $inspection->refresh()->load(['contract.project', 'contract.artisan', 'inspector', 'paymentPhase']);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Inspection submitted for approval.',
-                'data' => $this->formatInspection($inspection),
+                'data' => $this->formatInspection($inspection, true),
             ]);
         } catch (\Throwable $e) {
             Log::error('LaborInspection submit error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to submit inspection: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /api/v1/labor/inspections/{id}/approve
+     * Serves both RingleSoft steps: Supervisor VERIFY (order 1) then MD APPROVE
+     * (order 2). The role-per-step gate is enforced via canBeApprovedBy(); a
+     * user who does not hold the current step's role gets 403. Completing the
+     * final step fires onApprovalCompleted() -> paymentPhase->markAsDue().
+     */
+    public function approve(Request $request, int $id): JsonResponse
+    {
+        try {
+            $inspection = LaborInspection::findOrFail($id);
+
+            if (!$inspection->canBeApprovedBy($request->user())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not allowed to approve this inspection at the current step.',
+                ], 403);
+            }
+
+            $ok = $inspection->approve($request->input('comment'), $request->user());
+
+            if ($ok === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not allowed to approve this inspection at the current step.',
+                ], 403);
+            }
+
+            $inspection->refresh()->load(['contract.project', 'contract.artisan', 'inspector', 'paymentPhase']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Inspection approved.',
+                'data' => $this->formatInspection($inspection, true),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('LaborInspection approve error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to approve inspection: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /api/v1/labor/inspections/{id}/reject
+     */
+    public function reject(Request $request, int $id): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'reason' => 'required|string|max:500',
+            ]);
+
+            $inspection = LaborInspection::findOrFail($id);
+
+            if (!$inspection->canBeApprovedBy($request->user())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not allowed to reject this inspection at the current step.',
+                ], 403);
+            }
+
+            $ok = $inspection->reject($validated['reason'], $request->user());
+
+            if ($ok === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not allowed to reject this inspection at the current step.',
+                ], 403);
+            }
+
+            $inspection->refresh()->load(['contract.project', 'contract.artisan', 'inspector', 'paymentPhase']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Inspection rejected.',
+                'data' => $this->formatInspection($inspection, true),
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('LaborInspection reject error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reject inspection: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -464,6 +588,66 @@ class LaborInspectionApiController extends Controller
                 'message' => 'Failed to fetch dashboard: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Persist inspection photos from the request and return the merged list of
+     * public "/storage/..." paths. Accepts multipart uploads under `photos[]`
+     * (the mobile convention) and optional base64/data-URI strings under
+     * `photos_base64[]`. Files are stored under uploads/labor_inspections on the
+     * public disk, mirroring web LaborInspectionController.
+     *
+     * @param  array<int,string>  $existing  Already-stored paths to keep.
+     * @return array<int,string>
+     */
+    private function persistPhotos(Request $request, array $existing = []): array
+    {
+        $photos = $existing;
+
+        // Multipart file uploads (photos[] as an array of UploadedFile, or a
+        // single photo field).
+        if ($request->hasFile('photos')) {
+            $files = $request->file('photos');
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+            foreach ($files as $photo) {
+                if (!$photo || !$photo->isValid()) {
+                    continue;
+                }
+                $fileName = time() . '_' . uniqid() . '_' . $photo->getClientOriginalName();
+                $filePath = $photo->storeAs('uploads/labor_inspections', $fileName, 'public');
+                $photos[] = '/storage/' . $filePath;
+            }
+        }
+
+        // Base64 / data-URI encoded images (defensive: some mobile clients post
+        // captured images as base64 rather than multipart).
+        $base64Items = $request->input('photos_base64', []);
+        if (is_string($base64Items)) {
+            $base64Items = [$base64Items];
+        }
+        if (is_array($base64Items)) {
+            foreach ($base64Items as $b64) {
+                if (!is_string($b64) || trim($b64) === '') {
+                    continue;
+                }
+                $ext = 'jpg';
+                if (preg_match('/^data:image\/(\w+);base64,/', $b64, $m)) {
+                    $ext = strtolower($m[1]) === 'jpeg' ? 'jpg' : strtolower($m[1]);
+                    $b64 = substr($b64, strpos($b64, ',') + 1);
+                }
+                $decoded = base64_decode($b64, true);
+                if ($decoded === false) {
+                    continue;
+                }
+                $filePath = 'uploads/labor_inspections/' . time() . '_' . uniqid() . '.' . $ext;
+                Storage::disk('public')->put($filePath, $decoded);
+                $photos[] = '/storage/' . $filePath;
+            }
+        }
+
+        return $photos;
     }
 
     private function formatInspection($inspection, bool $detailed = false)

@@ -180,8 +180,14 @@ class LaborPaymentApiController extends Controller
                 'amount' => 'required|numeric|min:0',
                 'due_date' => 'required|date',
                 'milestone_description' => 'nullable|string',
-                'status' => 'required|in:pending,due,approved,paid,held',
             ]);
+
+            // PAY-7: never trust a client-supplied status. New phases always
+            // start as 'pending'; they only advance via the dedicated
+            // approve/process/hold/release actions (which run the state machine
+            // + contract-total reconciliation).
+            $validated['amount'] = (float) str_replace(',', '', (string) $validated['amount']);
+            $validated['status'] = 'pending';
 
             $payment = LaborPaymentPhase::create($validated);
 
@@ -190,6 +196,12 @@ class LaborPaymentApiController extends Controller
                 'data' => $this->formatPayment($payment),
                 'message' => 'Payment phase created successfully',
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
         } catch (\Throwable $e) {
             Log::error('LaborPayment store error: ' . $e->getMessage());
             return response()->json([
@@ -231,8 +243,16 @@ class LaborPaymentApiController extends Controller
                 'amount' => 'sometimes|required|numeric|min:0',
                 'due_date' => 'sometimes|required|date',
                 'milestone_description' => 'nullable|string',
-                'status' => 'sometimes|required|in:pending,due,approved,paid,held',
+                // PAY-7: a phase may never be moved to 'approved' or 'paid' via
+                // this metadata endpoint — those transitions carry side effects
+                // (contract-total reconciliation, disbursement reference) that
+                // only the approve()/processPayment() actions perform.
+                'status' => 'sometimes|required|in:pending,due,held',
             ]);
+
+            if (array_key_exists('amount', $validated)) {
+                $validated['amount'] = (float) str_replace(',', '', (string) $validated['amount']);
+            }
 
             $payment->update($validated);
 
@@ -241,6 +261,12 @@ class LaborPaymentApiController extends Controller
                 'data' => $this->formatPayment($payment),
                 'message' => 'Payment phase updated successfully',
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
         } catch (\Throwable $e) {
             Log::error('LaborPayment update error: ' . $e->getMessage());
             return response()->json([
@@ -254,6 +280,16 @@ class LaborPaymentApiController extends Controller
     {
         try {
             $payment = LaborPaymentPhase::findOrFail($id);
+
+            // PAY-7: a disbursed phase is a financial record — it must not be
+            // deletable, or it would silently desync the contract paid total.
+            if ($payment->isPaid()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Paid payment phases cannot be deleted',
+                ], 422);
+            }
+
             $payment->delete();
 
             return response()->json([
@@ -337,6 +373,247 @@ class LaborPaymentApiController extends Controller
                 'success' => false,
                 'message' => 'Failed to process payment: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * PAY-1: Put a payment phase on hold. Mirrors web LaborPaymentController::hold().
+     */
+    public function hold(Request $request, int $id): JsonResponse
+    {
+        try {
+            $payment = LaborPaymentPhase::findOrFail($id);
+
+            if ($payment->isPaid()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Paid phases cannot be put on hold',
+                ], 422);
+            }
+
+            $validated = $request->validate([
+                'hold_reason' => 'required|string|min:10',
+            ]);
+
+            $payment->putOnHold($validated['hold_reason']);
+
+            $payment->load(['contract.project', 'contract.artisan', 'paidByUser']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $this->formatPayment($payment),
+                'message' => 'Payment put on hold',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('LaborPayment hold error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to put payment on hold: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * PAY-2: Release a held payment phase back to 'due'. Mirrors web LaborPaymentController::release().
+     */
+    public function release(int $id): JsonResponse
+    {
+        try {
+            $payment = LaborPaymentPhase::findOrFail($id);
+
+            if (!$payment->isHeld()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only held payments can be released',
+                ], 422);
+            }
+
+            $payment->update([
+                'status' => 'due',
+                'notes' => $payment->notes . "\n\nReleased from hold on: " . now()->format('Y-m-d H:i'),
+            ]);
+
+            $payment->load(['contract.project', 'contract.artisan', 'paidByUser']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $this->formatPayment($payment),
+                'message' => 'Payment released from hold',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('LaborPayment release error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to release payment: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * PAY-3: Bulk-approve payment phases. Mirrors web LaborPaymentController::bulkApprove().
+     */
+    public function bulkApprove(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'phase_ids' => 'required|array',
+                'phase_ids.*' => 'exists:labor_payment_phases,id',
+            ]);
+
+            $approved = 0;
+            $failed = 0;
+
+            foreach ($validated['phase_ids'] as $phaseId) {
+                $phase = LaborPaymentPhase::find($phaseId);
+                if ($phase && $phase->canBeApproved()) {
+                    $phase->approve();
+                    $approved++;
+                } else {
+                    $failed++;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'approved' => $approved,
+                    'failed' => $failed,
+                ],
+                'message' => "{$approved} payment(s) approved" . ($failed > 0 ? ", {$failed} could not be approved" : ''),
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('LaborPayment bulkApprove error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to bulk-approve payments: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * PAY-4: Paid-payment summary report grouped by project and artisan.
+     * Mirrors web LaborPaymentController::report().
+     */
+    public function report(Request $request): JsonResponse
+    {
+        try {
+            $startDate = $request->input('start_date') ?? date('Y-01-01');
+            $endDate = $request->input('end_date') ?? date('Y-m-d');
+            $projectId = $request->input('project_id');
+
+            $query = LaborPaymentPhase::with(['contract.project', 'contract.artisan', 'paidByUser'])
+                ->where('status', 'paid')
+                ->whereBetween('paid_at', [$startDate, $endDate . ' 23:59:59']);
+
+            if ($projectId) {
+                $query->whereHas('contract', fn($q) => $q->where('project_id', $projectId));
+            }
+
+            $payments = $query->orderBy('paid_at', 'desc')->get();
+
+            $byProject = $payments->groupBy(fn($p) => $p->contract?->project_id)
+                ->map(fn($group) => [
+                    'project_id' => $group->first()->contract?->project_id,
+                    'project_name' => $group->first()->contract?->project?->project_name,
+                    'count' => $group->count(),
+                    'total' => (float) $group->sum('amount'),
+                ])
+                ->values();
+
+            $byArtisan = $payments->groupBy(fn($p) => $p->contract?->artisan_id)
+                ->map(fn($group) => [
+                    'artisan_id' => $group->first()->contract?->artisan_id,
+                    'artisan_name' => $group->first()->contract?->artisan?->name,
+                    'count' => $group->count(),
+                    'total' => (float) $group->sum('amount'),
+                ])
+                ->values();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'payments' => $payments->map(fn($p) => $this->formatPayment($p))->values(),
+                    'by_project' => $byProject,
+                    'by_artisan' => $byArtisan,
+                    'total_amount' => (float) $payments->sum('amount'),
+                    'filters' => [
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                        'project_id' => $projectId,
+                    ],
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('LaborPayment report error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate payment report: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * PAY-5: Per-contract payment schedule (contract header + ordered phases with inspections).
+     * Mirrors web LaborPaymentController::contractPayments().
+     */
+    public function contractPayments(int $contractId): JsonResponse
+    {
+        try {
+            $contract = LaborContract::with([
+                'project',
+                'artisan',
+                'paymentPhases.paidByUser',
+                'paymentPhases.inspections',
+            ])->findOrFail($contractId);
+
+            $phases = $contract->paymentPhases
+                ->sortBy('phase_number')
+                ->values()
+                ->map(function ($phase) {
+                    $data = $this->formatPayment($phase);
+                    $data['inspections'] = $phase->inspections->map(fn($inspection) => [
+                        'id' => $inspection->id,
+                        'inspection_number' => $inspection->inspection_number,
+                        'inspection_type' => $inspection->inspection_type,
+                        'inspection_date' => $inspection->inspection_date?->format('Y-m-d'),
+                        'status' => $inspection->status,
+                        'result' => $inspection->result,
+                    ])->values();
+                    return $data;
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'contract' => [
+                        'id' => $contract->id,
+                        'contract_number' => $contract->contract_number,
+                        'status' => $contract->status,
+                        'total_amount' => (float) $contract->total_amount,
+                        'project_name' => $contract->project?->project_name,
+                        'artisan_name' => $contract->artisan?->name,
+                    ],
+                    'phases' => $phases,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('LaborPayment contractPayments error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch contract payments: ' . $e->getMessage(),
+            ], 404);
         }
     }
 
