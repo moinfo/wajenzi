@@ -482,15 +482,19 @@ class _ContactCard extends ConsumerWidget {
                     backgroundColor: const Color(0xFF25D366),
                     foregroundColor: Colors.white,
                     minimumSize: const Size(0, 36),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    visualDensity: VisualDensity.compact,
                   ),
                   onPressed: () => _sendWhatsApp(context, contact),
                   icon: const Icon(Icons.send_rounded, size: 16),
                   label: Text(isSwahili ? 'Tuma' : 'Send'),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(0, 36),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    visualDensity: VisualDensity.compact,
                   ),
                   onPressed: () => _changeStage(context, ref, contact),
                   icon: const Icon(Icons.swap_horiz, size: 16),
@@ -498,15 +502,37 @@ class _ContactCard extends ConsumerWidget {
                 ),
                 const Spacer(),
                 IconButton(
+                  tooltip: isSwahili ? 'Simu' : 'Call log',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  onPressed: () => showModalBottomSheet<void>(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => _CallLogSheet(
+                      contactId: contact['id'] as int,
+                      contactName: '${contact['name'] ?? ''}',
+                    ),
+                  ),
+                  icon: const Icon(Icons.phone_in_talk_outlined, size: 20),
+                ),
+                IconButton(
                   tooltip: isSwahili ? 'Hariri' : 'Edit',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                   onPressed: () => _editContact(context, contact),
-                  icon: const Icon(Icons.edit_outlined),
+                  icon: const Icon(Icons.edit_outlined, size: 20),
                 ),
                 IconButton(
                   tooltip: isSwahili ? 'Futa' : 'Delete',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                   onPressed: () => _deleteContact(context, ref, contact),
                   icon: const Icon(Icons.delete_outline,
-                      color: AppColors.error),
+                      size: 20, color: AppColors.error),
                 ),
               ],
             ),
@@ -896,6 +922,8 @@ class _ContactFormSheetState extends ConsumerState<_ContactFormSheet> {
   List<Map<String, dynamic>> _sources = const [];
   List<Map<String, dynamic>> _campaigns = const [];
   List<Map<String, dynamic>> _users = const [];
+  List<Map<String, dynamic>> _labels = const [];
+  final Set<String> _selectedLabels = {};
 
   @override
   void initState() {
@@ -905,6 +933,10 @@ class _ContactFormSheetState extends ConsumerState<_ContactFormSheet> {
     _campaignId = widget.contact?['campaign_id'] as int?;
     _assignedTo = widget.contact?['assigned_to'] as int?;
     _important = widget.contact?['is_important'] == true;
+    _selectedLabels.addAll(
+      ((widget.contact?['labels'] as List?) ?? const [])
+          .map((e) => e.toString()),
+    );
     _loadRefs();
   }
 
@@ -930,6 +962,10 @@ class _ContactFormSheetState extends ConsumerState<_ContactFormSheet> {
             .map((e) => Map<String, dynamic>.from(e))
             .toList();
         _users = ((d['users'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+        _labels = ((d['labels'] as List?) ?? const [])
             .whereType<Map>()
             .map((e) => Map<String, dynamic>.from(e))
             .toList();
@@ -964,6 +1000,7 @@ class _ContactFormSheetState extends ConsumerState<_ContactFormSheet> {
         if (_assignedTo != null) 'assigned_to': _assignedTo,
         'notes': _notesCtrl.text.trim(),
         'is_important': _important,
+        'label_ids': _selectedLabels.toList(),
       };
       final id = widget.contact?['id'];
       if (id != null) {
@@ -1084,6 +1121,34 @@ class _ContactFormSheetState extends ConsumerState<_ContactFormSheet> {
                       onChanged: (v) => setState(() => _important = v),
                       title: Text(isSwahili ? 'Muhimu' : 'Important'),
                     ),
+                    if (_labels.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(isSwahili ? 'Lebo' : 'Labels',
+                            style: AppType.display(13)),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: _labels.map((l) {
+                          final key = l['value']?.toString() ?? '';
+                          final selected = _selectedLabels.contains(key);
+                          return FilterChip(
+                            label: Text('${l['label'] ?? key}'),
+                            selected: selected,
+                            onSelected: (on) => setState(() {
+                              if (on) {
+                                _selectedLabels.add(key);
+                              } else {
+                                _selectedLabels.remove(key);
+                              }
+                            }),
+                          );
+                        }).toList(),
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     TextFormField(
                       controller: _notesCtrl,
@@ -1349,3 +1414,336 @@ InputDecoration _dec(String label) => InputDecoration(
         borderSide: BorderSide.none,
       ),
     );
+
+/// Per-contact call / follow-up log (mirrors the web call log). Lists past
+/// calls and lets the user log a new one via the existing calls endpoints.
+class _CallLogSheet extends ConsumerStatefulWidget {
+  final int contactId;
+  final String contactName;
+  const _CallLogSheet({required this.contactId, required this.contactName});
+
+  @override
+  ConsumerState<_CallLogSheet> createState() => _CallLogSheetState();
+}
+
+class _CallLogSheetState extends ConsumerState<_CallLogSheet> {
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _calls = const [];
+  List<Map<String, dynamic>> _outcomes = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final api = ref.read(apiClientProvider);
+      final results = await Future.wait([
+        api.get('/whatsapp-marketing/contacts/${widget.contactId}/calls'),
+        api.get('/whatsapp-marketing/reference-data'),
+      ]);
+      final calls = (results[0].data['data'] as List? ?? const [])
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+      final refData = results[1].data['data'] as Map?;
+      final outcomes = ((refData?['call_outcomes'] as List?) ?? const [])
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+      setState(() {
+        _calls = calls;
+        _outcomes = outcomes;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = _msg(e);
+        _loading = false;
+      });
+    }
+  }
+
+  String _msg(Object e) {
+    try {
+      final data = (e as dynamic).response?.data;
+      if (data is Map && data['message'] is String) return data['message'];
+    } catch (_) {}
+    return e.toString();
+  }
+
+  Future<void> _logCall(bool sw) async {
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _CallFormSheet(
+        contactId: widget.contactId,
+        outcomes: _outcomes,
+      ),
+    );
+    if (saved == true) _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isSwahili = ref.watch(isSwahiliProvider);
+    final isDark = ref.watch(isDarkModeProvider);
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${isSwahili ? 'Kumbukumbu za simu' : 'Call Log'} — ${widget.contactName}',
+                      style: AppType.display(16),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  FilledButton.icon(
+                    onPressed: () => _logCall(isSwahili),
+                    icon: const Icon(Icons.add_call, size: 18),
+                    label: Text(isSwahili ? 'Ongeza' : 'Log call'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
+                        ? Center(child: Text(_error!))
+                        : _calls.isEmpty
+                            ? Center(
+                                child: Text(isSwahili
+                                    ? 'Hakuna simu bado.'
+                                    : 'No calls logged yet.'),
+                              )
+                            : ListView.separated(
+                                controller: scrollController,
+                                itemCount: _calls.length,
+                                separatorBuilder: (_, __) =>
+                                    const Divider(height: 1),
+                                itemBuilder: (context, i) {
+                                  final c = _calls[i];
+                                  final followup =
+                                      (c['next_followup_date'] ?? '').toString();
+                                  return ListTile(
+                                    leading: const Icon(
+                                        Icons.phone_callback_outlined),
+                                    title: Text(
+                                        '${c['outcome_label'] ?? c['outcome'] ?? ''}'),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text('${c['call_date'] ?? ''}'
+                                            '${c['logged_by'] != null ? ' · ${c['logged_by']}' : ''}'),
+                                        if ((c['notes'] ?? '')
+                                            .toString()
+                                            .isNotEmpty)
+                                          Text('${c['notes']}'),
+                                        if (followup.isNotEmpty)
+                                          Text(
+                                            '${isSwahili ? 'Fuatilia' : 'Follow-up'}: $followup',
+                                            style: const TextStyle(
+                                                color: AppColors.brandBlue),
+                                          ),
+                                      ],
+                                    ),
+                                    isThreeLine: true,
+                                  );
+                                },
+                              ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CallFormSheet extends ConsumerStatefulWidget {
+  final int contactId;
+  final List<Map<String, dynamic>> outcomes;
+  const _CallFormSheet({required this.contactId, required this.outcomes});
+
+  @override
+  ConsumerState<_CallFormSheet> createState() => _CallFormSheetState();
+}
+
+class _CallFormSheetState extends ConsumerState<_CallFormSheet> {
+  DateTime _callDate = DateTime.now();
+  DateTime? _followupDate;
+  String? _outcome;
+  final _notesCtrl = TextEditingController();
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _notesCtrl.dispose();
+    super.dispose();
+  }
+
+  String _fmt(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  Future<void> _pick(bool followup) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: followup ? (_followupDate ?? DateTime.now()) : _callDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        if (followup) {
+          _followupDate = picked;
+        } else {
+          _callDate = picked;
+        }
+      });
+    }
+  }
+
+  Future<void> _save(bool sw) async {
+    if (_outcome == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(sw ? 'Chagua matokeo' : 'Select an outcome')));
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      await ref.read(apiClientProvider).post(
+        '/whatsapp-marketing/contacts/${widget.contactId}/calls',
+        data: {
+          'call_date': _fmt(_callDate),
+          'outcome': _outcome,
+          if (_followupDate != null)
+            'next_followup_date': _fmt(_followupDate!),
+          'notes': _notesCtrl.text.trim(),
+        },
+      );
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      final msg = () {
+        try {
+          final d = (e as dynamic).response?.data;
+          if (d is Map && d['message'] is String) return d['message'] as String;
+        } catch (_) {}
+        return e.toString();
+      }();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(msg)));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sw = ref.watch(isSwahiliProvider);
+    final isDark = ref.watch(isDarkModeProvider);
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: ListView(
+          shrinkWrap: true,
+          padding: EdgeInsets.fromLTRB(
+              20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+          children: [
+            Text(sw ? 'Ongeza Simu' : 'Log Call',
+                textAlign: TextAlign.center, style: AppType.display(18)),
+            const SizedBox(height: 16),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(sw ? 'Tarehe ya simu' : 'Call date'),
+              subtitle: Text(_fmt(_callDate)),
+              trailing: const Icon(Icons.calendar_today, size: 18),
+              onTap: () => _pick(false),
+            ),
+            DropdownButtonFormField<String>(
+              value: _outcome,
+              decoration: _dec(sw ? 'Matokeo' : 'Outcome'),
+              items: widget.outcomes
+                  .map((o) => DropdownMenuItem<String>(
+                        value: o['value']?.toString(),
+                        child: Text('${o['label'] ?? o['value']}'),
+                      ))
+                  .toList(),
+              onChanged: (v) => setState(() => _outcome = v),
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(sw ? 'Tarehe ya kufuatilia' : 'Follow-up date'),
+              subtitle: Text(
+                  _followupDate == null ? '—' : _fmt(_followupDate!)),
+              trailing: _followupDate == null
+                  ? const Icon(Icons.event, size: 18)
+                  : IconButton(
+                      icon: const Icon(Icons.clear, size: 18),
+                      onPressed: () => setState(() => _followupDate = null),
+                    ),
+              onTap: () => _pick(true),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _notesCtrl,
+              maxLines: 3,
+              decoration: _dec(sw ? 'Maelezo' : 'Notes'),
+            ),
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: _saving ? null : () => _save(sw),
+              child: _saving
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text(sw ? 'Hifadhi' : 'Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

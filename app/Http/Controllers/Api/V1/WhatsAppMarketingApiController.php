@@ -491,6 +491,10 @@ class WhatsAppMarketingApiController extends Controller
             'services'           => $contact->relationLoaded('services')
                 ? $contact->services->map(fn ($s) => ['id' => $s->id, 'name' => $s->name])->all()
                 : [],
+            // Label keys assigned to this contact (the list endpoint overrides
+            // this via a batched map to avoid N+1; here it keeps show/update
+            // responses consistent so the edit form can pre-select labels).
+            'labels'             => $contact->label_list,
             'created_at'         => optional($contact->created_at)->toIso8601String(),
             'updated_at'         => optional($contact->updated_at)->toIso8601String(),
         ];
