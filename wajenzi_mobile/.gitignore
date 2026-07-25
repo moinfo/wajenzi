@@ -88,3 +88,7 @@ android/key.properties
 android/upload-keystore.jks
 .claude/
 
+
+# Release artifacts (built locally, not committed)
+*.ipa
+*.aab
