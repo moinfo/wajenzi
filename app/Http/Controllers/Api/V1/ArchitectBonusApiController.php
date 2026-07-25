@@ -467,6 +467,201 @@ class ArchitectBonusApiController extends Controller
         }
     }
 
+    // Architect accepts their own pending bonus (starts the clock). Distinct
+    // from start() which is the admin force-start. Gated to the assigned
+    // architect (mirrors web accept()).
+    public function accept(int $id): JsonResponse
+    {
+        try {
+            $task = ArchitectBonusTask::find($id);
+            if (!$task) {
+                return response()->json(['success' => false, 'message' => 'Task not found'], 404);
+            }
+            if ($task->architect_id !== Auth::id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You can only accept a bonus assigned to you.',
+                ], 403);
+            }
+            if ($task->status !== 'pending') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This task cannot be accepted.',
+                ], 422);
+            }
+
+            $now = now();
+            $task->update([
+                'accepted_at' => $now,
+                'start_date'  => $now->toDateString(),
+                'status'      => 'in_progress',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bonus accepted — the clock started today.',
+                'data' => $this->formatTask($task->fresh(['architect', 'lead', 'creator'])),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('ArchitectBonus accept error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to accept task: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Admin updates a task's project budget (recomputes max units). Blocked once
+    // the task is finalised (mirrors web updateBudget).
+    public function updateBudget(Request $request, int $id): JsonResponse
+    {
+        try {
+            if (!$this->isAdmin()) {
+                return response()->json(['success' => false, 'message' => 'Only administrators can change the budget'], 403);
+            }
+
+            $validated = $request->validate([
+                'project_budget' => 'required|numeric|min:0',
+            ]);
+
+            $task = ArchitectBonusTask::find($id);
+            if (!$task) {
+                return response()->json(['success' => false, 'message' => 'Task not found'], 404);
+            }
+            if (in_array($task->status, ['scored', 'paid', 'no_bonus'], true)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Cannot change the budget of a {$task->status} task — it has already been finalised.",
+                ], 422);
+            }
+
+            $maxUnits = BonusUnitTier::getMaxUnits((float) $validated['project_budget']);
+            $task->update([
+                'project_budget' => $validated['project_budget'],
+                'max_units'      => $maxUnits,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Budget updated.',
+                'data' => $this->formatTask($task->fresh(['architect', 'lead', 'creator'])),
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $e->errors()], 422);
+        } catch (\Throwable $e) {
+            Log::error('ArchitectBonus updateBudget error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to update budget: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Admin links an unlinked bonus to a project schedule (mirrors web linkSchedule).
+    public function linkSchedule(Request $request, int $id): JsonResponse
+    {
+        try {
+            if (!$this->isAdmin()) {
+                return response()->json(['success' => false, 'message' => 'Only administrators can link schedules'], 403);
+            }
+
+            $validated = $request->validate([
+                'project_schedule_id' => 'required|exists:project_schedules,id',
+            ]);
+
+            $task = ArchitectBonusTask::find($id);
+            if (!$task) {
+                return response()->json(['success' => false, 'message' => 'Task not found'], 404);
+            }
+            if ($task->project_schedule_id) {
+                return response()->json(['success' => false, 'message' => 'This bonus task is already linked to a schedule.'], 422);
+            }
+            if (ArchitectBonusTask::where('project_schedule_id', $validated['project_schedule_id'])->exists()) {
+                return response()->json(['success' => false, 'message' => 'That schedule is already linked to another bonus task.'], 422);
+            }
+
+            $task->update([
+                'project_schedule_id' => $validated['project_schedule_id'],
+                'auto_synced'         => true,
+                'last_synced_at'      => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Schedule linked.',
+                'data' => $this->formatTask($task->fresh(['architect', 'lead', 'creator'])),
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $e->errors()], 422);
+        } catch (\Throwable $e) {
+            Log::error('ArchitectBonus linkSchedule error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to link schedule: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Admin: suggested schedules to link for each unlinked bonus (mirrors web
+    // backfillSuggestions; returns JSON instead of a view).
+    public function backfillSuggestions(Request $request): JsonResponse
+    {
+        try {
+            if (!$this->isAdmin()) {
+                return response()->json(['success' => false, 'message' => 'Only administrators can view suggestions'], 403);
+            }
+
+            $unlinked = ArchitectBonusTask::whereNull('project_schedule_id')
+                ->with('architect')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $suggestions = $unlinked->map(function ($task) {
+                $candidates = \App\Models\ProjectSchedule::where('assigned_architect_id', $task->architect_id)
+                    ->whereDoesntHave('bonusTask')
+                    ->with(['lead', 'client'])
+                    ->get()
+                    ->map(function ($s) use ($task) {
+                        $scheduleName = $s->lead->name
+                            ?? (trim(($s->client->first_name ?? '') . ' ' . ($s->client->last_name ?? '')) ?: ('Schedule #' . $s->id));
+                        return [
+                            'id'         => $s->id,
+                            'name'       => $scheduleName,
+                            'start_date' => optional($s->start_date)->format('Y-m-d'),
+                            'status'     => $s->status,
+                            'similarity' => $this->nameSimilarity($task->project_name ?? '', $scheduleName),
+                        ];
+                    })
+                    ->sortByDesc('similarity')
+                    ->values()
+                    ->all();
+
+                return [
+                    'task_id'      => $task->id,
+                    'task_number'  => $task->task_number,
+                    'project_name' => $task->project_name,
+                    'architect'    => $task->architect?->name,
+                    'candidates'   => $candidates,
+                ];
+            })->values()->all();
+
+            return response()->json(['success' => true, 'data' => $suggestions]);
+        } catch (\Throwable $e) {
+            Log::error('ArchitectBonus backfillSuggestions error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to load suggestions: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Compute max bonus units for a budget amount (mirrors web getMaxUnits).
+    public function getMaxUnits(Request $request): JsonResponse
+    {
+        $amount = (float) $request->input('amount', 0);
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'max_units'  => BonusUnitTier::getMaxUnits($amount),
+                'unit_value' => BonusCalculationService::UNIT_VALUE,
+            ],
+        ]);
+    }
+
+    private function nameSimilarity(string $a, string $b): float
+    {
+        similar_text(strtolower(trim($a)), strtolower(trim($b)), $percent);
+        return round($percent / 100, 3);
+    }
+
     private function isAdmin(): bool
     {
         return Auth::user()->hasAnyRole(['System Administrator', 'Managing Director']);
@@ -486,6 +681,7 @@ class ArchitectBonusApiController extends Controller
             'task_number' => $task->task_number,
             'project_name' => $task->project_name,
             'project_budget' => (float) ($task->project_budget ?? 0),
+            'project_schedule_id' => $task->project_schedule_id,
             'start_date' => $task->start_date?->format('Y-m-d'),
             'scheduled_completion_date' => $task->scheduled_completion_date?->format('Y-m-d'),
             'actual_completion_date' => $task->actual_completion_date?->format('Y-m-d'),

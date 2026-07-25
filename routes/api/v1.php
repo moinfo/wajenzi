@@ -553,6 +553,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Architect Bonus CRUD
     Route::get('architect-bonus/reference-data', [ArchitectBonusApiController::class, 'referenceData']);
+    Route::get('architect-bonus/backfill-suggestions', [ArchitectBonusApiController::class, 'backfillSuggestions']);
+    Route::post('architect-bonus/max-units', [ArchitectBonusApiController::class, 'getMaxUnits']);
     Route::get('architect-bonus', [ArchitectBonusApiController::class, 'index']);
     Route::get('architect-bonus/report', [ArchitectBonusApiController::class, 'report']);
     Route::get('architect-bonus/weights', [ArchitectBonusApiController::class, 'weights']);
@@ -563,8 +565,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('architect-bonus/{id}', [ArchitectBonusApiController::class, 'update']);
     Route::delete('architect-bonus/{id}', [ArchitectBonusApiController::class, 'destroy']);
     Route::post('architect-bonus/{id}/start', [ArchitectBonusApiController::class, 'start']);
+    Route::post('architect-bonus/{id}/accept', [ArchitectBonusApiController::class, 'accept']);
     Route::post('architect-bonus/{id}/score', [ArchitectBonusApiController::class, 'score']);
     Route::post('architect-bonus/{id}/paid', [ArchitectBonusApiController::class, 'markPaid']);
+    Route::post('architect-bonus/{id}/budget', [ArchitectBonusApiController::class, 'updateBudget']);
+    Route::post('architect-bonus/{id}/link-schedule', [ArchitectBonusApiController::class, 'linkSchedule']);
 
     // Provision Tax CRUD
     Route::get('provision-tax/reference-data', [ProvisionTaxApiController::class, 'referenceData']);

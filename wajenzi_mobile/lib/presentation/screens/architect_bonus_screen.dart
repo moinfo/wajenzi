@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/network/api_client.dart';
 import '../../core/router/app_router.dart';
+import '../providers/auth_provider.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/common/empty_state_widget.dart';
 import '../widgets/common/filter_bottom_sheet.dart';
@@ -1204,8 +1205,377 @@ class _ArchitectBonusScreenState extends ConsumerState<ArchitectBonusScreen> {
     }
   }
 
+  // Admin updates a task's project budget (recomputes max units server-side).
+  // Blocked once the task is scored/paid/no_bonus. Live-previews max units
+  // locally from the loaded tiers (matches the create/edit form).
+  Future<void> _showBudgetSheet(Map<String, dynamic> task) async {
+    final isSwahili = ref.read(isSwahiliProvider);
+    final formKey = GlobalKey<FormState>();
+    final projectBudgetController = TextEditingController(
+      text:
+          '${(double.tryParse('${task['project_budget'] ?? 0}') ?? 0).toStringAsFixed(0)}',
+    );
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            final budget =
+                double.tryParse(projectBudgetController.text.trim()) ?? 0;
+            final maxUnits = _maxUnitsForBudget(budget);
+            final mediaQuery = MediaQuery.of(sheetContext);
+
+            Future<void> submitBudget() async {
+              if (!formKey.currentState!.validate()) return;
+
+              try {
+                final api = ref.read(apiClientProvider);
+                final response = await api.post(
+                  '/architect-bonus/${task['id']}/budget',
+                  data: {
+                    'project_budget': double.parse(
+                      projectBudgetController.text.trim(),
+                    ),
+                  },
+                );
+
+                if (!mounted) return;
+                Navigator.pop(sheetContext);
+                await _loadData(refresh: true);
+                _showSnackBar(
+                  response.data['message']?.toString() ?? 'Budget updated.',
+                  isError: false,
+                );
+              } catch (error) {
+                _showSnackBar(
+                  _humanizeError(error, fallback: 'Failed to update budget.'),
+                );
+              }
+            }
+
+            return SafeArea(
+              top: false,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(sheetContext).scaffoldBackgroundColor,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    16,
+                    20,
+                    20 + mediaQuery.viewInsets.bottom,
+                  ),
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[400],
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                isSwahili
+                                    ? 'Sasisha Bajeti'
+                                    : 'Update Budget',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () => Navigator.pop(sheetContext),
+                              icon: const Icon(Icons.close),
+                              label: Text(isSwahili ? 'Funga' : 'Close'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: projectBudgetController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: isSwahili
+                                ? 'Bajeti ya Mradi (TZS) *'
+                                : 'Project Budget (TZS) *',
+                          ),
+                          onChanged: (_) => setSheetState(() {}),
+                          validator: (value) {
+                            final parsed = double.tryParse(
+                              (value ?? '').trim(),
+                            );
+                            if (parsed == null || parsed < 0) {
+                              return isSwahili
+                                  ? 'Weka bajeti sahihi'
+                                  : 'Enter a valid budget';
+                            }
+                            if (_maxUnitsForBudget(parsed) == 0) {
+                              return isSwahili
+                                  ? 'Hakuna tier ya bonasi kwa bajeti hii'
+                                  : 'No bonus tier found for this budget';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.blue.withOpacity(0.16),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isSwahili
+                                    ? 'Muhtasari wa Tier'
+                                    : 'Tier Summary',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text('Max Units: $maxUnits'),
+                              Text(
+                                'Max Bonus: TZS ${_formatMoney(maxUnits * 10000)}',
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => Navigator.pop(sheetContext),
+                                icon: const Icon(Icons.close),
+                                label: Text(isSwahili ? 'Funga' : 'Close'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: submitBudget,
+                                icon: const Icon(Icons.save),
+                                label: Text(isSwahili ? 'Hifadhi' : 'Save'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _linkSchedule(
+    Map<String, dynamic> task,
+    dynamic scheduleId,
+  ) async {
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.post(
+        '/architect-bonus/${task['id']}/link-schedule',
+        data: {'project_schedule_id': scheduleId},
+      );
+      await _loadData(refresh: true);
+      _showSnackBar(
+        response.data['message']?.toString() ?? 'Schedule linked.',
+        isError: false,
+      );
+    } catch (error) {
+      _showSnackBar(
+        _humanizeError(error, fallback: 'Failed to link schedule.'),
+      );
+    }
+  }
+
+  // Admin picker for linking an unlinked bonus to a project schedule. Populated
+  // from GET /architect-bonus/backfill-suggestions (the entry whose task_id
+  // matches this task lists its candidate schedules).
+  Future<void> _showLinkScheduleSheet(Map<String, dynamic> task) async {
+    final isSwahili = ref.read(isSwahiliProvider);
+    List<dynamic> candidates = <dynamic>[];
+
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.get('/architect-bonus/backfill-suggestions');
+      final data = response.data['data'] as List<dynamic>? ?? <dynamic>[];
+      for (final entry in data) {
+        if ('${entry['task_id']}' == '${task['id']}') {
+          candidates = entry['candidates'] as List<dynamic>? ?? <dynamic>[];
+          break;
+        }
+      }
+    } catch (error) {
+      _showSnackBar(
+        _humanizeError(
+          error,
+          fallback: 'Failed to load schedule suggestions.',
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return SafeArea(
+          top: false,
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(sheetContext).size.height * 0.8,
+            ),
+            decoration: BoxDecoration(
+              color: Theme.of(sheetContext).scaffoldBackgroundColor,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          isSwahili ? 'Unganisha Ratiba' : 'Link Schedule',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => Navigator.pop(sheetContext),
+                        icon: const Icon(Icons.close),
+                        label: Text(isSwahili ? 'Funga' : 'Close'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (candidates.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 32),
+                      child: Text(
+                        isSwahili
+                            ? 'Hakuna ratiba za kupendekeza kwa kazi hii.'
+                            : 'No candidate schedules found for this task.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    )
+                  else
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: candidates.map((candidate) {
+                            final candidateMap =
+                                candidate as Map<String, dynamic>;
+                            final similarity =
+                                double.tryParse(
+                                  '${candidateMap['similarity'] ?? 0}',
+                                ) ??
+                                0;
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              child: ListTile(
+                                title: Text(
+                                  '${candidateMap['name'] ?? 'Schedule'}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  '${isSwahili ? 'Kuanza' : 'Start'}: '
+                                  '${_formatDate(candidateMap['start_date'])}'
+                                  '   •   '
+                                  '${isSwahili ? 'Ufanano' : 'Match'}: '
+                                  '${(similarity * 100).toStringAsFixed(0)}%',
+                                ),
+                                trailing: candidateMap['status'] == null
+                                    ? null
+                                    : Text(
+                                        _statusLabel(
+                                          '${candidateMap['status']}',
+                                        ),
+                                        style: TextStyle(
+                                          color: _statusColor(
+                                            candidateMap['status']?.toString(),
+                                          ),
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                onTap: () async {
+                                  Navigator.pop(sheetContext);
+                                  await _linkSchedule(
+                                    task,
+                                    candidateMap['id'],
+                                  );
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _showTaskDetails(Map<String, dynamic> task) async {
     final isSwahili = ref.read(isSwahiliProvider);
+    final currentUserId = ref.read(authStateProvider).valueOrNull?.user?.id;
     try {
       final api = ref.read(apiClientProvider);
       final response = await api.get('/architect-bonus/${task['id']}');
@@ -1418,6 +1788,21 @@ class _ArchitectBonusScreenState extends ConsumerState<ArchitectBonusScreen> {
                             icon: const Icon(Icons.play_arrow),
                             label: Text(isSwahili ? 'Anza' : 'Start'),
                           ),
+                        if (detail['status'] == 'pending' &&
+                            currentUserId != null &&
+                            detail['architect']?['id'] == currentUserId)
+                          FilledButton.icon(
+                            onPressed: () async {
+                              Navigator.pop(sheetContext);
+                              await _runTaskAction(
+                                path:
+                                    '/architect-bonus/${detail['id']}/accept',
+                                fallbackError: 'Failed to accept bonus task.',
+                              );
+                            },
+                            icon: const Icon(Icons.check_circle_outline),
+                            label: Text(isSwahili ? 'Kubali' : 'Accept'),
+                          ),
                         if (detail['can_score'] == true)
                           FilledButton.icon(
                             onPressed: () async {
@@ -1439,6 +1824,33 @@ class _ArchitectBonusScreenState extends ConsumerState<ArchitectBonusScreen> {
                             },
                             icon: const Icon(Icons.payments_outlined),
                             label: Text(isSwahili ? 'Lipa' : 'Mark Paid'),
+                          ),
+                        if (_isAdmin &&
+                            !const [
+                              'scored',
+                              'paid',
+                              'no_bonus',
+                            ].contains(detail['status']))
+                          OutlinedButton.icon(
+                            onPressed: () async {
+                              Navigator.pop(sheetContext);
+                              await _showBudgetSheet(detail);
+                            },
+                            icon: const Icon(Icons.attach_money),
+                            label: Text(
+                              isSwahili ? 'Bajeti' : 'Update Budget',
+                            ),
+                          ),
+                        if (_isAdmin && detail['project_schedule_id'] == null)
+                          OutlinedButton.icon(
+                            onPressed: () async {
+                              Navigator.pop(sheetContext);
+                              await _showLinkScheduleSheet(detail);
+                            },
+                            icon: const Icon(Icons.link),
+                            label: Text(
+                              isSwahili ? 'Unganisha Ratiba' : 'Link Schedule',
+                            ),
                           ),
                         if (detail['can_edit'] == true)
                           OutlinedButton.icon(
