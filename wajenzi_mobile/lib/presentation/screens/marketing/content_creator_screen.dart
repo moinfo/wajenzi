@@ -1,9 +1,12 @@
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/external_launcher_service.dart';
 import '../../providers/settings_provider.dart';
 
 /// Content Creator — tasks board for the content team.
@@ -46,6 +49,11 @@ class _ContentCreatorScreenState extends ConsumerState<ContentCreatorScreen> {
         ),
         actions: [
           IconButton(
+            tooltip: _tr(isSwahili, 'Set target', 'Weka lengo'),
+            onPressed: () => _openTargetSheet(context),
+            icon: const Icon(Icons.flag_rounded),
+          ),
+          IconButton(
             tooltip: _tr(isSwahili, 'Refresh', 'Onyesha tena'),
             onPressed: _bump,
             icon: const Icon(Icons.refresh_rounded),
@@ -82,6 +90,24 @@ class _ContentCreatorScreenState extends ConsumerState<ContentCreatorScreen> {
         child: _TaskFormSheet(task: task),
       ),
     );
+  }
+
+  Future<void> _openTargetSheet(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _TargetFormSheet(),
+    );
+    if (saved == true && mounted) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_tr(
+              ref.read(isSwahiliProvider), 'Target saved.', 'Lengo limehifadhiwa.')),
+        ),
+      );
+    }
   }
 }
 
@@ -230,6 +256,7 @@ class _BoardViewState extends ConsumerState<_BoardView> {
           final stats = data['stats'] is Map
               ? Map<String, dynamic>.from(data['stats'] as Map)
               : const <String, dynamic>{};
+          final crew = (data['crew'] as List?) ?? const [];
 
           // Pull statuses from reference data if available, else use the
           // keys present in the board map.
@@ -300,6 +327,14 @@ class _BoardViewState extends ConsumerState<_BoardView> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             children: [
               _CcHero(stats: stats, isSwahili: isSwahili),
+              if (crew.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _CrewSection(
+                  crew: crew,
+                  isSwahili: isSwahili,
+                  onChanged: widget.onTaskChanged,
+                ),
+              ],
               const SizedBox(height: 16),
               TextField(
                 controller: _searchCtrl,
@@ -533,7 +568,7 @@ class _TaskCard extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => _edit(context),
+        onTap: () => _openDetail(context),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -720,6 +755,26 @@ class _TaskCard extends ConsumerWidget {
           ],
         ),
       );
+
+  Future<void> _openDetail(BuildContext context) async {
+    final rawId = task['id'];
+    final id = rawId is int ? rawId : int.tryParse('${rawId ?? ''}');
+    if (id == null) return;
+    await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.92,
+        child: _TaskDetailSheet(
+          taskId: id,
+          summary: task,
+          isSwahili: isSwahili,
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
 
   Future<void> _edit(BuildContext context) async {
     final saved = await showModalBottomSheet<bool>(
@@ -1118,6 +1173,856 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                   ],
                 ),
               ),
+      ),
+    );
+  }
+}
+
+// ───────────────────────────────────── Detail sheet ─────────────────────────
+
+/// Full task detail with progress control, comment thread and attachments.
+///
+/// Fetches `/content-creator/tasks/{id}` (which includes `comments` and
+/// `attachments`). Every mutation re-fetches the task and notifies the board
+/// via [onChanged] so counts/cards stay in sync.
+class _TaskDetailSheet extends ConsumerStatefulWidget {
+  final int taskId;
+  final Map<String, dynamic> summary;
+  final bool isSwahili;
+  final VoidCallback onChanged;
+
+  const _TaskDetailSheet({
+    required this.taskId,
+    required this.summary,
+    required this.isSwahili,
+    required this.onChanged,
+  });
+
+  @override
+  ConsumerState<_TaskDetailSheet> createState() => _TaskDetailSheetState();
+}
+
+class _TaskDetailSheetState extends ConsumerState<_TaskDetailSheet> {
+  Map<String, dynamic>? _task;
+  bool _loading = true;
+  String? _error;
+  bool _savingProgress = false;
+  bool _postingComment = false;
+  bool _uploading = false;
+  final _commentCtrl = TextEditingController();
+
+  static const _progressSteps = <String>['not_started', 'in_progress', 'completed'];
+
+  @override
+  void initState() {
+    super.initState();
+    _task = widget.summary;
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _commentCtrl.dispose();
+    super.dispose();
+  }
+
+  String _tr(String en, String sw) => widget.isSwahili ? sw : en;
+
+  String _labelize(String value) => value
+      .split('_')
+      .map((w) =>
+          w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
+      .join(' ');
+
+  String _errMsg(Object e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map && data['message'] != null) {
+        return data['message'].toString();
+      }
+    }
+    return e.toString();
+  }
+
+  void _snack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final res = await ref
+          .read(apiClientProvider)
+          .get('/content-creator/tasks/${widget.taskId}');
+      final data =
+          res.data is Map ? Map<String, dynamic>.from(res.data as Map) : {};
+      final task = data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : null;
+      if (!mounted) return;
+      setState(() {
+        _task = task ?? _task;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = _errMsg(e);
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _setProgress(String progress) async {
+    if (_savingProgress) return;
+    setState(() => _savingProgress = true);
+    try {
+      await ref.read(apiClientProvider).post(
+        '/content-creator/tasks/${widget.taskId}/progress',
+        data: {'progress': progress},
+      );
+      widget.onChanged();
+      await _load();
+    } catch (e) {
+      _snack('${_tr('Failed', 'Imeshindwa')}: ${_errMsg(e)}');
+    } finally {
+      if (mounted) setState(() => _savingProgress = false);
+    }
+  }
+
+  Future<void> _addComment() async {
+    final text = _commentCtrl.text.trim();
+    if (text.isEmpty || _postingComment) return;
+    setState(() => _postingComment = true);
+    try {
+      await ref.read(apiClientProvider).post(
+        '/content-creator/tasks/${widget.taskId}/comments',
+        data: {'comment': text},
+      );
+      _commentCtrl.clear();
+      widget.onChanged();
+      await _load();
+    } catch (e) {
+      _snack('${_tr('Failed', 'Imeshindwa')}: ${_errMsg(e)}');
+    } finally {
+      if (mounted) setState(() => _postingComment = false);
+    }
+  }
+
+  Future<void> _uploadAttachment() async {
+    if (_uploading) return;
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const [
+        'jpg', 'jpeg', 'png', 'gif', 'webp',
+        'mp4', 'mov', 'avi', 'pdf', 'ai', 'psd', 'svg', 'zip', 'sketch',
+      ],
+    );
+    final path = result?.files.single.path;
+    if (path == null) return;
+    setState(() => _uploading = true);
+    try {
+      final form = FormData.fromMap({
+        'file': await MultipartFile.fromFile(path),
+      });
+      await ref
+          .read(apiClientProvider)
+          .uploadFile('/content-creator/tasks/${widget.taskId}/attachments',
+              data: form);
+      widget.onChanged();
+      await _load();
+      _snack(_tr('Attachment uploaded.', 'Kiambatisho kimepakiwa.'));
+    } catch (e) {
+      _snack('${_tr('Upload failed', 'Upakiaji umeshindwa')}: ${_errMsg(e)}');
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  Future<void> _openEdit() async {
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.92,
+        child: _TaskFormSheet(task: _task),
+      ),
+    );
+    if (saved == true) {
+      widget.onChanged();
+      await _load();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = ref.watch(isDarkModeProvider);
+    final t = _task ?? const <String, dynamic>{};
+
+    final status = t['status']?.toString() ?? '';
+    final priority = t['priority']?.toString() ?? '';
+    final platform = t['platform']?.toString() ?? '';
+    final taskType = t['task_type']?.toString() ?? '';
+    final assignee = t['assignee_name']?.toString() ?? '';
+    final deadline = t['deadline']?.toString() ?? '';
+    final description = t['description']?.toString() ?? '';
+    final instructions = t['instructions']?.toString() ?? '';
+    final progress = t['progress']?.toString() ?? 'not_started';
+    final comments = (t['comments'] as List?) ?? const [];
+    final attachments = (t['attachments'] as List?) ?? const [];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 12, 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      t['title']?.toString() ?? '-',
+                      style: AppType.display(18, weight: FontWeight.w700),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: _tr('Edit', 'Hariri'),
+                    onPressed: _openEdit,
+                    icon: const Icon(Icons.edit_outlined),
+                  ),
+                  IconButton(
+                    tooltip: _tr('Close', 'Funga'),
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+            ),
+            if (_loading) const LinearProgressIndicator(minHeight: 2),
+            Flexible(
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  8,
+                  20,
+                  MediaQuery.of(context).viewInsets.bottom + 28,
+                ),
+                children: [
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        _error!,
+                        style: const TextStyle(color: AppColors.error),
+                      ),
+                    ),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      if (status.isNotEmpty)
+                        _chip(_labelize(status), AppColors.brandBlue,
+                            Icons.dashboard_customize_outlined),
+                      if (priority.isNotEmpty)
+                        _chip(_labelize(priority), _priorityColor(priority),
+                            Icons.flag_outlined),
+                      if (platform.isNotEmpty)
+                        _chip(_labelize(platform), AppColors.brandBlue,
+                            Icons.public_rounded),
+                      if (taskType.isNotEmpty)
+                        _chip(_labelize(taskType), AppColors.textSecondary,
+                            Icons.layers_outlined),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  _infoRow(Icons.person_outline,
+                      assignee.isEmpty ? _tr('Unassigned', 'Hajachaguliwa') : assignee),
+                  if (deadline.isNotEmpty)
+                    _infoRow(Icons.event_outlined, deadline,
+                        danger: t['is_overdue'] == true),
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _sectionLabel(_tr('Brief', 'Maelezo')),
+                    Text(description),
+                  ],
+                  if (instructions.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _sectionLabel(_tr('Instructions', 'Maagizo')),
+                    Text(instructions),
+                  ],
+                  const SizedBox(height: 18),
+                  _sectionLabel(_tr('Progress', 'Maendeleo')),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final step in _progressSteps)
+                        ChoiceChip(
+                          label: Text(_progressLabel(step)),
+                          selected: progress == step,
+                          onSelected: _savingProgress
+                              ? null
+                              : (_) {
+                                  if (progress != step) _setProgress(step);
+                                },
+                          selectedColor: AppColors.brandGreen,
+                          labelStyle: TextStyle(
+                            color: progress == step
+                                ? Colors.white
+                                : AppColors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  _sectionLabel(
+                      '${_tr('Attachments', 'Viambatisho')} (${attachments.length})'),
+                  const SizedBox(height: 6),
+                  if (attachments.isEmpty)
+                    Text(
+                      _tr('No attachments yet.', 'Hakuna viambatisho bado.'),
+                      style: const TextStyle(color: AppColors.textSecondary),
+                    )
+                  else
+                    ...attachments.whereType<Map>().map((a) {
+                      final name = a['name']?.toString() ??
+                          (a['url']?.toString() ?? '-');
+                      final url = a['url']?.toString() ?? '';
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        leading: const Icon(Icons.attach_file_rounded,
+                            color: AppColors.brandBlue),
+                        title: Text(name, overflow: TextOverflow.ellipsis),
+                        trailing: const Icon(Icons.open_in_new_rounded, size: 16),
+                        onTap: url.isEmpty
+                            ? null
+                            : () => ExternalLauncherService.openMenuUrl(url),
+                      );
+                    }),
+                  const SizedBox(height: 6),
+                  OutlinedButton.icon(
+                    onPressed: _uploading ? null : _uploadAttachment,
+                    icon: _uploading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.upload_file_rounded, size: 18),
+                    label: Text(_tr('Upload', 'Pakia')),
+                  ),
+                  const SizedBox(height: 18),
+                  _sectionLabel(
+                      '${_tr('Comments', 'Maoni')} (${comments.length})'),
+                  const SizedBox(height: 6),
+                  if (comments.isEmpty)
+                    Text(
+                      _tr('No comments yet.', 'Hakuna maoni bado.'),
+                      style: const TextStyle(color: AppColors.textSecondary),
+                    )
+                  else
+                    ...comments.whereType<Map>().map(_commentTile),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _commentCtrl,
+                          minLines: 1,
+                          maxLines: 3,
+                          decoration: _dec(_tr('Add a comment…', 'Ongeza maoni…')),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton.filled(
+                        onPressed: _postingComment ? null : _addComment,
+                        icon: _postingComment
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(Icons.send_rounded),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _priorityColor(String priority) => switch (priority) {
+        'high' => AppColors.error,
+        'medium' => AppColors.brandYellow,
+        'low' => AppColors.brandGreen,
+        _ => AppColors.textSecondary,
+      };
+
+  String _progressLabel(String step) => switch (step) {
+        'not_started' => _tr('Not started', 'Haijaanza'),
+        'in_progress' => _tr('In progress', 'Inaendelea'),
+        'completed' => _tr('Completed', 'Imekamilika'),
+        _ => _labelize(step),
+      };
+
+  Widget _sectionLabel(String label) => Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      );
+
+  Widget _infoRow(IconData icon, String text, {bool danger = false}) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Row(
+          children: [
+            Icon(icon,
+                size: 16,
+                color: danger ? AppColors.error : AppColors.textSecondary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  color: danger ? AppColors.error : null,
+                  fontWeight: danger ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _chip(String label, Color color, IconData icon) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 4),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+          ],
+        ),
+      );
+
+  Widget _commentTile(Map comment) {
+    final name = comment['user_name']?.toString() ?? '—';
+    final body = comment['comment']?.toString() ?? '';
+    final at = comment['created_at']?.toString() ?? '';
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 14,
+            backgroundColor: AppColors.brandBlue.withValues(alpha: 0.15),
+            child: Text(
+              name.isEmpty ? '?' : name.trim().substring(0, 1).toUpperCase(),
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.brandBlue,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 13)),
+                    ),
+                    if (at.length >= 10)
+                      Text(at.substring(0, 10),
+                          style: const TextStyle(
+                              fontSize: 11, color: AppColors.textSecondary)),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(body),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ───────────────────────────────────── Crew section ─────────────────────────
+
+/// Content-team roster with tappable presence (online / busy / away / offline).
+class _CrewSection extends ConsumerWidget {
+  final List crew;
+  final bool isSwahili;
+  final VoidCallback onChanged;
+
+  const _CrewSection({
+    required this.crew,
+    required this.isSwahili,
+    required this.onChanged,
+  });
+
+  static const _statusColors = <String, Color>{
+    'online': AppColors.brandGreen,
+    'busy': AppColors.error,
+    'away': Colors.orange,
+    'offline': Colors.grey,
+  };
+
+  String _tr(String en, String sw) => isSwahili ? sw : en;
+
+  Color _dotColor(String status) => _statusColors[status] ?? Colors.grey;
+
+  String _statusLabel(String status) => switch (status) {
+        'online' => _tr('Online', 'Mtandaoni'),
+        'busy' => _tr('Busy', 'Bize'),
+        'away' => _tr('Away', 'Ametoka'),
+        'offline' => _tr('Offline', 'Nje ya mtandao'),
+        _ => status,
+      };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final members = crew.whereType<Map>().toList();
+    if (members.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.brandBlue.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.groups_rounded,
+                  size: 18, color: AppColors.brandBlue),
+              const SizedBox(width: 6),
+              Text(
+                _tr('Crew', 'Timu'),
+                style: AppType.display(14, weight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...members.map((m) {
+            final name = m['name']?.toString() ?? '—';
+            final role = m['role']?.toString() ?? '';
+            final status = m['online_status']?.toString() ?? 'offline';
+            return InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => _pickStatus(context, ref, m),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: _dotColor(status),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(name,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600)),
+                          if (role.isNotEmpty)
+                            Text(role,
+                                style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      _statusLabel(status),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: _dotColor(status),
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded,
+                        size: 18, color: AppColors.textSecondary),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickStatus(
+      BuildContext context, WidgetRef ref, Map member) async {
+    final rawId = member['user_id'];
+    final userId = rawId is int ? rawId : int.tryParse('${rawId ?? ''}');
+    if (userId == null) return;
+
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Text(
+                  '${member['name'] ?? '-'}',
+                  style: AppType.display(16, weight: FontWeight.w700),
+                ),
+              ),
+              for (final s in _statusColors.keys)
+                ListTile(
+                  leading: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: _dotColor(s),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  title: Text(_statusLabel(s)),
+                  onTap: () => Navigator.of(context).pop(s),
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (picked == null) return;
+    try {
+      await ref.read(apiClientProvider).post(
+        '/content-creator/crew/$userId/status',
+        data: {'online_status': picked},
+      );
+      onChanged();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_tr('Status updated.', 'Hali imesasishwa.'))),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        final msg = e is DioException &&
+                e.response?.data is Map &&
+                (e.response!.data as Map)['message'] != null
+            ? (e.response!.data as Map)['message'].toString()
+            : e.toString();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${_tr('Failed', 'Imeshindwa')}: $msg')),
+        );
+      }
+    }
+  }
+}
+
+// ───────────────────────────────────── Target sheet ─────────────────────────
+
+/// Set a monthly post target for a platform (`POST /content-creator/targets`).
+class _TargetFormSheet extends ConsumerStatefulWidget {
+  const _TargetFormSheet();
+
+  @override
+  ConsumerState<_TargetFormSheet> createState() => _TargetFormSheetState();
+}
+
+class _TargetFormSheetState extends ConsumerState<_TargetFormSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _targetCtrl = TextEditingController(text: '0');
+
+  // Targets endpoint accepts these platforms only (no "general").
+  static const _platforms = <String>[
+    'instagram', 'tiktok', 'facebook', 'linkedin', 'youtube',
+  ];
+
+  String _platform = 'instagram';
+  late int _month = DateTime.now().month;
+  late int _year = DateTime.now().year;
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _targetCtrl.dispose();
+    super.dispose();
+  }
+
+  String _tr(String en, String sw) =>
+      ref.read(isSwahiliProvider) ? sw : en;
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+    try {
+      await ref.read(apiClientProvider).post(
+        '/content-creator/targets',
+        data: {
+          'platform': _platform,
+          'target_posts': int.tryParse(_targetCtrl.text.trim()) ?? 0,
+          'month': _month,
+          'year': _year,
+        },
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      final msg = e is DioException &&
+              e.response?.data is Map &&
+              (e.response!.data as Map)['message'] != null
+          ? (e.response!.data as Map)['message'].toString()
+          : e.toString();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('${_tr('Failed', 'Imeshindwa')}: $msg')));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = ref.watch(isDarkModeProvider);
+    final now = DateTime.now();
+    final years = [for (var y = now.year - 1; y <= now.year + 2; y++) y];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              16,
+              20,
+              MediaQuery.of(context).viewInsets.bottom + 28,
+            ),
+            children: [
+              Text(
+                _tr('Set Platform Target', 'Weka Lengo la Jukwaa'),
+                textAlign: TextAlign.center,
+                style: AppType.display(20),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _platform,
+                decoration: _dec(_tr('Platform', 'Jukwaa')),
+                items: _platforms
+                    .map((p) => DropdownMenuItem<String>(
+                          value: p,
+                          child: Text('${p[0].toUpperCase()}${p.substring(1)}'),
+                        ))
+                    .toList(),
+                onChanged: (v) => setState(() => _platform = v ?? _platform),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _targetCtrl,
+                keyboardType: TextInputType.number,
+                decoration: _dec(_tr('Target posts', 'Machapisho lengwa')),
+                validator: (v) {
+                  final n = int.tryParse((v ?? '').trim());
+                  if (n == null || n < 0) {
+                    return _tr('Enter a valid number', 'Weka namba sahihi');
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<int>(
+                value: _month,
+                decoration: _dec(_tr('Month', 'Mwezi')),
+                items: [
+                  for (var m = 1; m <= 12; m++)
+                    DropdownMenuItem<int>(value: m, child: Text('$m')),
+                ],
+                onChanged: (v) => setState(() => _month = v ?? _month),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<int>(
+                value: years.contains(_year) ? _year : years.first,
+                decoration: _dec(_tr('Year', 'Mwaka')),
+                items: years
+                    .map((y) =>
+                        DropdownMenuItem<int>(value: y, child: Text('$y')))
+                    .toList(),
+                onChanged: (v) => setState(() => _year = v ?? _year),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _saving ? null : _save,
+                child: _saving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(_tr('Save', 'Hifadhi')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

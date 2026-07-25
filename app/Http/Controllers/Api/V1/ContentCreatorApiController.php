@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Content Creator API (mobile).
@@ -318,6 +319,78 @@ class ContentCreatorApiController extends Controller
                 'month'        => (int) $target->month,
                 'year'         => (int) $target->year,
             ],
+        ]);
+    }
+
+    // Upload a file attachment onto a task (mirrors web uploadAttachment).
+    public function uploadAttachment(Request $request, int $id): JsonResponse
+    {
+        $task = ContentCreatorTask::find($id);
+        if (!$task) {
+            return response()->json(['success' => false, 'message' => 'Task not found'], 404);
+        }
+
+        // Same ownership gate the controller applies to task edits (owner or
+        // manager) — web has no authz here, but mobile deliberately does.
+        $this->ensureCanEditTask($task);
+
+        // svg intentionally excluded (stored-XSS vector when served
+        // same-origin); consistent with the app's other mobile upload
+        // endpoints. Designers can still upload SVG via the web app.
+        $request->validate([
+            'file' => 'required|file|max:51200|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,pdf,ai,psd,zip,sketch',
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->store("content-creator/attachments/{$task->id}", 'public');
+
+        $attachments   = $task->attachments ?? [];
+        $attachments[] = [
+            'name'        => $file->getClientOriginalName(),
+            'path'        => $path,
+            'url'         => Storage::url($path),
+            'mime'        => $file->getMimeType(),
+            'uploaded_by' => Auth::id(),
+            'uploaded_at' => now()->toISOString(),
+        ];
+
+        $task->update(['attachments' => $attachments]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Attachment uploaded',
+            'attachments' => $attachments,
+        ]);
+    }
+
+    // Update a crew member's online presence (mirrors web updateCrewStatus).
+    public function updateCrewStatus(Request $request, int $userId): JsonResponse
+    {
+        if (!User::where('id', $userId)->exists()) {
+            return response()->json(['success' => false, 'message' => 'User not found'], 404);
+        }
+
+        // Users may set their own presence; only managers may set another
+        // crew member's status (prevents presence spoofing).
+        abort_unless(
+            Auth::id() === $userId || $this->isManager(),
+            403,
+            'You can only update your own status.',
+        );
+
+        $validated = $request->validate([
+            'online_status' => 'required|in:online,busy,away,offline',
+        ]);
+
+        ContentCreatorCrew::updateOrCreate(
+            ['user_id' => $userId],
+            ['online_status' => $validated['online_status']]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status updated',
+            'data' => ['user_id' => $userId, 'online_status' => $validated['online_status']],
         ]);
     }
 

@@ -1315,7 +1315,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('tasks/{id}/progress', [ContentCreatorApiController::class, 'updateProgress']);
         Route::post('tasks/{id}/approve', [ContentCreatorApiController::class, 'approveTask']);
         Route::post('tasks/{id}/comments', [ContentCreatorApiController::class, 'addComment']);
+        Route::post('tasks/{id}/attachments', [ContentCreatorApiController::class, 'uploadAttachment']);
         Route::post('targets', [ContentCreatorApiController::class, 'setTarget']);
+        Route::post('crew/{userId}/status', [ContentCreatorApiController::class, 'updateCrewStatus']);
     });
 
     // Engineering Design — Structural Design (mirrors ProjectStructuralDesignController)
