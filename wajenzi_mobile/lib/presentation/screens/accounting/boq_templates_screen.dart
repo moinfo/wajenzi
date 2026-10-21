@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/export_service.dart';
 import '../../providers/settings_provider.dart';
 import '../vat/vat_shared.dart';
 
@@ -836,6 +837,16 @@ class _BoqTemplateCard extends StatelessWidget {
                     ],
                   ],
                 ),
+              ),
+              ExportMenuButton(
+                tooltip: isSwahili ? 'Pakua' : 'Export',
+                options: [
+                  ExportOption(
+                    'CSV',
+                    'boq-templates/${template['id']}/csv',
+                    icon: Icons.table_chart_outlined,
+                  ),
+                ],
               ),
               PopupMenuButton<String>(
                 onSelected: (value) {

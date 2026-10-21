@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/services/export_service.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
@@ -461,6 +462,17 @@ class _BoqListScreenState extends ConsumerState<BoqListScreen> {
                                   ),
                                 ],
                               ),
+                            ),
+                            ExportMenuButton(
+                              tooltip: isSwahili ? 'Pakua' : 'Export',
+                              options: [
+                                ExportOption('PDF', 'boqs/${boq['id']}/pdf'),
+                                ExportOption(
+                                  'CSV',
+                                  'boqs/${boq['id']}/csv',
+                                  icon: Icons.table_chart_outlined,
+                                ),
+                              ],
                             ),
                             IconButton(
                               icon: const Icon(

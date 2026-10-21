@@ -43,6 +43,8 @@ import '../../presentation/screens/settings/deduction_settings_screen.dart';
 import '../../presentation/screens/settings/departments_screen.dart';
 import '../../presentation/screens/settings/positions_screen.dart';
 import '../../presentation/screens/settings/roles_screen.dart';
+import '../../presentation/screens/settings/role_permissions_screen.dart';
+import '../../presentation/screens/settings/role_users_screen.dart';
 import '../../presentation/screens/settings/permissions_screen.dart';
 import '../../presentation/screens/settings/suppliers_screen.dart';
 import '../../presentation/screens/settings/items_screen.dart';
@@ -242,6 +244,21 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Redirect to dashboard if already logged in (except for about page)
       if (isLoggedIn && (isOnLanding || isOnLogin)) {
         return '/dashboard';
+      }
+
+      // Role administration: same permission names the web uses to show
+      // these actions. The API enforces them too; this just avoids dead ends.
+      final location = state.matchedLocation;
+      final userPermissions = authSnapshot?.user?.permissions ?? const [];
+      if (isLoggedIn) {
+        if (RegExp(r'^/settings/roles/\d+/permissions$').hasMatch(location) &&
+            !userPermissions.contains('Assign Role To Permissions')) {
+          return '/dashboard';
+        }
+        if (RegExp(r'^/settings/roles/\d+/users$').hasMatch(location) &&
+            !userPermissions.contains('Assign User To Roles')) {
+          return '/dashboard';
+        }
       }
 
       return null;
@@ -1076,6 +1093,22 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const RolesScreen(),
           ),
           GoRoute(
+            path: '/settings/roles/:roleId/permissions',
+            name: 'settings-role-permissions',
+            builder: (context, state) => RolePermissionsScreen(
+              roleId: int.parse(state.pathParameters['roleId']!),
+              roleName: state.uri.queryParameters['name'],
+            ),
+          ),
+          GoRoute(
+            path: '/settings/roles/:roleId/users',
+            name: 'settings-role-users',
+            builder: (context, state) => RoleUsersScreen(
+              roleId: int.parse(state.pathParameters['roleId']!),
+              roleName: state.uri.queryParameters['name'],
+            ),
+          ),
+          GoRoute(
             path: '/settings/permissions',
             name: 'settings-permissions',
             builder: (context, state) => const PermissionsScreen(),
@@ -1653,6 +1686,15 @@ final _drawerMenusProvider = FutureProvider.autoDispose<List<dynamic>>((
   ref,
 ) async {
   final api = ref.watch(apiClientProvider);
+  // Re-fetch the menu whenever the user's roles/permissions change (e.g. an
+  // admin changed them on the web and the app just refreshed the user).
+  ref.watch(
+    authStateProvider.select(
+      (s) =>
+          '${s.valueOrNull?.user?.roles?.join('|')}#'
+          '${s.valueOrNull?.user?.permissions?.join('|')}',
+    ),
+  );
   late final dynamic response;
   try {
     response = await api.get('/menus');

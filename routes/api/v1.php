@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\ProjectClientController;
 use App\Http\Controllers\Api\V1\ProjectSiteVisitController;
 use App\Http\Controllers\Api\V1\BoqController;
+use App\Http\Controllers\Api\V1\ExportApiController;
 use App\Http\Controllers\Api\V1\ProjectMaterialApiController;
 use App\Http\Controllers\Api\V1\SaleApiController;
 use App\Http\Controllers\Api\V1\MaterialRequestController;
@@ -221,6 +222,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('{id}', [RoleApiController::class, 'show']);
         Route::put('{id}', [RoleApiController::class, 'update']);
         Route::delete('{id}', [RoleApiController::class, 'destroy']);
+        Route::get('{id}/permissions', [RoleApiController::class, 'permissions']);
+        Route::put('{id}/permissions', [RoleApiController::class, 'syncPermissions']);
+        Route::get('{id}/users', [RoleApiController::class, 'users']);
+        Route::put('{id}/users', [RoleApiController::class, 'syncUsers']);
     });
     Route::prefix('permissions')->group(function () {
         Route::get('reference-data', [PermissionApiController::class, 'referenceData']);
@@ -955,6 +960,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('finance')->group(function () {
         Route::get('dashboard', [FinanceDashboardApiController::class, 'index']);
         Route::get('expenditure-dashboard', [FinanceDashboardApiController::class, 'expenditureDashboard']);
+    });
+
+    // File exports — mobile counterparts of the web export/download buttons
+    Route::prefix('exports')->group(function () {
+        Route::get('boqs/{id}/pdf', [ExportApiController::class, 'boqPdf']);
+        Route::get('boqs/{id}/csv', [ExportApiController::class, 'boqCsv']);
+        Route::get('boq-templates/{id}/csv', [ExportApiController::class, 'boqTemplateCsv']);
+        Route::get('sales-daily-reports/summary/pdf', [ExportApiController::class, 'salesSummaryPdf']);
+        Route::get('sales-daily-reports/summary/excel', [ExportApiController::class, 'salesSummaryExcel']);
+        Route::get('sales-daily-reports/{id}/pdf', [ExportApiController::class, 'salesReportPdf']);
+        Route::get('site-visits/{id}/invoice-pdf', [ExportApiController::class, 'siteVisitInvoicePdf']);
+        Route::get('billing/payments/{id}/receipt-pdf', [ExportApiController::class, 'paymentReceiptPdf']);
+        Route::get('site-daily-reports/{id}/txt', [ExportApiController::class, 'siteDailyReportTxt']);
+        Route::get('site-cost-report/csv', [ExportApiController::class, 'siteCostReportCsv']);
+        Route::get('attendance-report/excel', [ExportApiController::class, 'attendanceReportExcel']);
     });
 
     // Billing Documents

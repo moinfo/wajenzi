@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/services/export_service.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
@@ -128,6 +129,19 @@ class SalesDailyReportsScreen extends ConsumerWidget {
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
         title: Text(isSwahili ? 'Ripoti za Mauzo' : 'Sales Daily Reports'),
+        actions: [
+          ExportMenuButton(
+            tooltip: isSwahili ? 'Pakua Muhtasari' : 'Export Summary',
+            options: [
+              ExportOption('Summary PDF', 'sales-daily-reports/summary/pdf'),
+              ExportOption(
+                'Summary Excel',
+                'sales-daily-reports/summary/excel',
+                icon: Icons.table_chart_outlined,
+              ),
+            ],
+          ),
+        ],
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 80),
@@ -524,6 +538,15 @@ class _SalesDailyReportCard extends StatelessWidget {
                       color:
                           isDarkMode ? Colors.white54 : AppColors.textSecondary,
                     ),
+                  ),
+                  ExportMenuButton(
+                    tooltip: isSwahili ? 'Pakua' : 'Export',
+                    options: [
+                      ExportOption(
+                        'PDF',
+                        'sales-daily-reports/${item['id']}/pdf',
+                      ),
+                    ],
                   ),
                   PopupMenuButton<String>(
                     onSelected: (value) {

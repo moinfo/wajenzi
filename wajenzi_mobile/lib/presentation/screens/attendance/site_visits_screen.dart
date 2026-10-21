@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/services/export_service.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
@@ -945,6 +946,16 @@ class _VisitDetailSheet extends ConsumerWidget {
                             ),
                           ),
                         ),
+                        if ((visit['invoice_number'] ?? '').toString().isNotEmpty)
+                          ExportMenuButton(
+                            tooltip: isSwahili ? 'Pakua Ankara' : 'Download Invoice',
+                            options: [
+                              ExportOption(
+                                isSwahili ? 'Ankara (PDF)' : 'Invoice (PDF)',
+                                'site-visits/$visitId/invoice-pdf',
+                              ),
+                            ],
+                          ),
                         if (_canEditOrDelete(status)) ...[
                           IconButton(
                             icon: const Icon(

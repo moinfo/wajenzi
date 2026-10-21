@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/config/app_config.dart';
 import 'core/config/theme_config.dart';
 import 'core/router/app_router.dart';
+import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/settings_provider.dart';
 import 'l10n/app_localizations.dart';
 
@@ -29,8 +30,42 @@ void main() async {
   );
 }
 
-class WajenziApp extends ConsumerWidget {
+class WajenziApp extends ConsumerStatefulWidget {
   const WajenziApp({super.key});
+
+  @override
+  ConsumerState<WajenziApp> createState() => _WajenziAppState();
+}
+
+class _WajenziAppState extends ConsumerState<WajenziApp>
+    with WidgetsBindingObserver {
+  DateTime? _lastRefresh;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Roles/permissions are managed on the web; re-read them whenever the app
+  /// comes back to the foreground so both sides always agree.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    final now = DateTime.now();
+    final last = _lastRefresh;
+    if (last != null && now.difference(last) < const Duration(seconds: 30)) {
+      return;
+    }
+    _lastRefresh = now;
+    ref.read(authStateProvider.notifier).refreshUser();
+  }
 
   Locale _getLocaleFromLanguage(AppLanguage language) {
     return switch (language) {
@@ -42,7 +77,7 @@ class WajenziApp extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     // Use effectiveLanguageProvider to respect login context

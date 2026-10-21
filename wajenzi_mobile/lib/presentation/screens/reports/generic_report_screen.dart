@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/services/export_service.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
@@ -208,6 +209,26 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
               ),
         title: Text(title),
         actions: [
+          if (widget.apiEndpoint == '/reports/attendances-report')
+            ExportMenuButton(
+              options: [
+                ExportOption(
+                  'Excel (CSV)',
+                  'attendance-report/excel',
+                  icon: Icons.table_chart_outlined,
+                  query: {
+                    if (_dateRange != null)
+                      'start_date': DateFormat(
+                        'yyyy-MM-dd',
+                      ).format(_dateRange!.start),
+                    if (_dateRange != null)
+                      'end_date': DateFormat(
+                        'yyyy-MM-dd',
+                      ).format(_dateRange!.end),
+                  },
+                ),
+              ],
+            ),
           if (widget.apiEndpoint != '/reports/statutory-category-report' &&
               widget.apiEndpoint != '/reports/statutory-payment-report' &&
               widget.apiEndpoint != '/reports/statutory-schedules-report')

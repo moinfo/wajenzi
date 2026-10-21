@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,6 +47,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
       if (token != null && userData != null) {
         final user = UserModel.fromJson(userData);
         state = AsyncValue.data(AuthState(user: user, token: token));
+        // The stored roles/permissions can be stale (changed on the web
+        // since last login); pull the current ones from the server.
+        unawaited(refreshUser());
       } else {
         state = const AsyncValue.data(AuthState());
       }
@@ -152,6 +157,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
   }
 
   Future<void> refreshUser() async {
+    if (state.valueOrNull?.isAuthenticated != true) return;
     try {
       final user = _userType == 'client'
           ? await _authApi.getClientUser()

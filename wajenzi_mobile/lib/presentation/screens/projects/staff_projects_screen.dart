@@ -317,16 +317,20 @@ class _StatsRow extends StatelessWidget {
         Icons.monetization_on_rounded,
       ),
     ];
+    final width = MediaQuery.sizeOf(context).width;
+    final cardWidth = (width * 0.36).clamp(120.0, 170.0);
+    // Height follows the user's font scale so text never overflows.
+    final scale = MediaQuery.textScalerOf(context).scale(1.0).clamp(1.0, 1.6);
     return SizedBox(
-      height: 110,
+      height: 112 * scale,
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
         scrollDirection: Axis.horizontal,
         itemBuilder: (_, index) {
           final (label, value, color, icon) = cards[index];
           return Container(
-            width: 130,
-            padding: const EdgeInsets.all(14),
+            width: cardWidth,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: cs.surface,
               borderRadius: BorderRadius.circular(14),
@@ -348,17 +352,24 @@ class _StatsRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        value,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: color,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          value,
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: color,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 11,
                           color: cs.onSurface.withValues(alpha: 0.55),

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/services/export_service.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
@@ -990,6 +991,16 @@ class _ReportCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
+                ExportMenuButton(
+                  tooltip: isSwahili ? 'Pakua' : 'Export',
+                  options: [
+                    ExportOption(
+                      'Text (.txt)',
+                      'site-daily-reports/${report['id']}/txt',
+                      icon: Icons.description_outlined,
+                    ),
+                  ],
+                ),
                 GestureDetector(
                   onTap: onEdit,
                   child: Container(

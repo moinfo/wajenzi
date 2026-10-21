@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/utils/permissions.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../vat/vat_shared.dart';
@@ -30,15 +32,25 @@ class RolesScreen extends ConsumerWidget {
     final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
     String tr(String en, String ar) => isArabic ? ar : en;
     final asyncData = ref.watch(_rolesProvider);
+    // Same permission names the web uses to show each Roles action.
+    final canAdd = hasPermission(ref, 'Add Role');
+    final canEdit = hasPermission(ref, 'Edit Role');
+    final canDelete = hasPermission(ref, 'Delete Role');
+    final canAssignPermissions = hasPermission(
+      ref,
+      'Assign Role To Permissions',
+    );
+    final canAssignUsers = hasPermission(ref, 'Assign User To Roles');
 
     return Scaffold(
       appBar: AppBar(
         title: Text(tr('Roles', 'الأدوار')),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _openForm(context, ref),
-          ),
+          if (canAdd)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _openForm(context, ref),
+            ),
         ],
       ),
       body: RefreshIndicator(
@@ -103,11 +115,12 @@ class RolesScreen extends ConsumerWidget {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () => _openForm(context, ref),
-                          icon: const Icon(Icons.add),
-                          label: Text(tr('New Role', 'دور جديد')),
-                        ),
+                        if (canAdd)
+                          ElevatedButton.icon(
+                            onPressed: () => _openForm(context, ref),
+                            icon: const Icon(Icons.add),
+                            label: Text(tr('New Role', 'دور جديد')),
+                          ),
                       ],
                     ),
                   ),
@@ -212,25 +225,59 @@ class RolesScreen extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            _openForm(context, ref, item: item);
-                          } else if (value == 'delete') {
-                            _deleteItem(context, ref, item);
-                          }
-                        },
-                        itemBuilder: (_) => [
-                          PopupMenuItem(
-                            value: 'edit',
-                            child: Text(tr('Edit', 'تعديل')),
-                          ),
-                          PopupMenuItem(
-                            value: 'delete',
-                            child: Text(tr('Delete', 'حذف')),
-                          ),
-                        ],
-                      ),
+                      trailing:
+                          (canEdit ||
+                              canDelete ||
+                              canAssignPermissions ||
+                              canAssignUsers)
+                          ? PopupMenuButton<String>(
+                              onSelected: (value) {
+                                final roleId = item['id'];
+                                final roleName = Uri.encodeComponent(
+                                  item['name']?.toString() ?? '',
+                                );
+                                if (value == 'edit') {
+                                  _openForm(context, ref, item: item);
+                                } else if (value == 'delete') {
+                                  _deleteItem(context, ref, item);
+                                } else if (value == 'permissions') {
+                                  context.push(
+                                    '/settings/roles/$roleId/permissions?name=$roleName',
+                                  );
+                                } else if (value == 'users') {
+                                  context.push(
+                                    '/settings/roles/$roleId/users?name=$roleName',
+                                  );
+                                }
+                              },
+                              itemBuilder: (_) => [
+                                if (canAssignPermissions)
+                                  PopupMenuItem(
+                                    value: 'permissions',
+                                    child: Text(
+                                      tr('Manage Permissions', 'إدارة الصلاحيات'),
+                                    ),
+                                  ),
+                                if (canAssignUsers)
+                                  PopupMenuItem(
+                                    value: 'users',
+                                    child: Text(
+                                      tr('Assign Users', 'تعيين المستخدمين'),
+                                    ),
+                                  ),
+                                if (canEdit)
+                                  PopupMenuItem(
+                                    value: 'edit',
+                                    child: Text(tr('Edit', 'تعديل')),
+                                  ),
+                                if (canDelete)
+                                  PopupMenuItem(
+                                    value: 'delete',
+                                    child: Text(tr('Delete', 'حذف')),
+                                  ),
+                              ],
+                            )
+                          : null,
                     ),
                   );
                 }),
@@ -240,11 +287,13 @@ class RolesScreen extends ConsumerWidget {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(context, ref),
-        icon: const Icon(Icons.add),
-        label: Text(tr('New Role', 'دور جديد')),
-      ),
+      floatingActionButton: canAdd
+          ? FloatingActionButton.extended(
+              onPressed: () => _openForm(context, ref),
+              icon: const Icon(Icons.add),
+              label: Text(tr('New Role', 'دور جديد')),
+            )
+          : null,
     );
   }
 
