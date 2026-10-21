@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/export_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../providers/client_billing_provider.dart';
 import '../../providers/settings_provider.dart';
@@ -121,20 +122,16 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
 
       final file = File(filePath);
       if (await file.exists()) {
-        final uri = Uri.file(filePath);
-        final opened = await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
-        if (!opened) {
-          messenger.showSnackBar(
-            SnackBar(
-              content: Text(
-                isSwahili ? 'Imehifadhiwa: $fileName' : 'Saved: $fileName',
-              ),
+        await saveDownload(await file.readAsBytes(), fileName);
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              isSwahili
+                  ? 'Upakuaji umekamilika: $fileName'
+                  : 'Download complete: $fileName',
             ),
-          );
-        }
+          ),
+        );
       }
     } catch (e) {
       messenger.showSnackBar(

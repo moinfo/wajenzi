@@ -2,15 +2,90 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../network/api_client.dart';
 
+final FlutterLocalNotificationsPlugin _notifications =
+    FlutterLocalNotificationsPlugin();
+bool _notificationsReady = false;
+
+/// Call once at app start. Tapping a "Download complete" notification opens
+/// the downloaded document.
+Future<void> initDownloadNotifications() async {
+  if (kIsWeb || _notificationsReady) return;
+  try {
+    await _notifications.initialize(
+      settings: const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(),
+      ),
+      onDidReceiveNotificationResponse: (response) {
+        final path = response.payload;
+        if (path != null && path.isNotEmpty) OpenFilex.open(path);
+      },
+    );
+    await _notifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.requestNotificationsPermission();
+    _notificationsReady = true;
+  } catch (e) {
+    debugPrint('Download notifications unavailable: $e');
+  }
+}
+
+/// Saves [bytes] to the device, posts a "Download complete" notification (tap
+/// to open) and returns the saved path.
+Future<String> saveDownload(List<int> bytes, String filename) async {
+  final safe = _safeName(filename);
+  Directory dir;
+  try {
+    dir =
+        (!kIsWeb && Platform.isAndroid
+            ? await getExternalStorageDirectory()
+            : null) ??
+        await getApplicationDocumentsDirectory();
+  } catch (_) {
+    dir = await getTemporaryDirectory();
+  }
+  final folder = Directory('${dir.path}/Downloads');
+  if (!await folder.exists()) await folder.create(recursive: true);
+  final path = '${folder.path}/$safe';
+  await File(path).writeAsBytes(bytes);
+
+  await initDownloadNotifications();
+  try {
+    await _notifications.show(
+      id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title: 'Download complete',
+      body: safe,
+      payload: path,
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'downloads',
+          'Downloads',
+          channelDescription: 'Completed document downloads',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  } catch (e) {
+    debugPrint('Could not show download notification: $e');
+  }
+  return path;
+}
+
 /// Downloads a file produced by the backend `/exports/...` endpoints (the same
-/// documents the web export buttons give) and opens it on the device.
+/// documents the web export buttons give), saves it and notifies the user.
 ///
 /// The API answers `{ success, data: { filename, mime_type, file_base64 } }`.
 Future<void> downloadExport(
@@ -18,15 +93,30 @@ Future<void> downloadExport(
   WidgetRef ref,
   String path, {
   Map<String, dynamic>? query,
+}) => downloadFile(context, ref, '/exports/$path', query: query);
+
+/// Same as [downloadExport] for any endpoint answering with a base64 file
+/// (`file_base64` or `pdf_base64`).
+Future<void> downloadFile(
+  BuildContext context,
+  WidgetRef ref,
+  String apiPath, {
+  Map<String, dynamic>? query,
 }) async {
   final messenger = ScaffoldMessenger.of(context);
-  void say(String text, {bool error = false}) {
+  void say(String text, {bool error = false, String? openPath}) {
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text(text),
           backgroundColor: error ? Colors.red.shade700 : null,
+          action: openPath == null
+              ? null
+              : SnackBarAction(
+                  label: 'Open',
+                  onPressed: () => OpenFilex.open(openPath),
+                ),
         ),
       );
   }
@@ -35,22 +125,21 @@ Future<void> downloadExport(
   try {
     final response = await ref
         .read(apiClientProvider)
-        .get('/exports/$path', queryParameters: query);
+        .get(apiPath, queryParameters: query);
     final data = response.data['data'] as Map<String, dynamic>?;
-    final b64 = data?['file_base64'] as String?;
+    final b64 =
+        (data?['file_base64'] ?? data?['pdf_base64']) as String?;
     if (b64 == null || b64.isEmpty) {
       throw StateError('Empty file response');
     }
-    final filename = _safeName(data?['filename'] as String? ?? 'export');
-    final dir = await getTemporaryDirectory();
-    final filePath = '${dir.path}/$filename';
-    await File(filePath).writeAsBytes(base64Decode(b64));
-    messenger.hideCurrentSnackBar();
-    final opened = await launchUrl(
-      Uri.file(filePath),
-      mode: LaunchMode.externalApplication,
+    final saved = await saveDownload(
+      base64Decode(b64),
+      data?['filename'] as String? ?? 'export',
     );
-    if (!opened) say('Saved: $filename');
+    say(
+      'Download complete: ${saved.split(RegExp(r'[\/]')).last}',
+      openPath: saved,
+    );
   } on DioException catch (e) {
     final body = e.response?.data;
     final message = body is Map ? body['message'] as String? : null;

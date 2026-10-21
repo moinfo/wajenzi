@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/export_service.dart';
+import '../../../core/utils/permissions.dart';
 import '../../../data/datasources/remote/staff_dashboard_api.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
@@ -78,6 +80,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         ),
         actions: [
+          ExportMenuButton(
+            tooltip: 'Export calendar',
+            options: [
+              const ExportOption(
+                'Follow-ups calendar (.ics)',
+                'calendar/followups',
+                icon: Icons.event_outlined,
+              ),
+              if (hasPermission(ref, 'View All Invoice Due Dates'))
+                const ExportOption(
+                  'Invoice due dates (.ics)',
+                  'calendar/invoices',
+                  icon: Icons.event_note_outlined,
+                ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () => context.push('/notifications'),

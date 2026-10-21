@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/config/app_config.dart';
 import 'core/config/theme_config.dart';
 import 'core/router/app_router.dart';
+import 'core/services/export_service.dart';
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/settings_provider.dart';
 import 'l10n/app_localizations.dart';
@@ -16,6 +17,9 @@ void main() async {
 
   // Initialize SharedPreferences for settings persistence
   final sharedPreferences = await SharedPreferences.getInstance();
+
+  // "Download complete" notifications for exported documents
+  await initDownloadNotifications();
 
   // Initialize Firebase (uncomment when configured)
   // await Firebase.initializeApp();

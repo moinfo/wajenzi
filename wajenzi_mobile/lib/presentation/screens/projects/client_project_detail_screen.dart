@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/config/theme_config.dart';
+import '../../../core/services/export_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../data/datasources/remote/client_api.dart';
 import '../../providers/client_project_detail_provider.dart';
@@ -148,26 +149,20 @@ class _ClientProjectDetailScreenState
 
       final file = File(filePath);
       if (await file.exists()) {
-        final uri = Uri.file(filePath);
-        final opened = await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
-        if (!opened) {
-          messenger.showSnackBar(
-            SnackBar(
-              content: Text(
-                _projectDetailTr(
-                  language,
-                  en: 'Saved: $fileName',
-                  sw: 'Imehifadhiwa: $fileName',
-                  fr: 'Enregistre : $fileName',
-                  ar: 'تم الحفظ: $fileName',
-                ),
+        await saveDownload(await file.readAsBytes(), fileName);
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              _projectDetailTr(
+                language,
+                en: 'Download complete: $fileName',
+                sw: 'Upakuaji umekamilika: $fileName',
+                fr: 'Telechargement termine : $fileName',
+                ar: 'اكتمل التنزيل: $fileName',
               ),
             ),
-          );
-        }
+          ),
+        );
       }
     } catch (e) {
       messenger.showSnackBar(

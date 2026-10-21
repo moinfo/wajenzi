@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/services/export_service.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../vat/vat_shared.dart';
@@ -516,6 +517,18 @@ class _InvoiceCard extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+              ExportMenuButton(
+                tooltip: isSwahili ? 'Pakua' : 'Export',
+                options: [
+                  ExportOption('PDF', 'billing/invoices/${item['id']}/pdf'),
+                  if ((item['status'] ?? '').toString().toLowerCase() == 'paid')
+                    ExportOption(
+                      isSwahili ? 'Risiti (PDF)' : 'Receipt (PDF)',
+                      'billing/invoices/${item['id']}/receipt-pdf',
+                      icon: Icons.receipt_long_outlined,
+                    ),
+                ],
               ),
               PopupMenuButton<String>(
                 onSelected: (value) {

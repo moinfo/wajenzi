@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/services/export_service.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../vat/vat_shared.dart';
@@ -482,10 +483,36 @@ class _PayslipView extends ConsumerWidget {
           );
         }
 
-        return _PayslipContent(
-          payslip: payslip,
-          isSwahili: isSwahili,
-          isDarkMode: isDarkMode,
+        return Column(
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 12, top: 4),
+                child: TextButton.icon(
+                  onPressed: () => downloadFile(
+                    context,
+                    ref,
+                    '/salary-slips/payslip/pdf',
+                    query: {
+                      'staff_id': staffId,
+                      'month': month,
+                      'year': year,
+                    },
+                  ),
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: Text(isSwahili ? 'Pakua PDF' : 'Export PDF'),
+                ),
+              ),
+            ),
+            Expanded(
+              child: _PayslipContent(
+                payslip: payslip,
+                isSwahili: isSwahili,
+                isDarkMode: isDarkMode,
+              ),
+            ),
+          ],
         );
       },
     );

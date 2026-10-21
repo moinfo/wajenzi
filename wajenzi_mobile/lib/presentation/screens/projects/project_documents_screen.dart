@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/services/export_service.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/external_launcher_service.dart';
 import '../../providers/settings_provider.dart';
@@ -453,7 +454,16 @@ class _DocumentCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded),
+              ExportMenuButton(
+                tooltip: isSwahili ? 'Pakua' : 'Download',
+                options: [
+                  ExportOption(
+                    isSwahili ? 'Pakua hati' : 'Download document',
+                    'project-documents/${document['id']}/download',
+                    icon: Icons.download_rounded,
+                  ),
+                ],
+              ),
             ],
           ),
         ),

@@ -11,6 +11,7 @@ import '../../providers/kpi_provider.dart';
 import '../../widgets/common/error_widget.dart';
 import '../../widgets/common/loading_widget.dart';
 import 'kpi_widgets.dart';
+import '../../../core/services/export_service.dart';
 
 class KpiDetailScreen extends ConsumerWidget {
   final int reviewId;
@@ -484,15 +485,13 @@ class KpiDetailScreen extends ConsumerWidget {
         foreground: AppColors.brandBlue,
       ));
     }
-    if (d.pdfUrl != null && d.pdfUrl!.isNotEmpty) {
-      buttons.add(_btn(
-        'View PDF',
-        Icons.picture_as_pdf,
-        AppColors.brandBlue,
-        () => ExternalLauncherService.openUri(Uri.parse(d.pdfUrl!)),
-        outlined: true,
-      ));
-    }
+    buttons.add(_btn(
+      'Download PDF',
+      Icons.picture_as_pdf,
+      AppColors.brandBlue,
+      () => downloadFile(context, ref, '/performance/${d.id}/pdf'),
+      outlined: true,
+    ));
     // Delete is the ONLY Spatie-permission-gated action in the module.
     // The API enforces the same check; this hides an action the user can't use.
     if (hasPermission(ref, 'Delete Performance Reviews')) {

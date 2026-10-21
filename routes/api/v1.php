@@ -972,9 +972,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('sales-daily-reports/{id}/pdf', [ExportApiController::class, 'salesReportPdf']);
         Route::get('site-visits/{id}/invoice-pdf', [ExportApiController::class, 'siteVisitInvoicePdf']);
         Route::get('billing/payments/{id}/receipt-pdf', [ExportApiController::class, 'paymentReceiptPdf']);
+        Route::get('billing/invoices/{id}/pdf', [ExportApiController::class, 'invoicePdf']);
+        Route::get('billing/invoices/{id}/receipt-pdf', [ExportApiController::class, 'invoiceReceiptPdf']);
+        Route::get('billing/quotations/{id}/pdf', [ExportApiController::class, 'quotationPdf']);
+        Route::get('billing/proformas/{id}/pdf', [ExportApiController::class, 'proformaPdf']);
+        Route::get('project-documents/{id}/download', [ExportApiController::class, 'projectDocument']);
+        Route::get('calendar/followups', [ExportApiController::class, 'followupsCalendar']);
+        Route::get('calendar/invoices', [ExportApiController::class, 'invoicesCalendar']);
         Route::get('site-daily-reports/{id}/txt', [ExportApiController::class, 'siteDailyReportTxt']);
         Route::get('site-cost-report/csv', [ExportApiController::class, 'siteCostReportCsv']);
         Route::get('attendance-report/excel', [ExportApiController::class, 'attendanceReportExcel']);
+        Route::get('daily-attendance-report/excel', [ExportApiController::class, 'dailyAttendanceReportExcel']);
     });
 
     // Billing Documents
@@ -1129,6 +1137,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('salary-slips')->group(function () {
         Route::get('/', [SalarySlipApiController::class, 'index']);
         Route::get('/payslip', [SalarySlipApiController::class, 'getPayslip']);
+        Route::get('/payslip/pdf', [SalarySlipApiController::class, 'pdf']);
         Route::get('/staff/{staffId}/payslips', [SalarySlipApiController::class, 'listStaffPayslips']);
     });
 

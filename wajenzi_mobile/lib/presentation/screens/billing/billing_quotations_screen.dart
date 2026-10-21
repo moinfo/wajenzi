@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/services/export_service.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../vat/vat_shared.dart';
@@ -492,6 +493,12 @@ class _QuotationCard extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+              ExportMenuButton(
+                tooltip: isSwahili ? 'Pakua' : 'Export',
+                options: [
+                  ExportOption('PDF', 'billing/quotations/${item['id']}/pdf'),
+                ],
               ),
               PopupMenuButton<String>(
                 onSelected: (value) {

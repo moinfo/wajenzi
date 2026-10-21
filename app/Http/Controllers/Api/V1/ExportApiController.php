@@ -2,15 +2,22 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Controllers\Billing\InvoiceController;
 use App\Http\Controllers\Billing\PaymentController;
+use App\Http\Controllers\Billing\ProformaController;
+use App\Http\Controllers\Billing\QuotationController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\ProjectBoqController;
+use App\Http\Controllers\ProjectDocumentController;
 use App\Http\Controllers\ProjectSiteVisitController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SalesDailyReportController;
 use App\Http\Controllers\SiteDailyReportController;
 use App\Http\Controllers\SiteReportController;
+use App\Models\BillingDocument;
 use App\Models\BillingPayment;
+use App\Models\ProjectDocument;
 use App\Models\ProjectSiteVisit;
 use App\Models\SalesDailyReport;
 use App\Models\SiteDailyReport;
@@ -108,8 +115,54 @@ class ExportApiController extends Controller
         return $this->wrap(app(PaymentController::class)->receiptPDF($payment));
     }
 
-    // ── Site daily reports ────────────────────────────────────────────────
+    public function invoicePdf(int $id): JsonResponse
+    {
+        $doc = BillingDocument::findOrFail($id);
 
+        return $this->wrap(app(InvoiceController::class)->generatePDF($doc));
+    }
+
+    public function invoiceReceiptPdf(int $id): JsonResponse
+    {
+        $doc = BillingDocument::findOrFail($id);
+
+        return $this->wrap(app(InvoiceController::class)->generateReceipt($doc));
+    }
+
+    public function quotationPdf(int $id): JsonResponse
+    {
+        $doc = BillingDocument::findOrFail($id);
+
+        return $this->wrap(app(QuotationController::class)->generatePDF($doc));
+    }
+
+    public function proformaPdf(int $id): JsonResponse
+    {
+        $doc = BillingDocument::findOrFail($id);
+
+        return $this->wrap(app(ProformaController::class)->generatePDF($doc));
+    }
+
+    // ── Project documents / dashboard calendars ───────────────────────────
+
+    public function projectDocument(int $id): JsonResponse
+    {
+        $doc = ProjectDocument::findOrFail($id);
+
+        return $this->wrap(app(ProjectDocumentController::class)->download($doc->id));
+    }
+
+    public function followupsCalendar(Request $request): JsonResponse
+    {
+        return $this->wrap(app(DashboardController::class)->exportFollowupsToCalendar($request));
+    }
+
+    public function invoicesCalendar(Request $request): JsonResponse
+    {
+        return $this->wrap(app(DashboardController::class)->exportInvoicesToCalendar($request));
+    }
+
+    // ── Site daily reports ────────────────────────────────────────────────
     public function siteDailyReportTxt(Request $request, int $id): JsonResponse
     {
         // Mirrors the permission middleware on the web controller (index/show).
@@ -134,6 +187,13 @@ class ExportApiController extends Controller
         $request->merge(['export' => 'excel']);
 
         return $this->wrap(app(ReportsController::class)->attendances_report($request));
+    }
+
+    public function dailyAttendanceReportExcel(Request $request): JsonResponse
+    {
+        $request->merge(['export' => 'excel']);
+
+        return $this->wrap(app(ReportsController::class)->daily_attendances_report($request));
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

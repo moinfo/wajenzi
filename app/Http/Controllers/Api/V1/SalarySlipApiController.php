@@ -10,11 +10,41 @@ use App\Models\PayrollNetSalary;
 use App\Models\Staff;
 use App\Models\StaffBankDetail;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SalarySlipApiController extends Controller
 {
+    /**
+     * Payslip as a PDF (same figures and layout as the web payslip), returned
+     * as base64 JSON like the other mobile downloads.
+     */
+    public function pdf(Request $request): JsonResponse
+    {
+        $response = $this->getPayslip($request);
+        $payload = $response->getData(true);
+        if (!($payload['success'] ?? false)) {
+            return $response;
+        }
+
+        $data = $payload['data'];
+        $pdf = Pdf::loadView('pages.payroll.payslip_pdf', compact('data'))->setPaper('a4', 'portrait');
+        $base64 = base64_encode($pdf->output());
+        $filename = 'Payslip-' . str_replace(' ', '_', $data['employee']['name']) . '-'
+            . $data['payroll']['month_name'] . '-' . $data['payroll']['year'] . '.pdf';
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'filename' => $filename,
+                'mime_type' => 'application/pdf',
+                'file_base64' => $base64,
+                'pdf_base64' => $base64,
+            ],
+        ]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $staffs = collect(User::onlyStaffs())

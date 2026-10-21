@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/services/export_service.dart';
 import '../../providers/settings_provider.dart';
 import 'labor_contract_form_screen.dart';
 
@@ -321,19 +322,10 @@ class _LaborContractDetailScreenState
       if (base64Str == null || base64Str.isEmpty) {
         throw StateError('Empty PDF response');
       }
-      final bytes = base64Decode(base64Str);
-      final dir = await getTemporaryDirectory();
-      final filePath = '${dir.path}/$filename';
-      final file = File(filePath);
-      await file.writeAsBytes(bytes);
-      final uri = Uri.file(filePath);
-      final opened =
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!opened) {
-        _showMessage(
-          isSwahili ? 'Imehifadhiwa: $filename' : 'Saved: $filename',
-        );
-      }
+      await saveDownload(base64Decode(base64Str), filename);
+      _showMessage(
+        isSwahili ? 'Upakuaji umekamilika: $filename' : 'Download complete: $filename',
+      );
     } on DioException catch (e) {
       _showMessage(_dioMessage(e, isSwahili), error: true);
     } catch (e) {

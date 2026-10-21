@@ -209,6 +209,22 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
               ),
         title: Text(title),
         actions: [
+          if (widget.apiEndpoint == '/reports/daily-attendances-report')
+            ExportMenuButton(
+              options: [
+                ExportOption(
+                  'Excel (CSV)',
+                  'daily-attendance-report/excel',
+                  icon: Icons.table_chart_outlined,
+                  query: {
+                    if (_dateRange != null)
+                      'start_date': DateFormat(
+                        'yyyy-MM-dd',
+                      ).format(_dateRange!.start),
+                  },
+                ),
+              ],
+            ),
           if (widget.apiEndpoint == '/reports/attendances-report')
             ExportMenuButton(
               options: [

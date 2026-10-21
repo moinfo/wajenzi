@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/services/export_service.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
@@ -1048,22 +1049,14 @@ Future<void> _openTrainingGuide(
       return;
     }
 
-    final dir = await getTemporaryDirectory();
-    final filePath = '${dir.path}/$fileName';
-    final file = File(filePath);
-    await file.writeAsBytes(bytes, flush: true);
-
-    final uri = Uri.file(filePath);
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!opened) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            isSwahili ? 'Imehifadhiwa: $fileName' : 'Saved: $fileName',
-          ),
+    await saveDownload(bytes, fileName);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          isSwahili ? 'Upakuaji umekamilika: $fileName' : 'Download complete: $fileName',
         ),
-      );
-    }
+      ),
+    );
   } catch (e) {
     messenger.showSnackBar(
       SnackBar(

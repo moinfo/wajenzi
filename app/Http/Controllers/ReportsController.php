@@ -1151,7 +1151,7 @@ class ReportsController extends Controller
         }
         
         // Paginate users
-        $users = $usersQuery->orderBy('attendance_types.name')->orderBy('users.name')->paginate($perPage);
+        $users = $usersQuery->orderBy('attendance_types.name')->orderBy('users.name')->paginate($export === 'excel' ? 100000 : $perPage);
         
         // Get user IDs for attendance query
         $userIds = $users->pluck('id')->toArray();
@@ -1219,6 +1219,10 @@ class ReportsController extends Controller
             'absent_today' => $allStaffs->where('status_badge_class', 'badge-secondary')->count(),
         ];
         
+        if ($export === 'excel') {
+            return $this->exportDailyAttendanceToExcel($staffs, $overallStats, $start_date);
+        }
+
         return view('pages.reports.reports_daily_attendances_report', compact(
             'staffs',
             'attendanceTypes', 
@@ -1228,6 +1232,53 @@ class ReportsController extends Controller
             'search',
             'users'
         ));
+    }
+
+    /**
+     * Export the daily attendance report (one date) as a CSV that Excel opens.
+     */
+    private function exportDailyAttendanceToExcel($staffs, $overallStats, $date)
+    {
+        $filename = 'daily_attendance_report_' . $date . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($staffs, $overallStats, $date) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            fputcsv($file, ['Daily Attendance Report']);
+            fputcsv($file, ['Date', $date]);
+            fputcsv($file, ['Generated on', date('Y-m-d H:i:s')]);
+            fputcsv($file, []);
+            fputcsv($file, ['Total Users', $overallStats['total_users']]);
+            fputcsv($file, ['Present', $overallStats['present_today']]);
+            fputcsv($file, ['On Time', $overallStats['on_time_today']]);
+            fputcsv($file, ['Late', $overallStats['late_today']]);
+            fputcsv($file, ['Absent', $overallStats['absent_today']]);
+            fputcsv($file, []);
+            fputcsv($file, ['#', 'Attendance Type', 'Name', 'Email', 'Department', 'In Time', 'Status']);
+
+            foreach ($staffs as $type => $group) {
+                foreach ($group as $staff) {
+                    fputcsv($file, [
+                        $staff->row_number,
+                        $type,
+                        $staff->name,
+                        $staff->email,
+                        $staff->department_display,
+                        $staff->in_time,
+                        $staff->status_title,
+                    ]);
+                }
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     /**
