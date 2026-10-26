@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../widgets/common/date_filter_bar.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
@@ -65,7 +68,7 @@ Future<Response<dynamic>> _postWithFallback(
 }
 
 final _salesStartProvider =
-    StateProvider.autoDispose<DateTime>((ref) => DateTime.now());
+    StateProvider.autoDispose<DateTime>((ref) => defaultStartDate());
 final _salesEndProvider =
     StateProvider.autoDispose<DateTime>((ref) => DateTime.now());
 final _salesSearchProvider =
@@ -158,17 +161,22 @@ class SalesScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Uuzaji' : 'Sales'),
+        title: Text(isSwahili ? 'Uuzaji' : 'Sales'), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'sales', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showSaleForm(context, ref),
           tooltip: isSwahili ? 'Ongeza' : 'Add',
           child: const Icon(Icons.add),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('sales')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_salesProvider);
         },
@@ -228,14 +236,6 @@ class SalesScreen extends ConsumerWidget {
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: AppColors.textSecondary),
                   ),
-                  const SizedBox(height: 24),
-                  Center(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _showSaleForm(context, ref),
-                      icon: const Icon(Icons.add),
-                      label: Text(isSwahili ? 'Ongeza Uuzaji' : 'Add Sale'),
-                    ),
-                  ),
                 ],
               );
             }
@@ -281,6 +281,8 @@ class SalesScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
     );
   }
@@ -1347,7 +1349,7 @@ class _SaleCard extends StatelessWidget {
                       if (value == 'delete') onDelete();
                     },
                     itemBuilder: (ctx) => [
-                      PopupMenuItem(
+                      if (canAct(context, 'sales', 'edit')) PopupMenuItem(
                         value: 'edit',
                         child: Row(
                           children: [
@@ -1357,7 +1359,7 @@ class _SaleCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      PopupMenuItem(
+                      if (canAct(context, 'sales', 'delete')) PopupMenuItem(
                         value: 'delete',
                         child: Row(
                           children: [

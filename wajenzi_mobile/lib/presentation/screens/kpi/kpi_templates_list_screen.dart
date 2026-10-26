@@ -85,7 +85,7 @@ class KpiTemplatesListScreen extends ConsumerWidget {
                   onRefresh: notifier.refresh,
                   color: AppColors.brandGreen,
                   child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
                     itemCount: resp.templates.length,
                     itemBuilder: (context, i) =>
                         _TemplateCard(template: resp.templates[i]),

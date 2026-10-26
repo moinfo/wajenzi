@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/export_service.dart';
 import '../../../core/services/external_launcher_service.dart';
 import '../../providers/settings_provider.dart';
 import 'engineering_design_shared.dart';
@@ -63,14 +64,21 @@ class _DesignListScreenState extends ConsumerState<DesignListScreen> {
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton.extended(
           onPressed: () => _showCreateModal(context),
           icon: const Icon(Icons.add_rounded),
           label: Text(trDesign(language, en: 'New', sw: 'Mpya')),
         ),
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions(
+              widget.kind == EngineeringDesignKind.service
+                  ? 'service_design.index'
+                  : 'structural_design.index',
+            )),
+          Expanded(child: RefreshIndicator(
         color: AppColors.brandGreen,
         onRefresh: () async => ref.invalidate(designListProvider(widget.kind)),
         child: Column(
@@ -184,7 +192,7 @@ class _DesignListScreenState extends ConsumerState<DesignListScreen> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
                     itemCount: filtered.length,
                     itemBuilder: (context, i) => _DesignCard(
                       kind: widget.kind,
@@ -199,6 +207,8 @@ class _DesignListScreenState extends ConsumerState<DesignListScreen> {
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -1526,6 +1536,7 @@ class _DesignCreateFormState extends ConsumerState<_DesignCreateForm> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     DropdownButtonFormField<int>(
+      isExpanded: true,
                       initialValue: _projectId,
                       decoration: InputDecoration(
                         labelText:
@@ -1546,6 +1557,7 @@ class _DesignCreateFormState extends ConsumerState<_DesignCreateForm> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<int?>(
+      isExpanded: true,
                       initialValue: _engineerId,
                       decoration: InputDecoration(
                         labelText: trDesign(language,

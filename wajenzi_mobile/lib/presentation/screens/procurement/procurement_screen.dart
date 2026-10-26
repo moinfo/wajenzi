@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -56,11 +57,18 @@ final _materialRequestsProvider = FutureProvider.autoDispose<List<dynamic>>((
   final queryParams = <String, dynamic>{'per_page': 100};
   if (search.isNotEmpty) queryParams['search'] = search;
   if (filter != null) queryParams['status'] = filter;
-  final response = await api.get(
-    '/material-requests',
-    queryParameters: queryParams,
-  );
-  return _extractListPayload(response.data);
+  try {
+    final response = await api.get(
+      '/material-requests',
+      queryParameters: queryParams,
+    );
+    return _extractListPayload(response.data);
+  } on DioException catch (e) {
+    // A user without the material-request permission still gets the rest of
+    // the dashboard (the web hides that section instead of failing the page).
+    if (e.response?.statusCode == 403) return const <dynamic>[];
+    rethrow;
+  }
 });
 
 final _materialRequestDetailProvider = FutureProvider.autoDispose
@@ -1283,7 +1291,7 @@ class ProcurementScreen extends ConsumerWidget {
       ),
       floatingActionButton: materialRequestsOnly || supplierQuotationsOnly
           ? Padding(
-              padding: const EdgeInsets.only(bottom: 80),
+              padding: const EdgeInsets.only(bottom: 0),
               child: FloatingActionButton(
                 heroTag: 'procurement_fab',
                 onPressed: () {
@@ -2406,6 +2414,7 @@ Future<void> _showMaterialRequestForm(
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
+      isExpanded: true,
                   value: selectedProjectId,
                   items: projects
                       .map(
@@ -2463,6 +2472,7 @@ Future<void> _showMaterialRequestForm(
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
+      isExpanded: true,
                   value: priority,
                   decoration: InputDecoration(
                     labelText: isSwahili ? 'Kipaumbele' : 'Priority',
@@ -2822,6 +2832,7 @@ Future<void> _showSupplierQuotationForm(
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<int>(
+      isExpanded: true,
                   value: selectedSupplierId,
                   items: suppliers
                       .map(
@@ -3469,6 +3480,7 @@ Future<void> _showRecordDeliveryForm(
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
+      isExpanded: true,
                     initialValue: condition,
                     decoration: InputDecoration(
                       labelText: isSwahili ? 'Hali *' : 'Condition *',
@@ -4397,6 +4409,12 @@ class _ErrorView extends StatelessWidget {
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
+        const SizedBox(height: 8),
+        Text(
+          _errorDetail(error),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
         const SizedBox(height: 24),
         Center(
           child: ElevatedButton.icon(
@@ -4408,4 +4426,20 @@ class _ErrorView extends StatelessWidget {
       ],
     );
   }
+}
+
+/// The server's message (or the failure kind) behind a failed load.
+String _errorDetail(Object error) {
+  try {
+    final res = (error as dynamic).response;
+    final data = res?.data;
+    final status = res?.statusCode;
+    if (data is Map && data['message'] is String) {
+      return '${status ?? ''} ${data['message']}'.trim();
+    }
+    if (status != null) return 'HTTP $status';
+    final type = (error as dynamic).type;
+    if (type != null) return '$type';
+  } catch (_) {}
+  return error.toString();
 }

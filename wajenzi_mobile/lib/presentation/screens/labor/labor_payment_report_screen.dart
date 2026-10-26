@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/common/date_filter_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/network/api_client.dart';
@@ -34,7 +35,7 @@ class _LaborPaymentReportScreenState
   void initState() {
     super.initState();
     final now = DateTime.now();
-    _startDate = DateTime(now.year, 1, 1);
+    _startDate = defaultStartDate();
     _endDate = now;
     _loadReport();
   }

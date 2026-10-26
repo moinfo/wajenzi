@@ -1379,7 +1379,7 @@ class _ScheduleDetailSheet extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: RichText(
         text: TextSpan(
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+          style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
           children: [
             TextSpan(
               text: '$label: ',

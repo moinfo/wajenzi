@@ -190,7 +190,7 @@ class _LeaveDashboardScreenState extends ConsumerState<LeaveDashboardScreen> {
                     },
                     child: Text(
                       isSwahili ? 'Tazama Zote' : 'View All',
-                      style: const TextStyle(color: AppColors.primary),
+                      style: TextStyle(color: AppColors.accent(context)),
                     ),
                   ),
                 ],
@@ -293,9 +293,9 @@ class _LeaveBalanceCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                  child: const Icon(
+                  child: Icon(
                     Icons.event_note,
-                    color: AppColors.primary,
+                    color: AppColors.accent(context),
                     size: 20,
                   ),
                 ),
@@ -553,9 +553,9 @@ class _LeaveRequestCard extends StatelessWidget {
                             backgroundColor: AppColors.primary.withValues(
                               alpha: 0.1,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.event_note,
-                              color: AppColors.primary,
+                              color: AppColors.accent(context),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -667,7 +667,7 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.primary),
+          Icon(icon, size: 20, color: AppColors.accent(context)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -774,9 +774,9 @@ class _LeaveRequestFormSheetState
                               backgroundColor: AppColors.primary.withValues(
                                 alpha: 0.1,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.add,
-                                color: AppColors.primary,
+                                color: AppColors.accent(context),
                               ),
                             ),
                             const SizedBox(width: 16),

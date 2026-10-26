@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -92,9 +94,12 @@ class _AdvanceSalariesScreenState extends ConsumerState<AdvanceSalariesScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Mishahara ya Mapema' : 'Advance Salaries'),
+        title: Text(isSwahili ? 'Mishahara ya Mapema' : 'Advance Salaries'), actions: [],
       ),
       body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_advance_salary')),
+          Expanded(child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
@@ -267,7 +272,7 @@ class _AdvanceSalariesScreenState extends ConsumerState<AdvanceSalariesScreen> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final item = filtered[index];
@@ -300,15 +305,19 @@ class _AdvanceSalariesScreenState extends ConsumerState<AdvanceSalariesScreen> {
             ),
           ),
         ],
+      )),
+        ],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 70),
+      floatingActionButton: canAct(context, 'hr_settings_advance_salary', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openForm(context, ref),
           backgroundColor: AppColors.primary,
           child: const Icon(Icons.add, color: Colors.white),
         ),
-      ),
+      )
+          : null,
     );
   }
 
@@ -371,9 +380,9 @@ class _AdvanceSalariesScreenState extends ConsumerState<AdvanceSalariesScreen> {
                             backgroundColor: AppColors.primary.withValues(
                               alpha: 0.1,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.payments_outlined,
-                              color: AppColors.primary,
+                              color: AppColors.accent(context),
                               size: 28,
                             ),
                           ),
@@ -627,10 +636,10 @@ class _AdvanceSalaryCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '$index',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -723,7 +732,7 @@ class _AdvanceSalaryCard extends StatelessWidget {
                     ),
                   ),
                   if (canMutate)
-                    PopupMenuItem(
+                    if (canAct(context, 'hr_settings_advance_salary', 'edit')) PopupMenuItem(
                       value: 'edit',
                       child: Row(
                         children: [
@@ -734,7 +743,7 @@ class _AdvanceSalaryCard extends StatelessWidget {
                       ),
                     ),
                   if (canMutate)
-                    PopupMenuItem(
+                    if (canAct(context, 'hr_settings_advance_salary', 'delete')) PopupMenuItem(
                       value: 'delete',
                       child: Row(
                         children: [
@@ -783,7 +792,7 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.primary),
+          Icon(icon, size: 20, color: AppColors.accent(context)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -910,7 +919,7 @@ class _AdvanceSalaryFormSheetState
                               ),
                               child: Icon(
                                 widget.item == null ? Icons.add : Icons.edit,
-                                color: AppColors.primary,
+                                color: AppColors.accent(context),
                               ),
                             ),
                             const SizedBox(width: 16),

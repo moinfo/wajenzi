@@ -392,6 +392,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<AppLanguage>(
+      isExpanded: true,
                   initialValue: currentLanguage,
                   icon: const Icon(Icons.arrow_drop_down_rounded),
                   decoration: InputDecoration(

@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -90,13 +92,14 @@ class _ChartAccountUsagesScreenState
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Matumizi ya Akaunti' : 'Chart Account Usages'),
+        title: Text(isSwahili ? 'Matumizi ya Akaunti' : 'Chart Account Usages'), actions: [],
       ),
-      floatingActionButton: usagesAsync.maybeWhen(
+      floatingActionButton: canAct(context, 'charts_of_account_usages', 'add')
+          ? usagesAsync.maybeWhen(
         data: (payload) => payload['unavailable_on_live'] == true
             ? null
             : Padding(
-                padding: const EdgeInsets.only(bottom: 80),
+                padding: const EdgeInsets.only(bottom: 0),
                 child: FloatingActionButton(
                   onPressed: () => _openForm(context, ref),
                   child: const Icon(Icons.add_rounded),
@@ -104,15 +107,19 @@ class _ChartAccountUsagesScreenState
                 ),
               ),
         orElse: () => Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 0),
           child: FloatingActionButton(
             onPressed: () => _openForm(context, ref),
             child: const Icon(Icons.add_rounded),
             tooltip: isSwahili ? 'Ongeza' : 'Add',
           ),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('charts_of_account_usages')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_chartAccountUsagesProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -256,7 +263,7 @@ class _ChartAccountUsagesScreenState
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final usage = filteredUsages[index];
@@ -276,6 +283,8 @@ class _ChartAccountUsagesScreenState
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -586,7 +595,7 @@ class _UsageCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'charts_of_account_usages', 'edit')) PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
@@ -596,7 +605,7 @@ class _UsageCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'charts_of_account_usages', 'delete')) PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [

@@ -12,8 +12,15 @@ class PurchaseOrdersRepository {
   Future<List<PurchaseOrderListItem>> listPurchaseOrders({
     String? search,
     String? status,
+    String? startDate,
+    String? endDate,
   }) =>
-      _ds.listPurchaseOrders(search: search, status: status);
+      _ds.listPurchaseOrders(
+        search: search,
+        status: status,
+        startDate: startDate,
+        endDate: endDate,
+      );
 
   Future<PurchaseOrderDetail> getPurchaseOrder(int id) =>
       _ds.getPurchaseOrder(id);
@@ -65,8 +72,15 @@ class PurchaseOrdersRepository {
   Future<List<ReceivingListItem>> listReceivings({
     String? search,
     String? status,
+    String? startDate,
+    String? endDate,
   }) =>
-      _ds.listReceivings(search: search, status: status);
+      _ds.listReceivings(
+        search: search,
+        status: status,
+        startDate: startDate,
+        endDate: endDate,
+      );
 
   Future<ReceivingDetail> getReceiving(int id) => _ds.getReceiving(id);
 

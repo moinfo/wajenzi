@@ -237,7 +237,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 child: Text(
                   '$projectsCount ${_profileTr(language, en: 'projects', sw: 'miradi', fr: 'projets', ar: 'مشاريع')}',
-                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 13),
+                  style: TextStyle(color: AppColors.accent(context), fontWeight: FontWeight.w600, fontSize: 13),
                 ),
               ),
             ],

@@ -148,6 +148,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     String? currentValue = _filters[key]?.toString();
     
     return DropdownButtonFormField<String>(
+      isExpanded: true,
       value: currentValue,
       decoration: const InputDecoration(
         border: OutlineInputBorder(),

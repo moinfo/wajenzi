@@ -1,4 +1,7 @@
 import 'package:dio/dio.dart';
+import 'project_document_form_sheet.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -73,7 +76,21 @@ class _ProjectDocumentsScreenState
         ),
         title: Text(isSwahili ? 'Nyaraka za Miradi' : 'Project Documents'),
       ),
-      body: RefreshIndicator(
+      // Like the web's "New Document" button: needs "Add Document".
+      floatingActionButton: canAct(context, 'project_documents', 'add')
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 0),
+              child: FloatingActionButton(
+                onPressed: () => _openForm(context),
+                child: const Icon(Icons.add_rounded),
+              ),
+            )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('project_documents')),
+          Expanded(
+            child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_projectDocumentsProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -220,6 +237,8 @@ class _ProjectDocumentsScreenState
                           isSwahili: isSwahili,
                           isDarkMode: isDarkMode,
                           onTap: () => _showDocumentDetails(context, document),
+                          onEdit: () => _openForm(context, document: document),
+                          onDelete: () => _deleteDocument(context, document),
                         ),
                       ),
                       const SizedBox(height: 80),
@@ -230,8 +249,72 @@ class _ProjectDocumentsScreenState
             ),
           ],
         ),
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  Future<void> _openForm(
+    BuildContext context, {
+    Map<String, dynamic>? document,
+  }) async {
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => ProjectDocumentFormSheet(document: document),
+    );
+    if (saved == true) ref.invalidate(_projectDocumentsProvider);
+  }
+
+  Future<void> _deleteDocument(
+    BuildContext context,
+    Map<String, dynamic> document,
+  ) async {
+    final isSwahili = ref.read(isSwahiliProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isSwahili ? 'Futa Hati' : 'Delete Document'),
+        content: Text(
+          isSwahili
+              ? 'Una uhakika unataka kufuta hati hii?'
+              : 'Are you sure you want to delete this document?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              isSwahili ? 'Futa' : 'Delete',
+              style: const TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await ref.read(apiClientProvider).delete('/project-documents/${document['id']}');
+      ref.invalidate(_projectDocumentsProvider);
+      messenger.showSnackBar(
+        SnackBar(content: Text(isSwahili ? 'Hati imefutwa' : 'Document deleted')),
+      );
+    } catch (error) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_projectDocumentErrorMessage(error, isSwahili)),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   Future<void> _showDocumentDetails(
@@ -371,12 +454,16 @@ class _DocumentCard extends StatelessWidget {
   final bool isSwahili;
   final bool isDarkMode;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const _DocumentCard({
     required this.document,
     required this.isSwahili,
     required this.isDarkMode,
     required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
@@ -464,6 +551,27 @@ class _DocumentCard extends StatelessWidget {
                   ),
                 ],
               ),
+              // Like the web: "Edit Document" / "Delete Document".
+              if (canAct(context, 'project_documents', 'edit') ||
+                  canAct(context, 'project_documents', 'delete'))
+                PopupMenuButton<String>(
+                  onSelected: (value) => value == 'edit' ? onEdit() : onDelete(),
+                  itemBuilder: (_) => [
+                    if (canAct(context, 'project_documents', 'edit'))
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Text(isSwahili ? 'Hariri' : 'Edit'),
+                      ),
+                    if (canAct(context, 'project_documents', 'delete'))
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text(
+                          isSwahili ? 'Futa' : 'Delete',
+                          style: const TextStyle(color: AppColors.error),
+                        ),
+                      ),
+                  ],
+                ),
             ],
           ),
         ),

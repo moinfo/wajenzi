@@ -140,7 +140,7 @@ class _AboutAdminScreenState extends ConsumerState<AboutAdminScreen> {
       key: _formKey,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
         children: [
           Container(
             padding: const EdgeInsets.all(16),

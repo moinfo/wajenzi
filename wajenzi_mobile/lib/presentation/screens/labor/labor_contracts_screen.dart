@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../widgets/common/date_range_sheet.dart';
+import '../../widgets/common/date_filter_bar.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -69,7 +72,7 @@ class _LaborContractsScreenState extends ConsumerState<LaborContractsScreen> {
     final now = DateTime.now();
     final startDate =
         dateRange?['start'] ??
-        DateFormat('yyyy-MM-dd').format(DateTime(now.year, now.month, 1));
+        DateFormat('yyyy-MM-dd').format(defaultStartDate());
     final endDate = dateRange?['end'] ?? DateFormat('yyyy-MM-dd').format(now);
 
     return Scaffold(
@@ -80,8 +83,7 @@ class _LaborContractsScreenState extends ConsumerState<LaborContractsScreen> {
               ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
         ),
         title: Text(isSwahili ? 'Mikataba ya Labor' : 'Labor Contracts'),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.dashboard_rounded),
             tooltip: isSwahili ? 'Dashibodi' : 'Dashboard',
             onPressed: () => context.go('/labor-dashboard'),
@@ -98,7 +100,10 @@ class _LaborContractsScreenState extends ConsumerState<LaborContractsScreen> {
         icon: const Icon(Icons.add),
         label: Text(isSwahili ? 'Mkataba' : 'Contract'),
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('labor.contracts.index')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_laborContractsProvider);
           ref.invalidate(_laborContractsReferenceProvider);
@@ -361,6 +366,8 @@ class _LaborContractsScreenState extends ConsumerState<LaborContractsScreen> {
             );
           },
         ),
+      )),
+        ],
       ),
     );
   }
@@ -392,28 +399,15 @@ class _LaborContractsScreenState extends ConsumerState<LaborContractsScreen> {
   Future<void> _selectDateRange(BuildContext context, WidgetRef ref) async {
     final now = DateTime.now();
     final initialRange = DateTimeRange(
-      start: DateTime(now.year, now.month, 1),
+      start: defaultStartDate(),
       end: now,
     );
 
-    final picked = await showDateRangePicker(
+    final picked = await showDateRangeSheet(
       context: context,
       firstDate: DateTime(2020),
       lastDate: now,
       initialDateRange: initialRange,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF2563EB),
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {

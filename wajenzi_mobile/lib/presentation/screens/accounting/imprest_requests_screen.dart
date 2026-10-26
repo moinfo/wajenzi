@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -9,6 +11,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/external_launcher_service.dart';
 import '../../providers/settings_provider.dart';
+import '../../widgets/common/date_filter_bar.dart';
 import '../vat/vat_shared.dart';
 
 final _imprestSearchProvider = StateProvider.autoDispose<String>((ref) => '');
@@ -20,7 +23,10 @@ final _imprestRequestsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
       try {
-        final response = await api.get('/imprest-requests');
+        final response = await api.get(
+          '/imprest-requests',
+          queryParameters: dateRangeQuery(ref.watch(dateRangeProvider('imprest'))),
+        );
         final data = response.data is Map<String, dynamic>
             ? response.data as Map<String, dynamic>
             : const <String, dynamic>{};
@@ -92,13 +98,14 @@ class _ImprestRequestsScreenState extends ConsumerState<ImprestRequestsScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Maombi ya Imprest' : 'Imprest Requests'),
+        title: Text(isSwahili ? 'Maombi ya Imprest' : 'Imprest Requests'), actions: [],
       ),
-      floatingActionButton: requestsAsync.maybeWhen(
+      floatingActionButton: canAct(context, 'imprest_requests', 'add')
+          ? requestsAsync.maybeWhen(
         data: (payload) => payload['unavailable_on_live'] == true
             ? null
             : Padding(
-                padding: const EdgeInsets.only(bottom: 80),
+                padding: const EdgeInsets.only(bottom: 0),
                 child: FloatingActionButton(
                   onPressed: () => _openForm(context, ref),
                   child: const Icon(Icons.add_rounded),
@@ -106,15 +113,19 @@ class _ImprestRequestsScreenState extends ConsumerState<ImprestRequestsScreen> {
                 ),
               ),
         orElse: () => Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 0),
           child: FloatingActionButton(
             onPressed: () => _openForm(context, ref),
             child: const Icon(Icons.add_rounded),
             tooltip: isSwahili ? 'Ongeza Ombi' : 'Add Request',
           ),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          const ExportAndDateBar(id: 'imprest', route: 'imprest_requests'),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_imprestRequestsProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -386,7 +397,7 @@ class _ImprestRequestsScreenState extends ConsumerState<ImprestRequestsScreen> {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
                       _ImprestSummaryCard(
@@ -412,6 +423,8 @@ class _ImprestRequestsScreenState extends ConsumerState<ImprestRequestsScreen> {
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -818,7 +831,7 @@ class _ImprestCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'imprest_requests', 'edit')) PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
@@ -828,7 +841,7 @@ class _ImprestCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'imprest_requests', 'delete')) PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [

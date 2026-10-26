@@ -91,6 +91,14 @@ class AppConfig {
 
   static String get portalBaseUrl {
     if (_explicitPortalBaseUrl.isNotEmpty) return _explicitPortalBaseUrl;
+    // Only the API address was given (e.g. a phone testing against a LAN
+    // server): serve media and web links from that same host.
+    if (_explicitApiBaseUrl.isNotEmpty) {
+      final uri = Uri.tryParse(_explicitApiBaseUrl);
+      if (uri != null && uri.hasScheme && uri.host.isNotEmpty) {
+        return uri.origin;
+      }
+    }
     final localUrl = _getLocalPortalUrl();
     if (localUrl.isNotEmpty) return localUrl;
     // Debug → local Laravel; release → production.
@@ -124,7 +132,9 @@ class AppConfig {
   );
 
   static const Duration connectionTimeout = Duration(seconds: 60);
-  static const Duration receiveTimeout = Duration(seconds: 60);
+  // Debug builds talk to a slow single-threaded local server, so allow longer.
+  static const Duration receiveTimeout =
+      kDebugMode ? Duration(seconds: 180) : Duration(seconds: 60);
 
   static const Duration syncInterval = Duration(minutes: 15);
   static const int maxSyncRetries = 3;

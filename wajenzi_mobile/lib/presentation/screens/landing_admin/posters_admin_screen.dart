@@ -72,7 +72,7 @@ class PostersAdminScreen extends ConsumerWidget {
           );
         }
         return SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           sliver: SliverList.builder(
             itemCount: filtered.length,
             itemBuilder: (context, index) {

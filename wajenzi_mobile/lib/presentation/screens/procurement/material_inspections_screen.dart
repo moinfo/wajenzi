@@ -1,4 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/router/app_router.dart';
@@ -6,6 +8,7 @@ import '../../../data/models/procurement/inspection_models.dart';
 import '../../../data/repositories/inspections_repository.dart';
 import 'material_inspection_create_screen.dart';
 import 'procurement_shared.dart';
+import '../../widgets/common/date_filter_bar.dart';
 
 final _searchProvider = StateProvider.autoDispose<String>((_) => '');
 final _statusFilterProvider = StateProvider.autoDispose<String?>((_) => null);
@@ -15,9 +18,12 @@ final _inspectionsListProvider =
   final repo = ref.watch(inspectionsRepositoryProvider);
   final search = ref.watch(_searchProvider);
   final status = ref.watch(_statusFilterProvider);
+  final range = ref.watch(dateRangeProvider('material_inspections'));
   return repo.list(
     search: search.isEmpty ? null : search,
     status: status,
+    startDate: DateFilterBar.format(range.start),
+    endDate: DateFilterBar.format(range.end),
     perPage: 100,
   );
 });
@@ -58,6 +64,37 @@ class _MaterialInspectionsScreenState
     await ref.read(_inspectionsListProvider.future);
   }
 
+  Future<void> _deleteInspection(InspectionDto inspection) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Inspection'),
+        content: Text('Delete ${inspection.inspectionNumber ?? 'this inspection'}? This cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Color(0xFFE74C3C))),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    try {
+      await ref.read(inspectionsRepositoryProvider).delete(inspection.id);
+      ref.invalidate(_inspectionsListProvider);
+      messenger.showSnackBar(const SnackBar(content: Text('Inspection deleted successfully.')));
+    } catch (e) {
+      var message = 'Could not delete the inspection';
+      if (e is DioException && e.response?.data is Map && e.response!.data['message'] != null) {
+        message = '${e.response!.data['message']}';
+      }
+      messenger.showSnackBar(SnackBar(content: Text(message), backgroundColor: const Color(0xFFE74C3C)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
@@ -81,9 +118,12 @@ class _MaterialInspectionsScreenState
             const Tab(text: 'Inspections'),
             Tab(text: 'To Inspect ($pendingCount)'),
           ],
-        ),
+        ), actions: [],
       ),
-      body: TabBarView(
+      body: Column(
+        children: [
+          const ExportAndDateBar(id: 'material_inspections', route: 'material_inspections'),
+          Expanded(child: TabBarView(
         controller: _tabController,
         children: [
           Column(
@@ -116,11 +156,16 @@ class _MaterialInspectionsScreenState
                         );
                       }
                       return ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                         itemCount: items.length,
                         itemBuilder: (context, index) => _InspectionCard(
                           inspection: items[index],
                           onTap: () => _openDetail(items[index].id),
+                          // Like the web list: Delete only while pending.
+                          onDelete: (items[index].status ?? '').toLowerCase() == 'pending' &&
+                                  !items[index].stockUpdated
+                              ? () => _deleteInspection(items[index])
+                              : null,
                         ),
                       );
                     },
@@ -147,7 +192,7 @@ class _MaterialInspectionsScreenState
                   );
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                   itemCount: pending.length,
                   itemBuilder: (context, index) => _PendingReceivingCard(
                     receiving: pending[index],
@@ -158,6 +203,8 @@ class _MaterialInspectionsScreenState
               },
             ),
           ),
+        ],
+      )),
         ],
       ),
     );
@@ -318,8 +365,9 @@ class _FilterChip extends StatelessWidget {
 class _InspectionCard extends StatelessWidget {
   final InspectionDto inspection;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
-  const _InspectionCard({required this.inspection, required this.onTap});
+  const _InspectionCard({required this.inspection, required this.onTap, this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -354,6 +402,13 @@ class _InspectionCard extends StatelessWidget {
                     ),
                   ),
                   ProcurementStatusChip(status: status),
+                  if (onDelete != null)
+                    IconButton(
+                      tooltip: 'Delete',
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFE74C3C), size: 22),
+                      onPressed: onDelete,
+                    ),
                 ],
               ),
               const SizedBox(height: 6),

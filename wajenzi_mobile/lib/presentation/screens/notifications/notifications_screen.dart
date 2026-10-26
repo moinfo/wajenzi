@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
@@ -28,14 +29,16 @@ class NotificationsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(isSwahili ? 'Arifa' : 'Notifications'),
-        actions: [
-          TextButton(
+        actions: [TextButton(
             onPressed: () => _markAllAsRead(context, ref, isSwahili),
             child: Text(isSwahili ? 'Soma Zote' : 'Read All'),
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('user_notifications')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () => ref.refresh(_notificationsProvider.future),
         child: notificationsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -111,6 +114,8 @@ class NotificationsScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
     );
   }

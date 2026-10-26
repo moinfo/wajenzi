@@ -7,6 +7,7 @@ import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../../widgets/common/empty_state_widget.dart';
 import '../../widgets/common/filter_bottom_sheet.dart';
+import '../../../core/services/export_service.dart';
 import 'labor_payment_detail_screen.dart';
 import 'labor_payment_report_screen.dart';
 
@@ -402,6 +403,9 @@ class _LaborPaymentsScreenState extends ConsumerState<LaborPaymentsScreen> {
             ),
       body: Column(
         children: [
+          ExportButtonsBar(options: webTableExportOptions('labor.payments.index')),
+          Expanded(child: Column(
+        children: [
           if (_isBulkApproving) const LinearProgressIndicator(),
           Expanded(
             child: RefreshIndicator(
@@ -409,6 +413,8 @@ class _LaborPaymentsScreenState extends ConsumerState<LaborPaymentsScreen> {
               child: _buildList(),
             ),
           ),
+        ],
+      )),
         ],
       ),
     );

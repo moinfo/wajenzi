@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../../widgets/common/date_filter_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/theme_config.dart';
@@ -7,7 +8,7 @@ import '../../providers/settings_provider.dart';
 import 'vat_shared.dart';
 
 final _startProvider = StateProvider.autoDispose<DateTime>(
-    (ref) => DateTime(DateTime.now().year, DateTime.now().month, 1));
+    (ref) => defaultStartDate());
 final _endProvider =
     StateProvider.autoDispose<DateTime>((ref) => DateTime.now());
 
@@ -38,7 +39,7 @@ class VatSalesScreen extends ConsumerWidget {
         backgroundColor: isDark ? vatDarkCard : null,
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showSaleForm(context, ref, isDark, isSwahili),
           child: const Icon(Icons.add),

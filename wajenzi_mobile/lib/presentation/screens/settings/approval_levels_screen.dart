@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -46,14 +48,16 @@ class ApprovalLevelsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(tr('Approval Levels', 'مستويات الموافقة')),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _openForm(context, ref),
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_approval_levels')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_approvalLevelsProvider),
         child: asyncData.when(
           loading: () => LoadingWidget(
@@ -98,10 +102,10 @@ class ApprovalLevelsScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.rule_folder_outlined,
                           size: 56,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -163,9 +167,9 @@ class ApprovalLevelsScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.rule_folder_outlined,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -273,11 +277,11 @@ class ApprovalLevelsScreen extends ConsumerWidget {
                           }
                         },
                         itemBuilder: (_) => [
-                          PopupMenuItem(
+                          if (canAct(context, 'hr_settings_approval_levels', 'edit')) PopupMenuItem(
                             value: 'edit',
                             child: Text(tr('Edit', 'تعديل')),
                           ),
-                          PopupMenuItem(
+                          if (canAct(context, 'hr_settings_approval_levels', 'delete')) PopupMenuItem(
                             value: 'delete',
                             child: Text(tr('Delete', 'حذف')),
                           ),
@@ -291,12 +295,16 @@ class ApprovalLevelsScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: canAct(context, 'hr_settings_approval_levels', 'add')
+          ? FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
         label: Text(tr('New Approval Level', 'مستوى موافقة جديد')),
-      ),
+      )
+          : null,
     );
   }
 
@@ -494,6 +502,7 @@ class _ApprovalLevelFormSheetState
                 ),
                 const SizedBox(height: 18),
                 DropdownButtonFormField<int>(
+      isExpanded: true,
                   value:
                       documentTypes.any(
                         (item) => _asInt(item['id']) == _approvalDocumentTypeId,
@@ -526,6 +535,7 @@ class _ApprovalLevelFormSheetState
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
+      isExpanded: true,
                   value:
                       userGroups.any(
                         (item) => _asInt(item['id']) == _userGroupId,
@@ -582,6 +592,7 @@ class _ApprovalLevelFormSheetState
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
+      isExpanded: true,
                   value:
                       actions.any(
                         (item) => item['value']?.toString() == _action,

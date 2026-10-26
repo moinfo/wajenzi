@@ -263,7 +263,7 @@ class _LeaveManagementsScreenState
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                     itemCount: items.length,
                     itemBuilder: (context, index) {
                       final item = items[index] as Map<String, dynamic>;
@@ -375,9 +375,9 @@ class _LeaveManagementsScreenState
                           backgroundColor: AppColors.primary.withValues(
                             alpha: 0.1,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.edit,
-                            color: AppColors.primary,
+                            color: AppColors.accent(context),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -474,9 +474,9 @@ class _LeaveManagementsScreenState
                           backgroundColor: AppColors.primary.withValues(
                             alpha: 0.1,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.event_note,
-                            color: AppColors.primary,
+                            color: AppColors.accent(context),
                             size: 28,
                           ),
                         ),
@@ -771,9 +771,9 @@ class _LeaveManagementCard extends StatelessWidget {
                     ),
                     child: Text(
                       '${item['total_days'] ?? 0} ${isSwahili ? 'siku' : 'days'}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.primary,
+                        color: AppColors.accent(context),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -840,7 +840,7 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.primary),
+          Icon(icon, size: 20, color: AppColors.accent(context)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -951,6 +951,7 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
+      isExpanded: true,
             value: _status,
             decoration: InputDecoration(
               labelText: widget.isSwahili ? 'Uamuzi *' : 'Decision *',

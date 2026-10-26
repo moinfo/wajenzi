@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -46,14 +48,16 @@ class DeductionSettingsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(tr('Deduction Settings', 'إعدادات الاستقطاعات')),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _openForm(context, ref),
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_deduction_settings')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_deductionSettingsProvider),
         child: asyncData.when(
           loading: () => LoadingWidget(
@@ -92,10 +96,10 @@ class DeductionSettingsScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.tune,
                           size: 56,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -157,7 +161,7 @@ class DeductionSettingsScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(Icons.tune, color: AppColors.primary),
+                        child: Icon(Icons.tune, color: AppColors.accent(context)),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -239,11 +243,11 @@ class DeductionSettingsScreen extends ConsumerWidget {
                                   }
                                 },
                                 itemBuilder: (_) => [
-                                  PopupMenuItem(
+                                  if (canAct(context, 'hr_settings_deduction_settings', 'edit')) PopupMenuItem(
                                     value: 'edit',
                                     child: Text(tr('Edit', 'تعديل')),
                                   ),
-                                  PopupMenuItem(
+                                  if (canAct(context, 'hr_settings_deduction_settings', 'delete')) PopupMenuItem(
                                     value: 'delete',
                                     child: Text(tr('Delete', 'حذف')),
                                   ),
@@ -292,12 +296,16 @@ class DeductionSettingsScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: canAct(context, 'hr_settings_deduction_settings', 'add')
+          ? FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
         label: Text(tr('New Setting', 'إعداد جديد')),
-      ),
+      )
+          : null,
     );
   }
 

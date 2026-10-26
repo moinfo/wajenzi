@@ -5,7 +5,10 @@ import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/export_service.dart';
+import '../../../core/utils/web_actions.dart';
 import '../../providers/settings_provider.dart';
+import '../../widgets/common/date_filter_bar.dart';
 
 final _projectReportsSearchProvider = StateProvider.autoDispose<String>(
   (ref) => '',
@@ -50,7 +53,7 @@ class _ReportFilter {
 }
 
 final _projectReportsFilterProvider = StateProvider.autoDispose<_ReportFilter>(
-  (ref) => _ReportFilter(),
+  (ref) => _ReportFilter(startDate: defaultStartDate(), endDate: today()),
 );
 
 final _projectReportsProjectsProvider =
@@ -67,10 +70,18 @@ final _projectReportsProjectsProvider =
 final _projectReportsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
+      final filter = ref.watch(_projectReportsFilterProvider);
       try {
         final response = await api.get(
           '/project-daily-reports',
-          queryParameters: {'per_page': 100},
+          queryParameters: {
+            'per_page': 100,
+            if (filter.startDate != null)
+              'start_date': DateFilterBar.format(filter.startDate),
+            if (filter.endDate != null)
+              'end_date': DateFilterBar.format(filter.endDate),
+            if (filter.projectId != null) 'project_id': filter.projectId,
+          },
         );
         final rawItems = response.data['data'] as List? ?? const [];
         final items = rawItems.whereType<Map>().map((item) {
@@ -186,7 +197,7 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
         ),
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openReportForm(),
           child: const Icon(Icons.add_rounded),
@@ -244,18 +255,88 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    projectsAsync.when(
-                      loading: () => const SizedBox.shrink(),
-                      error: (_, __) => const SizedBox.shrink(),
-                      data: (projects) => (projects as List).isEmpty
-                          ? const SizedBox.shrink()
-                          : _ReportFilters(
-                              projects: projects,
-                              filter: filter,
-                              language: language,
-                              isDarkMode: isDarkMode,
+                    ExportButtonsBar(
+                      padding: const EdgeInsets.only(top: 12),
+                      options: webTableExportOptions(
+                        'project_daily_reports',
+                        params: {
+                          'start_date': DateFilterBar.format(filter.startDate),
+                          'end_date': DateFilterBar.format(filter.endDate),
+                          'project_id': filter.projectId?.toString(),
+                        },
+                      ),
+                    ),
+                    DateFilterBar(
+                      padding: const EdgeInsets.only(top: 12),
+                      start: filter.startDate,
+                      end: filter.endDate,
+                      startLabel: _projectReportsTr(
+                        language,
+                        en: 'Start Date',
+                        sw: 'Tarehe ya Kuanza',
+                        fr: 'Date de début',
+                        ar: 'تاريخ البدء',
+                      ),
+                      endLabel: _projectReportsTr(
+                        language,
+                        en: 'End Date',
+                        sw: 'Tarehe ya Mwisho',
+                        fr: 'Date de fin',
+                        ar: 'تاريخ الانتهاء',
+                      ),
+                      onStart: (d) =>
+                          ref.read(_projectReportsFilterProvider.notifier).state =
+                              filter.copyWith(startDate: d, clearStart: d == null),
+                      onEnd: (d) =>
+                          ref.read(_projectReportsFilterProvider.notifier).state =
+                              filter.copyWith(endDate: d, clearEnd: d == null),
+                      extra: [
+                        if ((projectsAsync.valueOrNull ?? const []).isNotEmpty)
+                          DropdownButtonFormField<int?>(
+                            isExpanded: true,
+                            initialValue: filter.projectId,
+                            decoration: InputDecoration(
+                              labelText: _projectReportsTr(
+                                language,
+                                en: 'Project',
+                                sw: 'Mradi',
+                                fr: 'Projet',
+                                ar: 'المشروع',
+                              ),
+                              isDense: true,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
+                            items: [
+                              DropdownMenuItem<int?>(
+                                value: null,
+                                child: Text(
+                                  _projectReportsTr(
+                                    language,
+                                    en: 'All Projects',
+                                    sw: 'Miradi Yote',
+                                    fr: 'Tous les projets',
+                                    ar: 'كل المشاريع',
+                                  ),
+                                ),
+                              ),
+                              for (final p in (projectsAsync.valueOrNull ?? const [])
+                                  .whereType<Map>())
+                                DropdownMenuItem<int?>(
+                                  value: int.tryParse('${p['id']}'),
+                                  child: Text(
+                                    '${p['project_name'] ?? p['name'] ?? p['id']}',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                            ],
+                            onChanged: (v) => ref
+                                    .read(_projectReportsFilterProvider.notifier)
+                                    .state =
+                                filter.copyWith(projectId: v, clearProject: v == null),
+                          ),
+                      ],
                     ),
                   ],
                 ),
@@ -342,7 +423,11 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
                             allItems.isEmpty
                                 ? _projectReportsTr(
                                     language,
-                                    en: 'No project daily reports found',
+                                    en: (filter.startDate != null ||
+                                            filter.endDate != null ||
+                                            filter.projectId != null)
+                                        ? 'No project daily reports for the selected dates / project'
+                                        : 'No project daily reports found',
                                     sw: 'Hakuna ripoti za kila siku za miradi',
                                     fr: 'Aucun rapport quotidien de projet trouvé',
                                     ar: 'لم يتم العثور على تقارير مشاريع يومية',
@@ -900,6 +985,7 @@ class _ReportItemCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (canAct(context, 'project_daily_reports', 'edit'))
                     PopupMenuItem(
                       value: 'edit',
                       child: Text(
@@ -912,6 +998,7 @@ class _ReportItemCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (canAct(context, 'project_daily_reports', 'delete'))
                     PopupMenuItem(
                       value: 'delete',
                       child: Text(
@@ -1551,7 +1638,7 @@ class _ReportDetailRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 14, color: AppColors.text(context)),
             ),
           ),
         ],

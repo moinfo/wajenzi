@@ -545,9 +545,9 @@ class _ClientsTab extends ConsumerWidget {
                   contentPadding: const EdgeInsets.all(16),
                   leading: CircleAvatar(
                     backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    child: const Icon(
+                    child: Icon(
                       Icons.person_outline,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                   title: Text(

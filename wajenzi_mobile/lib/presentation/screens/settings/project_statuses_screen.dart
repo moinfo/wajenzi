@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -66,10 +68,11 @@ class ProjectStatusesScreen extends ConsumerWidget {
             fr: 'Statuts du projet',
             ar: 'حالات المشروع',
           ),
-        ),
+        ), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'hr_settings_project_statuses', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openForm(context, ref),
           child: const Icon(Icons.add_rounded),
@@ -81,8 +84,12 @@ class ProjectStatusesScreen extends ConsumerWidget {
             ar: 'إضافة حالة',
           ),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_project_statuses')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_projectStatusesProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -238,7 +245,7 @@ class ProjectStatusesScreen extends ConsumerWidget {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final item = filtered[index];
@@ -257,6 +264,8 @@ class ProjectStatusesScreen extends ConsumerWidget {
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -407,9 +416,9 @@ class _ProjectStatusCard extends StatelessWidget {
           ),
           child: Text(
             '${index + 1}',
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+              color: AppColors.accent(context),
             ),
           ),
         ),
@@ -428,7 +437,7 @@ class _ProjectStatusCard extends StatelessWidget {
             }
           },
           itemBuilder: (_) => [
-            PopupMenuItem(
+            if (canAct(context, 'hr_settings_project_statuses', 'edit')) PopupMenuItem(
               value: 'edit',
               child: Row(
                 children: [
@@ -446,7 +455,7 @@ class _ProjectStatusCard extends StatelessWidget {
                 ],
               ),
             ),
-            PopupMenuItem(
+            if (canAct(context, 'hr_settings_project_statuses', 'delete')) PopupMenuItem(
               value: 'delete',
               child: Row(
                 children: [

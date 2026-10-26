@@ -9,6 +9,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/services/export_service.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+import '../../widgets/common/date_filter_bar.dart';
 import '../vat/vat_shared.dart';
 
 final _paymentSearchProvider = StateProvider.autoDispose<String>((ref) => '');
@@ -45,7 +46,10 @@ final _paymentListProvider =
       final response = await _getWithRetry(
         api,
         '/billing/payments',
-        queryParameters: {'per_page': 100},
+        queryParameters: {
+          'per_page': 100,
+          ...dateRangeQuery(ref.watch(dateRangeProvider('billing_payment'))),
+        },
       );
       final data = response.data is Map<String, dynamic>
           ? response.data as Map<String, dynamic>
@@ -118,6 +122,7 @@ class _BillingPaymentsScreenState extends ConsumerState<BillingPaymentsScreen> {
       ),
       body: Column(
         children: [
+          const ExportAndDateBar(id: 'billing_payment'),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -275,14 +280,13 @@ class _BillingPaymentsScreenState extends ConsumerState<BillingPaymentsScreen> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                     itemCount: filteredItems.length,
                     itemBuilder: (context, index) {
                       final item = filteredItems[index];
                       final id = _toInt(item['id']);
                       final paymentStatus = _text(item['status']);
-                      final isPending =
-                          paymentStatus.toLowerCase() == 'pending';
+                      final st = paymentStatus.toLowerCase();
 
                       return _PaymentCard(
                         item: item,
@@ -292,12 +296,13 @@ class _BillingPaymentsScreenState extends ConsumerState<BillingPaymentsScreen> {
                         onTap: id > 0
                             ? () => _showPaymentSheet(context, ref, id)
                             : null,
-                        onEdit: (isPending || paymentStatus.isEmpty)
+                        // As on the web: Edit unless voided, Void once completed.
+                        onEdit: st != 'voided'
                             ? () =>
                                   _openPaymentForm(context, ref, payment: item)
                             : null,
-                        onDelete: (isPending || paymentStatus.isEmpty)
-                            ? () => _deletePayment(context, ref, item)
+                        onVoid: st == 'completed'
+                            ? () => _voidPayment(context, ref, item)
                             : null,
                       );
                     },
@@ -309,7 +314,7 @@ class _BillingPaymentsScreenState extends ConsumerState<BillingPaymentsScreen> {
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 70),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openPaymentForm(context, ref),
           backgroundColor: AppColors.primary,
@@ -370,7 +375,7 @@ class _PaymentCard extends StatelessWidget {
   final bool isDarkMode;
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
+  final VoidCallback? onVoid;
 
   const _PaymentCard({
     required this.item,
@@ -379,7 +384,7 @@ class _PaymentCard extends StatelessWidget {
     required this.isDarkMode,
     this.onTap,
     this.onEdit,
-    this.onDelete,
+    this.onVoid,
   });
 
   @override
@@ -473,18 +478,18 @@ class _PaymentCard extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.receipt_outlined,
                                   size: 10,
-                                  color: AppColors.primary,
+                                  color: AppColors.accent(context),
                                 ),
                                 const SizedBox(width: 4),
                                 Flexible(
                                   child: Text(
                                     _text(document['document_number']),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 10,
-                                      color: AppColors.primary,
+                                      color: AppColors.accent(context),
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -566,8 +571,8 @@ class _PaymentCard extends StatelessWidget {
                         onTap?.call();
                       } else if (value == 'edit') {
                         onEdit?.call();
-                      } else if (value == 'delete') {
-                        onDelete?.call();
+                      } else if (value == 'void') {
+                        onVoid?.call();
                       }
                     },
                     itemBuilder: (_) => [
@@ -592,20 +597,20 @@ class _PaymentCard extends StatelessWidget {
                             ],
                           ),
                         ),
-                      if (onDelete != null)
+                      if (onVoid != null)
                         PopupMenuItem(
-                          value: 'delete',
+                          value: 'void',
                           child: Row(
                             children: [
                               const Icon(
-                                Icons.delete_outlined,
+                                Icons.block_outlined,
                                 size: 20,
-                                color: AppColors.error,
+                                color: Color(0xFFD97706),
                               ),
                               const SizedBox(width: 10),
                               Text(
-                                isSwahili ? 'Futa' : 'Delete',
-                                style: const TextStyle(color: AppColors.error),
+                                isSwahili ? 'Batilisha' : 'Void',
+                                style: const TextStyle(color: Color(0xFFD97706)),
                               ),
                             ],
                           ),
@@ -689,7 +694,7 @@ Future<void> _openPaymentForm(
   }
 }
 
-Future<void> _deletePayment(
+Future<void> _voidPayment(
   BuildContext context,
   WidgetRef ref,
   Map<String, dynamic> payment,
@@ -698,22 +703,11 @@ Future<void> _deletePayment(
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      backgroundColor: ref.read(isDarkModeProvider)
-          ? const Color(0xFF1A1A2E)
-          : null,
-      title: Text(
-        isSwahili ? 'Thibitisha Kufuta' : 'Confirm Delete',
-        style: TextStyle(
-          color: ref.read(isDarkModeProvider) ? Colors.white : null,
-        ),
-      ),
+      title: Text(isSwahili ? 'Batilisha Malipo' : 'Void Payment'),
       content: Text(
         isSwahili
-            ? 'Je, una uhakika unataka kufuta "${_text(payment['payment_number'])}"?'
-            : 'Are you sure you want to delete "${_text(payment['payment_number'])}"?',
-        style: TextStyle(
-          color: ref.read(isDarkModeProvider) ? Colors.white70 : null,
-        ),
+            ? 'Una uhakika unataka kubatilisha malipo haya?'
+            : 'Are you sure you want to void this payment?',
       ),
       actions: [
         TextButton(
@@ -723,40 +717,42 @@ Future<void> _deletePayment(
         TextButton(
           onPressed: () => Navigator.pop(dialogContext, true),
           child: Text(
-            isSwahili ? 'Ndiyo, Futa' : 'Yes, Delete',
-            style: const TextStyle(color: AppColors.error),
+            isSwahili ? 'Ndiyo, Batilisha' : 'Yes, Void',
+            style: const TextStyle(color: Color(0xFFD97706)),
           ),
         ),
       ],
     ),
   );
+
   if (confirmed != true) return;
 
   try {
     await ref
         .read(apiClientProvider)
-        .delete('/billing/payments/${payment['id']}');
+        .post('/billing/payments/${payment['id']}/void');
     ref.invalidate(_paymentListProvider);
+
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.success,
-          content: Text(isSwahili ? 'Malipo yamefutwa' : 'Payment deleted'),
+          content: Text(isSwahili ? 'Malipo yamebatilishwa' : 'Payment voided successfully.'),
         ),
       );
     }
   } catch (error) {
+    var message = vatErrorMessage(error, isSwahili: isSwahili);
+    if (error is DioException && error.response?.data is Map && error.response!.data['message'] != null) {
+      message = '${error.response!.data['message']}';
+    }
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.error,
-          content: Text(vatErrorMessage(error, isSwahili: isSwahili)),
-        ),
+        SnackBar(backgroundColor: AppColors.error, content: Text(message)),
       );
     }
   }
 }
-
 void _showPaymentSheet(BuildContext context, WidgetRef ref, int id) {
   if (id <= 0) return;
   showModalBottomSheet<void>(

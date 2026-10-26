@@ -1,4 +1,6 @@
 import 'dart:async';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -134,19 +136,24 @@ class _MaterialRequestsScreenState
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Maombi ya Vifaa' : 'Material Requests'),
+        title: Text(isSwahili ? 'Maombi ya Vifaa' : 'Material Requests'), actions: [],
       ),
-      floatingActionButton: canAdd
+      floatingActionButton: canAct(context, 'project_material_requests', 'add')
+          ? canAdd
           ? Padding(
-              padding: const EdgeInsets.only(bottom: 72),
+              padding: const EdgeInsets.only(bottom: 0),
               child: FloatingActionButton.extended(
                 onPressed: () => _openCreate(),
                 icon: const Icon(Icons.add),
                 label: Text(isSwahili ? 'Ombi Jipya' : 'New Request'),
               ),
             )
+          : null
           : null,
       body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('project_material_requests')),
+          Expanded(child: Column(
         children: [
           _FilterBar(
             isSwahili: isSwahili,
@@ -166,6 +173,8 @@ class _MaterialRequestsScreenState
             },
           ),
           Expanded(child: _buildBody(isSwahili, isDarkMode)),
+        ],
+      )),
         ],
       ),
     );
@@ -202,7 +211,7 @@ class _MaterialRequestsScreenState
             )
           : ListView.builder(
               controller: _scrollCtrl,
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               itemCount: _items.length + (_page < _lastPage ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index >= _items.length) {
@@ -673,9 +682,8 @@ class _DetailBody extends ConsumerWidget {
     final flow = request.approvalFlow;
     final canApprove = flow?.canBeApproved ?? false;
     final canSubmit = flow?.canBeSubmitted ?? false;
-    final canEditQty = request.canEditQuantities &&
-        request.items.isNotEmpty &&
-        hasPermission(ref, 'Edit Material Request');
+    // Like the web: no permission, only blocked once the request is APPROVED.
+    final canEditQty = request.canEditQuantities && request.items.isNotEmpty;
 
     return RefreshIndicator(
       onRefresh: () async => onChanged(),

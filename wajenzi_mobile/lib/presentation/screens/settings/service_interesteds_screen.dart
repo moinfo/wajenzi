@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -59,14 +61,16 @@ class ServiceInterestedsScreen extends ConsumerWidget {
             ar: 'الخدمات المطلوبة',
           ),
         ),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _openForm(context, ref),
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_service_interesteds')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_serviceInterestedsProvider),
         child: asyncData.when(
           loading: () => LoadingWidget(
@@ -114,7 +118,7 @@ class ServiceInterestedsScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.design_services_outlined, size: 56, color: AppColors.primary),
+                        Icon(Icons.design_services_outlined, size: 56, color: AppColors.accent(context)),
                         const SizedBox(height: 12),
                         Text(
                           _serviceInterestedTr(
@@ -184,7 +188,7 @@ class ServiceInterestedsScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(Icons.design_services_outlined, color: AppColors.primary),
+                        child: Icon(Icons.design_services_outlined, color: AppColors.accent(context)),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -258,7 +262,7 @@ class ServiceInterestedsScreen extends ConsumerWidget {
                           }
                         },
                         itemBuilder: (_) => [
-                          PopupMenuItem(
+                          if (canAct(context, 'hr_settings_service_interesteds', 'edit')) PopupMenuItem(
                             value: 'edit',
                             child: Text(
                               _serviceInterestedTr(
@@ -270,7 +274,7 @@ class ServiceInterestedsScreen extends ConsumerWidget {
                               ),
                             ),
                           ),
-                          PopupMenuItem(
+                          if (canAct(context, 'hr_settings_service_interesteds', 'delete')) PopupMenuItem(
                             value: 'delete',
                             child: Text(
                               _serviceInterestedTr(
@@ -292,8 +296,11 @@ class ServiceInterestedsScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: canAct(context, 'hr_settings_service_interesteds', 'add')
+          ? FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
         label: Text(
@@ -305,7 +312,8 @@ class ServiceInterestedsScreen extends ConsumerWidget {
             ar: 'خدمة مطلوبة جديدة',
           ),
         ),
-      ),
+      )
+          : null,
     );
   }
 

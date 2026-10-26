@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -34,17 +36,22 @@ class SpecialStructuresScreen extends ConsumerWidget {
             en: 'Special Structure Rates',
             sw: 'Viwango vya Miundo Maalum',
             fr: 'Tarifs structures spéciales',
-            ar: 'أسعار الهياكل الخاصة')),
+            ar: 'أسعار الهياكل الخاصة')), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'hr_settings_design_special_structures', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton.extended(
           onPressed: () => _openForm(context, ref),
           icon: const Icon(Icons.add_rounded),
           label: Text(tr(lang, en: 'New', sw: 'Mpya')),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_design_special_structures')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_structuresProvider),
         child: CalcAsyncBody<List<DesignSpecialStructureDto>>(
           async: async,
@@ -55,7 +62,7 @@ class SpecialStructuresScreen extends ConsumerWidget {
               sw: 'Hakuna miundo maalum bado'),
           isEmpty: (d) => d.isEmpty,
           builder: (items) => ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             itemCount: items.length,
             itemBuilder: (_, i) {
               final s = items[i];
@@ -114,14 +121,14 @@ class SpecialStructuresScreen extends ConsumerWidget {
                           if (v == 'delete') _delete(context, ref, s);
                         },
                         itemBuilder: (_) => [
-                          PopupMenuItem(
+                          if (canAct(context, 'hr_settings_design_special_structures', 'edit')) PopupMenuItem(
                               value: 'edit',
                               child: Text(tr(lang,
                                   en: 'Edit',
                                   sw: 'Hariri',
                                   fr: 'Éditer',
                                   ar: 'تعديل'))),
-                          PopupMenuItem(
+                          if (canAct(context, 'hr_settings_design_special_structures', 'delete')) PopupMenuItem(
                               value: 'delete',
                               child: Text(
                                 tr(lang,
@@ -140,6 +147,8 @@ class SpecialStructuresScreen extends ConsumerWidget {
             },
           ),
         ),
+      )),
+        ],
       ),
     );
   }

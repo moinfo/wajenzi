@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -69,16 +72,24 @@ class MaterialTransfersScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Uhamishaji wa Vifaa' : 'Material Transfers'),
+        title: Text(isSwahili ? 'Uhamishaji wa Vifaa' : 'Material Transfers'), actions: [],
       ),
+      // Lifted above the bottom navigation bar, like the other screens; shown
+      // with the web's permission ("Add Material Transfer").
       floatingActionButton: canAdd
-          ? FloatingActionButton.extended(
-              onPressed: () => _openCreateSheet(context, ref, isSwahili),
-              icon: const Icon(Icons.add),
-              label: Text(isSwahili ? 'Mpya' : 'New'),
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 0),
+              child: FloatingActionButton.extended(
+                onPressed: () => _openCreateSheet(context, ref, isSwahili),
+                icon: const Icon(Icons.add),
+                label: Text(isSwahili ? 'Uhamishaji Mpya' : 'New Transfer'),
+              ),
             )
           : null,
       body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('material_transfers')),
+          Expanded(child: Column(
         children: [
           _SearchAndFilter(
             search: search,
@@ -130,7 +141,7 @@ class MaterialTransfersScreen extends ConsumerWidget {
                     );
                   }
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     itemCount: transfers.length,
                     itemBuilder: (context, index) {
                       return _TransferCard(
@@ -150,6 +161,8 @@ class MaterialTransfersScreen extends ConsumerWidget {
               ),
             ),
           ),
+        ],
+      )),
         ],
       ),
     );
@@ -440,7 +453,7 @@ class _TransferCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ],
@@ -1210,6 +1223,14 @@ class _CreateTransferSheetState extends ConsumerState<_CreateTransferSheet> {
                               const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
+                      if (_fromProjectId != null)
+                        TextButton.icon(
+                          onPressed: () => context.push(
+                            '/project-stock?project_id=$_fromProjectId',
+                          ),
+                          icon: const Icon(Icons.inventory_2_outlined),
+                          label: Text(isSwahili ? 'Hisa ya Site' : 'Manage Site Stock'),
+                        ),
                       TextButton.icon(
                         onPressed: _fromProjectId == null
                             ? null

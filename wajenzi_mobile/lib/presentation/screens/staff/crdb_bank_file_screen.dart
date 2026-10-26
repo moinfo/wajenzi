@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../widgets/common/date_filter_bar.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -11,7 +13,7 @@ import '../vat/vat_shared.dart';
 final _crdbSearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
 final _crdbStartDateProvider = StateProvider.autoDispose<DateTime>(
-  (ref) => DateTime(DateTime.now().year, DateTime.now().month, 1),
+  (ref) => defaultStartDate(),
 );
 
 final _crdbEndDateProvider = StateProvider.autoDispose<DateTime>(
@@ -71,9 +73,12 @@ class _CrdbBankFileScreenState extends ConsumerState<CrdbBankFileScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Faili ya Benki CRDB' : 'CRDB Bank File'),
+        title: Text(isSwahili ? 'Faili ya Benki CRDB' : 'CRDB Bank File'), actions: [],
       ),
       body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('crdb_bank_file')),
+          Expanded(child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
@@ -214,7 +219,7 @@ class _CrdbBankFileScreenState extends ConsumerState<CrdbBankFileScreen> {
                               children: [
                                 Icon(
                                   Icons.account_balance_wallet_outlined,
-                                  color: AppColors.primary,
+                                  color: AppColors.accent(context),
                                   size: 20,
                                 ),
                                 const SizedBox(width: 8),
@@ -264,9 +269,9 @@ class _CrdbBankFileScreenState extends ConsumerState<CrdbBankFileScreen> {
                                 ),
                                 Text(
                                   _money(totalAmount),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.primary,
+                                    color: AppColors.accent(context),
                                     fontSize: 16,
                                   ),
                                 ),
@@ -324,6 +329,8 @@ class _CrdbBankFileScreenState extends ConsumerState<CrdbBankFileScreen> {
             ),
           ),
         ],
+      )),
+        ],
       ),
     );
   }
@@ -368,9 +375,9 @@ class _CrdbBankFileScreenState extends ConsumerState<CrdbBankFileScreen> {
                             backgroundColor: AppColors.primary.withValues(
                               alpha: 0.1,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.account_balance,
-                              color: AppColors.primary,
+                              color: AppColors.accent(context),
                               size: 28,
                             ),
                           ),
@@ -538,10 +545,10 @@ class _CrdbCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '$index',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -587,9 +594,9 @@ class _CrdbCard extends StatelessWidget {
                           ),
                           child: Text(
                             item['details']?.toString() ?? 'SALARY',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10,
-                              color: AppColors.primary,
+                              color: AppColors.accent(context),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -604,10 +611,10 @@ class _CrdbCard extends StatelessWidget {
                 children: [
                   Text(
                     _money((item['amount'] as num?)?.toDouble() ?? 0),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -655,7 +662,7 @@ class _CrdbDetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.primary),
+          Icon(icon, size: 20, color: AppColors.accent(context)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

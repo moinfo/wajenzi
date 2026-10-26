@@ -323,9 +323,9 @@ class _DesignPricingCalculatorScreenState
                     ),
                     Text(
                       _fromUsd(p.priceUsd, lookups),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontWeight: FontWeight.w800,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                           fontSize: 14),
                     ),
                   ],
@@ -361,9 +361,9 @@ class _DesignPricingCalculatorScreenState
                     ),
                     Expanded(child: Text(a.name, style: const TextStyle(fontSize: 13))),
                     Text('+ ${_fromUsd(price, lookups)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
+                            color: AppColors.accent(context),
                             fontSize: 13)),
                   ],
                 ),
@@ -383,6 +383,7 @@ class _DesignPricingCalculatorScreenState
       children: [
         CalcSectionTitle(label: tr(lang, en: 'SPECIAL STRUCTURE', sw: 'MUUNDO MAALUM')),
         DropdownButtonFormField<int>(
+      isExpanded: true,
           initialValue: _specialId,
           decoration: const InputDecoration(border: OutlineInputBorder()),
           hint: Text(tr(lang, en: 'Choose…', sw: 'Chagua…')),

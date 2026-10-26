@@ -6,6 +6,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/services/export_service.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+import '../../widgets/common/date_filter_bar.dart';
 import '../vat/vat_shared.dart';
 
 final _quotationSearchProvider = StateProvider.autoDispose<String>((ref) => '');
@@ -21,7 +22,11 @@ final _quotationListProvider =
       final api = ref.watch(apiClientProvider);
       final response = await api.get(
         '/billing/documents',
-        queryParameters: {'document_type': 'quote', 'per_page': 100},
+        queryParameters: {
+          'document_type': 'quote',
+          'per_page': 100,
+          ...dateRangeQuery(ref.watch(dateRangeProvider('billing_quote'))),
+        },
       );
 
       final data = response.data is Map<String, dynamic>
@@ -96,6 +101,7 @@ class _BillingQuotationsScreenState
       ),
       body: Column(
         children: [
+          const ExportAndDateBar(id: 'billing_quote'),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -267,7 +273,7 @@ class _BillingQuotationsScreenState
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                     itemCount: filteredItems.length,
                     itemBuilder: (context, index) {
                       final item = filteredItems[index];
@@ -307,7 +313,7 @@ class _BillingQuotationsScreenState
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 70),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openQuotationForm(context, ref),
           backgroundColor: AppColors.primary,
@@ -413,10 +419,10 @@ class _QuotationCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '$index',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -470,9 +476,9 @@ class _QuotationCard extends StatelessWidget {
                             ),
                             child: Text(
                               _text(project['project_name']),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 10,
-                                color: AppColors.primary,
+                                color: AppColors.accent(context),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -737,9 +743,9 @@ void _showQuotationSheet(BuildContext context, WidgetRef ref, int id) {
                                   backgroundColor: AppColors.primary.withValues(
                                     alpha: 0.1,
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.request_quote,
-                                    color: AppColors.primary,
+                                    color: AppColors.accent(context),
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -1199,7 +1205,7 @@ class _QuotationFormSheetState extends ConsumerState<_QuotationFormSheet> {
                           ),
                           child: Icon(
                             widget.quotation == null ? Icons.add : Icons.edit,
-                            color: AppColors.primary,
+                            color: AppColors.accent(context),
                           ),
                         ),
                         const SizedBox(width: 16),

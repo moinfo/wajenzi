@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../../core/utils/web_actions.dart';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+import '../../../core/services/export_service.dart';
 
 final _clientSearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
@@ -84,9 +86,12 @@ class ProjectClientsScreen extends ConsumerWidget {
             ar: 'عملاء المشاريع',
           ),
         ),
+        actions: [
+          ],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'project_clients', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showClientForm(context, ref),
           tooltip: _trLocale(
@@ -97,8 +102,12 @@ class ProjectClientsScreen extends ConsumerWidget {
           ),
           child: const Icon(Icons.add_rounded),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('project_clients')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_clientsProvider);
         },
@@ -313,6 +322,8 @@ class ProjectClientsScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
     );
   }
@@ -1294,6 +1305,7 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
                           ),
                           const SizedBox(height: 16),
                           DropdownButtonFormField<int>(
+      isExpanded: true,
                             value: _clientSourceId,
                             decoration: InputDecoration(
                               labelText: _trLocale(
@@ -1694,7 +1706,7 @@ class _ClientCard extends StatelessWidget {
                       }
                     },
                     itemBuilder: (context) => [
-                      PopupMenuItem<String>(
+                      if (canAct(context, 'project_clients', 'edit')) PopupMenuItem<String>(
                         value: 'edit',
                         child: Text(
                           _trLocale(
@@ -1705,7 +1717,7 @@ class _ClientCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      PopupMenuItem<String>(
+                      if (canAct(context, 'project_clients', 'delete')) PopupMenuItem<String>(
                         value: 'delete',
                         child: Text(
                           _trLocale(

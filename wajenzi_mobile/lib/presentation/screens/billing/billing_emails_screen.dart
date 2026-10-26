@@ -273,7 +273,7 @@ class _BillingEmailsScreenState extends ConsumerState<BillingEmailsScreen> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                     itemCount: filteredItems.length,
                     itemBuilder: (context, index) {
                       final item = filteredItems[index];
@@ -488,9 +488,9 @@ class _EmailCard extends StatelessWidget {
                           ),
                           child: Text(
                             _text(item['document_type']).toUpperCase(),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10,
-                              color: AppColors.primary,
+                              color: AppColors.accent(context),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -977,9 +977,9 @@ class _ResendEmailSheetState extends ConsumerState<_ResendEmailSheet> {
                           backgroundColor: AppColors.primary.withValues(
                             alpha: 0.1,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.refresh,
-                            color: AppColors.primary,
+                            color: AppColors.accent(context),
                           ),
                         ),
                         const SizedBox(width: 16),

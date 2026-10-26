@@ -16,11 +16,15 @@ class QuotationsRemoteDataSource {
     String? status,
     int? materialRequestId,
     int perPage = 200,
+    String? startDate,
+    String? endDate,
   }) async {
     final qp = <String, dynamic>{'per_page': perPage};
     if (search != null && search.isNotEmpty) qp['search'] = search;
     if (status != null && status.isNotEmpty) qp['status'] = status;
     if (materialRequestId != null) qp['material_request_id'] = materialRequestId;
+    if (startDate != null) qp['start_date'] = startDate;
+    if (endDate != null) qp['end_date'] = endDate;
     final res = await _api.get('/procurement/supplier-quotations', queryParameters: qp);
     return _listItems(res.data)
         .map((e) => SupplierQuotationDto.fromJson(Map<String, dynamic>.from(e)))
@@ -90,10 +94,14 @@ class QuotationsRemoteDataSource {
     String? search,
     String? status,
     int perPage = 200,
+    String? startDate,
+    String? endDate,
   }) async {
     final qp = <String, dynamic>{'per_page': perPage};
     if (search != null && search.isNotEmpty) qp['search'] = search;
     if (status != null && status.isNotEmpty) qp['status'] = status;
+    if (startDate != null) qp['start_date'] = startDate;
+    if (endDate != null) qp['end_date'] = endDate;
     final res = await _api.get('/procurement/quotation-comparisons', queryParameters: qp);
     return _listItems(res.data)
         .map((e) => ComparisonListItemDto.fromJson(Map<String, dynamic>.from(e)))

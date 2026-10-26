@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../../core/services/export_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -765,8 +766,7 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
               ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
         ),
         title: Text(isSwahili ? 'Kodi ya Akiba' : 'Provision Tax'),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.filter_list),
             tooltip: isSwahili ? 'Chuja' : 'Filter',
             onPressed: _showFilterBottomSheet,
@@ -779,14 +779,17 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openTaxForm(isSwahili: isSwahili),
           tooltip: isSwahili ? 'Ongeza' : 'Add',
           child: const Icon(Icons.add_rounded),
         ),
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('provision_tax')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () => _loadData(refresh: true),
         child: _isLoading
             ? LoadingWidget(
@@ -884,6 +887,8 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
                   ),
                 ],
               ),
+      )),
+        ],
       ),
     );
   }

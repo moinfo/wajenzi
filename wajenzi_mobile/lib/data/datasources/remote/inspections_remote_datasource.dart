@@ -87,6 +87,8 @@ class InspectionsRemoteDataSource {
     return InspectionDto.fromJson(_data(res.data));
   }
 
+  Future<void> delete(int id) => _api.delete('/procurement/inspections/$id');
+
   Future<InspectionDto> updateStock(int id) async {
     final res = await _api.post('/procurement/inspections/$id/update-stock');
     return InspectionDto.fromJson(_data(res.data));

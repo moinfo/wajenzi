@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -7,6 +8,7 @@ import '../../../data/models/procurement/quotation_models.dart';
 import '../../../data/repositories/quotations_repository.dart';
 import '../../providers/settings_provider.dart';
 import 'procurement_shared.dart';
+import '../../widgets/common/date_filter_bar.dart';
 
 final _compSearchProvider = StateProvider.autoDispose<String>((_) => '');
 final _compStatusProvider = StateProvider.autoDispose<String?>((_) => null);
@@ -16,7 +18,13 @@ final _comparisonsProvider =
   final repo = ref.watch(quotationsRepositoryProvider);
   final search = ref.watch(_compSearchProvider);
   final status = ref.watch(_compStatusProvider);
-  return repo.comparisons(search: search, status: status);
+  final range = ref.watch(dateRangeProvider('quotation_comparisons'));
+  return repo.comparisons(
+    search: search,
+    status: status,
+    startDate: DateFilterBar.format(range.start),
+    endDate: DateFilterBar.format(range.end),
+  );
 });
 
 final _comparisonDetailProvider = FutureProvider.autoDispose
@@ -41,9 +49,12 @@ class QuotationComparisonsScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Ulinganisho wa Nukuu' : 'Quotation Comparisons'),
+        title: Text(isSwahili ? 'Ulinganisho wa Nukuu' : 'Quotation Comparisons'), actions: [],
       ),
       body: Column(
+        children: [
+          const ExportAndDateBar(id: 'quotation_comparisons', route: 'quotation_comparisons'),
+          Expanded(child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
@@ -139,6 +150,8 @@ class QuotationComparisonsScreen extends ConsumerWidget {
               ),
             ),
           ),
+        ],
+      )),
         ],
       ),
     );

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -33,14 +35,16 @@ class CostCategoriesScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(tr('Cost Categories', 'فئات التكلفة')),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _openForm(context, ref),
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_cost_categories')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_costCategoriesProvider),
         child: asyncData.when(
           loading: () => LoadingWidget(
@@ -82,10 +86,10 @@ class CostCategoriesScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.category_outlined,
                           size: 56,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -144,9 +148,9 @@ class CostCategoriesScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.category_outlined,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -220,11 +224,11 @@ class CostCategoriesScreen extends ConsumerWidget {
                           }
                         },
                         itemBuilder: (_) => [
-                          PopupMenuItem(
+                          if (canAct(context, 'hr_settings_cost_categories', 'edit')) PopupMenuItem(
                             value: 'edit',
                             child: Text(tr('Edit', 'تعديل')),
                           ),
-                          PopupMenuItem(
+                          if (canAct(context, 'hr_settings_cost_categories', 'delete')) PopupMenuItem(
                             value: 'delete',
                             child: Text(tr('Delete', 'حذف')),
                           ),
@@ -238,12 +242,16 @@ class CostCategoriesScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: canAct(context, 'hr_settings_cost_categories', 'add')
+          ? FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
         label: Text(tr('New Cost Category', 'فئة تكلفة جديدة')),
-      ),
+      )
+          : null,
     );
   }
 

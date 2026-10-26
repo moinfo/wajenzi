@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +10,7 @@ import '../../../data/models/procurement/quotation_models.dart';
 import '../../../data/repositories/quotations_repository.dart';
 import '../../providers/settings_provider.dart';
 import 'procurement_shared.dart';
+import '../../widgets/common/date_filter_bar.dart';
 
 final _searchProvider = StateProvider.autoDispose<String>((_) => '');
 final _statusFilterProvider = StateProvider.autoDispose<String?>((_) => null);
@@ -18,7 +20,13 @@ final _quotationsProvider =
   final repo = ref.watch(quotationsRepositoryProvider);
   final search = ref.watch(_searchProvider);
   final status = ref.watch(_statusFilterProvider);
-  return repo.quotations(search: search, status: status);
+  final range = ref.watch(dateRangeProvider('supplier_quotations'));
+  return repo.quotations(
+    search: search,
+    status: status,
+    startDate: DateFilterBar.format(range.start),
+    endDate: DateFilterBar.format(range.end),
+  );
 });
 
 final _referenceDataProvider =
@@ -45,11 +53,11 @@ class SupplierQuotationsScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Nukuu za Wasambazaji' : 'Supplier Quotations'),
+        title: Text(isSwahili ? 'Nukuu za Wasambazaji' : 'Supplier Quotations'), actions: [],
       ),
       floatingActionButton: canAdd
           ? Padding(
-              padding: const EdgeInsets.only(bottom: 72),
+              padding: const EdgeInsets.only(bottom: 0),
               child: FloatingActionButton.extended(
                 onPressed: () => _openForm(context, ref, isSwahili),
                 icon: const Icon(Icons.add),
@@ -58,6 +66,9 @@ class SupplierQuotationsScreen extends ConsumerWidget {
             )
           : null,
       body: Column(
+        children: [
+          const ExportAndDateBar(id: 'supplier_quotations', route: 'supplier_quotations'),
+          Expanded(child: Column(
         children: [
           _SearchAndFilter(
             search: search,
@@ -102,6 +113,8 @@ class SupplierQuotationsScreen extends ConsumerWidget {
               ),
             ),
           ),
+        ],
+      )),
         ],
       ),
     );

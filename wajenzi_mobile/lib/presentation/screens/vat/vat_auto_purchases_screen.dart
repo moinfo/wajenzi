@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../widgets/common/date_filter_bar.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -9,7 +12,7 @@ import '../../providers/settings_provider.dart';
 import 'vat_shared.dart';
 
 final _autoStartProvider = StateProvider.autoDispose<DateTime>(
-  (ref) => DateTime.now(),
+  (ref) => defaultStartDate(),
 );
 final _autoEndProvider = StateProvider.autoDispose<DateTime>(
   (ref) => DateTime.now(),
@@ -49,16 +52,21 @@ class VatAutoPurchasesScreen extends ConsumerWidget {
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
         title: Text(isSwahili ? 'Manunuzi ya Moja kwa Moja' : 'Auto Purchases'),
-        backgroundColor: isDark ? vatDarkCard : null,
+        backgroundColor: isDark ? vatDarkCard : null, actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'auto_purchases', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showAutoPurchaseForm(context, ref, isDark, isSwahili),
           child: const Icon(Icons.add),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('auto_purchases')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () => ref.refresh(_autoDataProvider.future),
         child: dataAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -156,6 +164,8 @@ class VatAutoPurchasesScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
     );
   }
@@ -309,7 +319,7 @@ Future<void> _showAutoPurchaseForm(
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -881,11 +891,11 @@ class _ReceiptWebCard extends StatelessWidget {
                   if (value == 'delete') onDelete();
                 },
                 itemBuilder: (context) => [
-                  PopupMenuItem<String>(
+                  if (canAct(context, 'auto_purchases', 'edit')) PopupMenuItem<String>(
                     value: 'edit',
                     child: Text(isSwahili ? 'Hariri' : 'Edit'),
                   ),
-                  PopupMenuItem<String>(
+                  if (canAct(context, 'auto_purchases', 'delete')) PopupMenuItem<String>(
                     value: 'delete',
                     child: Text(isSwahili ? 'Futa' : 'Delete'),
                   ),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -47,14 +49,16 @@ class EfdScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(tr('EFD', 'الفاتورة الإلكترونية')),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _openForm(context, ref),
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_efd')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_efdsSettingsProvider),
         child: asyncData.when(
           loading: () => LoadingWidget(
@@ -99,10 +103,10 @@ class EfdScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.receipt_outlined,
                           size: 56,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -159,9 +163,9 @@ class EfdScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.receipt_outlined,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -241,11 +245,11 @@ class EfdScreen extends ConsumerWidget {
                           }
                         },
                         itemBuilder: (_) => [
-                          PopupMenuItem(
+                          if (canAct(context, 'hr_settings_efd', 'edit')) PopupMenuItem(
                             value: 'edit',
                             child: Text(tr('Edit', 'تعديل')),
                           ),
-                          PopupMenuItem(
+                          if (canAct(context, 'hr_settings_efd', 'delete')) PopupMenuItem(
                             value: 'delete',
                             child: Text(tr('Delete', 'حذف')),
                           ),
@@ -259,12 +263,16 @@ class EfdScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: canAct(context, 'hr_settings_efd', 'add')
+          ? FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
         label: Text(tr('New EFD', 'جهاز جديد')),
-      ),
+      )
+          : null,
     );
   }
 
@@ -446,6 +454,7 @@ class _EfdFormSheetState extends ConsumerState<_EfdFormSheet> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
+      isExpanded: true,
                   value: _systems.any((item) => _asInt(item['id']) == _systemId)
                       ? _systemId
                       : null,

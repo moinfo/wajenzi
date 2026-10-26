@@ -331,7 +331,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
         // Bottom summary & checkout
         Container(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
           decoration: BoxDecoration(
             color: _cardBgColor,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),

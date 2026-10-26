@@ -168,7 +168,7 @@ class _DailyPaymentsScreenState extends ConsumerState<DailyPaymentsScreen> {
           }
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 90),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
             children: [
               Row(
                 children: [
@@ -585,6 +585,7 @@ class _CreatePaymentRequestScreenState
             ),
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
+      isExpanded: true,
               initialValue: line.category,
               decoration: const InputDecoration(
                 labelText: 'Category',

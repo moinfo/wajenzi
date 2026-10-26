@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -34,18 +36,23 @@ class CurrenciesScreen extends ConsumerWidget {
           onPressed: () => rootKey.currentState?.openDrawer(),
         ),
         title: Text(tr(lang,
-            en: 'Currencies', sw: 'Sarafu', fr: 'Devises', ar: 'العملات')),
+            en: 'Currencies', sw: 'Sarafu', fr: 'Devises', ar: 'العملات')), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'hr_settings_currencies', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton.extended(
           onPressed: () => _openForm(context, ref),
           icon: const Icon(Icons.add_rounded),
           label: Text(tr(lang,
               en: 'New', sw: 'Mpya', fr: 'Nouveau', ar: 'جديد')),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_currencies')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_currenciesProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -91,7 +98,7 @@ class CurrenciesScreen extends ConsumerWidget {
                 builder: (data) {
                   final filtered = _filter(data, search);
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     itemCount: filtered.length,
                     itemBuilder: (_, i) {
                       final c = filtered[i];
@@ -114,9 +121,9 @@ class CurrenciesScreen extends ConsumerWidget {
                                 ),
                                 child: Text(
                                   c.symbol,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w800,
-                                    color: AppColors.primary,
+                                    color: AppColors.accent(context),
                                   ),
                                 ),
                               ),
@@ -188,7 +195,7 @@ class CurrenciesScreen extends ConsumerWidget {
                                   }
                                 },
                                 itemBuilder: (_) => [
-                                  PopupMenuItem(
+                                  if (canAct(context, 'hr_settings_currencies', 'edit')) PopupMenuItem(
                                     value: 'edit',
                                     child: Row(children: [
                                       const Icon(Icons.edit_rounded, size: 18),
@@ -200,7 +207,7 @@ class CurrenciesScreen extends ConsumerWidget {
                                           ar: 'تعديل')),
                                     ]),
                                   ),
-                                  PopupMenuItem(
+                                  if (canAct(context, 'hr_settings_currencies', 'delete')) PopupMenuItem(
                                     value: 'delete',
                                     child: Row(children: [
                                       const Icon(Icons.delete_rounded,
@@ -226,6 +233,8 @@ class CurrenciesScreen extends ConsumerWidget {
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }

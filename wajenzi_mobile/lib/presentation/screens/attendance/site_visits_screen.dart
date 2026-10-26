@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
@@ -101,17 +103,22 @@ class SiteVisitsScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Visiti za Shughuli' : 'Site Visits'),
+        title: Text(isSwahili ? 'Visiti za Shughuli' : 'Site Visits'), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'project_site_visits', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showVisitForm(context, ref),
           child: const Icon(Icons.add_rounded),
           tooltip: isSwahili ? 'Ongeza Visit' : 'Add Visit',
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('project_site_visits')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_siteVisitsProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -263,7 +270,7 @@ class SiteVisitsScreen extends ConsumerWidget {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final visit = visits[index];
@@ -289,6 +296,8 @@ class SiteVisitsScreen extends ConsumerWidget {
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -737,16 +746,18 @@ class _SiteVisitCard extends StatelessWidget {
                     icon: const Icon(Icons.visibility_outlined),
                     label: Text(isSwahili ? 'Tazama' : 'View'),
                   ),
-                  OutlinedButton.icon(
-                    onPressed: onEdit,
-                    icon: const Icon(Icons.edit_outlined),
-                    label: Text(isSwahili ? 'Hariri' : 'Edit'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: onDelete,
-                    icon: const Icon(Icons.delete_outline),
-                    label: Text(isSwahili ? 'Futa' : 'Delete'),
-                  ),
+                  if (canAct(context, 'project_site_visits', 'edit'))
+                    OutlinedButton.icon(
+                      onPressed: onEdit,
+                      icon: const Icon(Icons.edit_outlined),
+                      label: Text(isSwahili ? 'Hariri' : 'Edit'),
+                    ),
+                  if (canAct(context, 'project_site_visits', 'delete'))
+                    OutlinedButton.icon(
+                      onPressed: onDelete,
+                      icon: const Icon(Icons.delete_outline),
+                      label: Text(isSwahili ? 'Futa' : 'Delete'),
+                    ),
                 ],
               ),
             ],
@@ -957,20 +968,22 @@ class _VisitDetailSheet extends ConsumerWidget {
                             ],
                           ),
                         if (_canEditOrDelete(status)) ...[
-                          IconButton(
-                            icon: const Icon(
-                              Icons.edit,
-                              color: AppColors.primary,
+                          if (canAct(context, 'project_site_visits', 'edit'))
+                            IconButton(
+                              icon: Icon(
+                                Icons.edit,
+                                color: AppColors.accent(context),
+                              ),
+                              onPressed: onEdit,
                             ),
-                            onPressed: onEdit,
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.delete,
-                              color: AppColors.error,
+                          if (canAct(context, 'project_site_visits', 'delete'))
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete,
+                                color: AppColors.error,
+                              ),
+                              onPressed: () => _showDeleteDialog(context, ref),
                             ),
-                            onPressed: () => _showDeleteDialog(context, ref),
-                          ),
                         ],
                         IconButton(
                           icon: const Icon(Icons.close),
@@ -1175,7 +1188,7 @@ class _DetailRow extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, size: 20, color: AppColors.primary),
+            child: Icon(icon, size: 20, color: AppColors.accent(context)),
           ),
           const SizedBox(width: 14),
           Expanded(

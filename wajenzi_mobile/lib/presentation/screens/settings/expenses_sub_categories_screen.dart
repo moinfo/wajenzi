@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -58,17 +60,22 @@ class ExpensesSubCategoriesScreen extends ConsumerWidget {
         ),
         title: Text(
           isSwahili ? 'Kundi la Masuala Madogo' : 'Expense Sub Categories',
-        ),
+        ), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'hr_settings_expenses_sub_categories', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openForm(context, ref),
           child: const Icon(Icons.add_rounded),
           tooltip: isSwahili ? 'Ongeza Kundi' : 'Add Sub Category',
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_expenses_sub_categories')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_expensesSubCategoriesProvider);
           ref.invalidate(_expensesSubCategoryReferenceProvider);
@@ -211,7 +218,7 @@ class ExpensesSubCategoriesScreen extends ConsumerWidget {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final item = filtered[index];
@@ -230,6 +237,8 @@ class ExpensesSubCategoriesScreen extends ConsumerWidget {
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -351,9 +360,9 @@ class _ExpenseSubCategoryCard extends StatelessWidget {
           ),
           child: Text(
             '${index + 1}',
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+              color: AppColors.accent(context),
             ),
           ),
         ),
@@ -412,7 +421,7 @@ class _ExpenseSubCategoryCard extends StatelessWidget {
             }
           },
           itemBuilder: (_) => [
-            PopupMenuItem(
+            if (canAct(context, 'hr_settings_expenses_sub_categories', 'edit')) PopupMenuItem(
               value: 'edit',
               child: Row(
                 children: [
@@ -422,7 +431,7 @@ class _ExpenseSubCategoryCard extends StatelessWidget {
                 ],
               ),
             ),
-            PopupMenuItem(
+            if (canAct(context, 'hr_settings_expenses_sub_categories', 'delete')) PopupMenuItem(
               value: 'delete',
               child: Row(
                 children: [
@@ -550,6 +559,7 @@ class _ExpenseSubCategoryFormSheetState
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
+      isExpanded: true,
                   value:
                       _categories.any(
                         (cat) => _asInt(cat['id']) == _expensesCategoryId,
@@ -578,6 +588,7 @@ class _ExpenseSubCategoryFormSheetState
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
+      isExpanded: true,
                   value:
                       _financialOptions.any(
                         (opt) => opt['value']?.toString() == _isFinancial,

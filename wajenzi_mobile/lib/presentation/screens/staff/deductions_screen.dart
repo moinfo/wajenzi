@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -81,13 +83,14 @@ class _DeductionsScreenState extends ConsumerState<DeductionsScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Makato' : 'Deductions'),
+        title: Text(isSwahili ? 'Makato' : 'Deductions'), actions: [],
       ),
-      floatingActionButton: deductionsAsync.maybeWhen(
+      floatingActionButton: canAct(context, 'hr_settings_deductions', 'add')
+          ? deductionsAsync.maybeWhen(
         data: (payload) => payload['unavailable_on_live'] == true
             ? null
             : Padding(
-                padding: const EdgeInsets.only(bottom: 80),
+                padding: const EdgeInsets.only(bottom: 0),
                 child: FloatingActionButton(
                   onPressed: () => _openForm(context, ref),
                   child: const Icon(Icons.add_rounded),
@@ -95,15 +98,19 @@ class _DeductionsScreenState extends ConsumerState<DeductionsScreen> {
                 ),
               ),
         orElse: () => Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 0),
           child: FloatingActionButton(
             onPressed: () => _openForm(context, ref),
             child: const Icon(Icons.add_rounded),
             tooltip: isSwahili ? 'Ongeza Deduction' : 'Add Deduction',
           ),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_deductions')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_deductionsProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -256,7 +263,7 @@ class _DeductionsScreenState extends ConsumerState<DeductionsScreen> {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final deduction = filteredDeductions[index];
@@ -283,6 +290,8 @@ class _DeductionsScreenState extends ConsumerState<DeductionsScreen> {
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -529,10 +538,10 @@ class _DeductionCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '${index + 1}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -667,7 +676,7 @@ class _DeductionCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_deductions', 'edit')) PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
@@ -677,7 +686,7 @@ class _DeductionCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_deductions', 'delete')) PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [

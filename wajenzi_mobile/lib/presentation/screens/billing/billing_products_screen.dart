@@ -293,7 +293,7 @@ class _BillingProductsScreenState extends ConsumerState<BillingProductsScreen> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                     itemCount: filteredProducts.length,
                     itemBuilder: (context, index) {
                       final item = filteredProducts[index];
@@ -320,7 +320,7 @@ class _BillingProductsScreenState extends ConsumerState<BillingProductsScreen> {
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 70),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openProductForm(context, ref),
           backgroundColor: AppColors.primary,

@@ -219,6 +219,7 @@ class _InspectionFormState extends ConsumerState<_InspectionForm> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
+      isExpanded: true,
                   initialValue: _condition,
                   decoration: const InputDecoration(
                     labelText: 'Overall condition',

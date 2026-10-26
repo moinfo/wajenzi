@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/export_service.dart';
 
 final _filtersProvider = StateProvider.autoDispose<Map<String, dynamic>>(
   (ref) => {},
@@ -66,15 +68,22 @@ class StaffProjectsScreen extends ConsumerWidget {
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
         title: Text(_tr(context, en: 'Projects', sw: 'Miradi', ar: 'المشاريع')),
+        actions: [
+          ],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'projects', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showProjectForm(context, ref),
           child: const Icon(Icons.add_rounded),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('projects')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_projectsProvider);
           ref.invalidate(_statsProvider);
@@ -170,7 +179,7 @@ class StaffProjectsScreen extends ConsumerWidget {
                   );
                 }
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final project = items[index];
@@ -189,6 +198,8 @@ class StaffProjectsScreen extends ConsumerWidget {
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -675,7 +686,7 @@ class _ProjectCard extends StatelessWidget {
                               _tr(context, en: 'View', sw: 'Tazama', ar: 'عرض'),
                             ),
                           ),
-                          PopupMenuItem(
+                          if (canAct(context, 'projects', 'edit')) PopupMenuItem(
                             value: 'edit',
                             child: Text(
                               _tr(
@@ -686,7 +697,7 @@ class _ProjectCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          PopupMenuItem(
+                          if (canAct(context, 'projects', 'delete')) PopupMenuItem(
                             value: 'delete',
                             child: Text(
                               _tr(context, en: 'Delete', sw: 'Futa', ar: 'حذف'),

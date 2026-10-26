@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -105,13 +107,14 @@ class _StaffBankDetailsScreenState
             fr: 'Coordonnées bancaires du personnel',
             ar: 'بيانات الحسابات البنكية للموظفين',
           ),
-        ),
+        ), actions: [],
       ),
-      floatingActionButton: detailsAsync.maybeWhen(
+      floatingActionButton: canAct(context, 'staff_bank_details', 'add')
+          ? detailsAsync.maybeWhen(
         data: (payload) => payload['unavailable_on_live'] == true
             ? null
             : Padding(
-                padding: const EdgeInsets.only(bottom: 80),
+                padding: const EdgeInsets.only(bottom: 0),
                 child: FloatingActionButton(
                   onPressed: () => _openForm(context, ref),
                   child: const Icon(Icons.add_rounded),
@@ -125,7 +128,7 @@ class _StaffBankDetailsScreenState
                 ),
               ),
         orElse: () => Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 0),
           child: FloatingActionButton(
             onPressed: () => _openForm(context, ref),
             child: const Icon(Icons.add_rounded),
@@ -138,8 +141,12 @@ class _StaffBankDetailsScreenState
             ),
           ),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('staff_bank_details')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_staffBankDetailsProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -313,7 +320,7 @@ class _StaffBankDetailsScreenState
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final detail = filteredDetails[index];
@@ -338,6 +345,8 @@ class _StaffBankDetailsScreenState
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -640,10 +649,10 @@ class _StaffBankCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '${index + 1}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -764,7 +773,7 @@ class _StaffBankCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'staff_bank_details', 'edit')) PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
@@ -782,7 +791,7 @@ class _StaffBankCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'staff_bank_details', 'delete')) PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [

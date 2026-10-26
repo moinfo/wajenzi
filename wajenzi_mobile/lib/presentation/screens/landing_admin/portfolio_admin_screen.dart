@@ -86,7 +86,7 @@ class PortfolioAdminScreen extends ConsumerWidget {
           );
         }
         return SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           sliver: SliverReorderableList(
             itemCount: filtered.length,
             onReorder: (oldIndex, newIndex) =>

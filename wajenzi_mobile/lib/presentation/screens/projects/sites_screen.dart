@@ -179,7 +179,7 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
         ),
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showSiteForm(context),
           child: const Icon(Icons.add_rounded),
@@ -1768,6 +1768,7 @@ class _StatusDropdown extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: DropdownButtonFormField<String>(
+      isExpanded: true,
         value: value,
         items: [
           DropdownMenuItem(

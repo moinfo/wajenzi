@@ -84,7 +84,7 @@ class _ChartsOfAccountsScreenState
         title: Text(isSwahili ? 'Chati ya Akaunti' : 'Charts of Accounts'),
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openForm(context, ref),
           child: const Icon(Icons.add_rounded),
@@ -319,7 +319,7 @@ class _ChartsOfAccountsScreenState
                     : accountTypes;
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final type = filteredTypes[index];

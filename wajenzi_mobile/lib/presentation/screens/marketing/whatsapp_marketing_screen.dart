@@ -231,7 +231,7 @@ class _ContactsTabState extends ConsumerState<_ContactsTab> {
               : const <String, dynamic>{};
 
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             children: [
               _WaHero(stats: stats, isSwahili: isSwahili),
               const SizedBox(height: 16),
@@ -718,7 +718,7 @@ class _CampaignsTabState extends ConsumerState<_CampaignsTab> {
             );
           }
           return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             itemCount: list.length,
             itemBuilder: (_, i) {
               final c = list[i];
@@ -1062,6 +1062,7 @@ class _ContactFormSheetState extends ConsumerState<_ContactFormSheet> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
+      isExpanded: true,
                       value: _stage.isEmpty ? null : _stage,
                       decoration: _dec(isSwahili ? 'Hatua' : 'Stage'),
                       items: _stages
@@ -1074,6 +1075,7 @@ class _ContactFormSheetState extends ConsumerState<_ContactFormSheet> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
+      isExpanded: true,
                       value: _source,
                       decoration: _dec(isSwahili ? 'Chanzo' : 'Source'),
                       items: _sources
@@ -1087,6 +1089,7 @@ class _ContactFormSheetState extends ConsumerState<_ContactFormSheet> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<int?>(
+      isExpanded: true,
                       value: _campaignId,
                       decoration:
                           _dec(isSwahili ? 'Kampeni' : 'Campaign (optional)'),
@@ -1102,6 +1105,7 @@ class _ContactFormSheetState extends ConsumerState<_ContactFormSheet> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<int?>(
+      isExpanded: true,
                       value: _assignedTo,
                       decoration: _dec(
                           isSwahili ? 'Mwajiriwa' : 'Assigned to (optional)'),
@@ -1701,6 +1705,7 @@ class _CallFormSheetState extends ConsumerState<_CallFormSheet> {
               onTap: () => _pick(false),
             ),
             DropdownButtonFormField<String>(
+      isExpanded: true,
               value: _outcome,
               decoration: _dec(sw ? 'Matokeo' : 'Outcome'),
               items: widget.outcomes

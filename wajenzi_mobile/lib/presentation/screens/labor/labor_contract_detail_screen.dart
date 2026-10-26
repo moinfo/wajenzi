@@ -868,10 +868,10 @@ class _LaborContractDetailScreenState
           ),
           child: Text(
             '$count',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: AppColors.primary,
+              color: AppColors.accent(context),
             ),
           ),
         ),

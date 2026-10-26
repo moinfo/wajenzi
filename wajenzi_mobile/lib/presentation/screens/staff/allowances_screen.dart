@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -95,9 +97,12 @@ class _AllowancesScreenState extends ConsumerState<AllowancesScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Posho' : 'Allowances'),
+        title: Text(isSwahili ? 'Posho' : 'Allowances'), actions: [],
       ),
       body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_allowances')),
+          Expanded(child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
@@ -263,7 +268,7 @@ class _AllowancesScreenState extends ConsumerState<AllowancesScreen> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final allowance = filtered[index];
@@ -290,15 +295,19 @@ class _AllowancesScreenState extends ConsumerState<AllowancesScreen> {
             ),
           ),
         ],
+      )),
+        ],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 70),
+      floatingActionButton: canAct(context, 'hr_settings_allowances', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openForm(context, ref),
           backgroundColor: AppColors.primary,
           child: const Icon(Icons.add, color: Colors.white),
         ),
-      ),
+      )
+          : null,
     );
   }
 
@@ -361,9 +370,9 @@ class _AllowancesScreenState extends ConsumerState<AllowancesScreen> {
                             backgroundColor: AppColors.primary.withValues(
                               alpha: 0.1,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.card_giftcard,
-                              color: AppColors.primary,
+                              color: AppColors.accent(context),
                               size: 28,
                             ),
                           ),
@@ -394,9 +403,9 @@ class _AllowancesScreenState extends ConsumerState<AllowancesScreen> {
                                   child: Text(
                                     allowance['allowance_type']?.toString() ??
                                         '-',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
-                                      color: AppColors.primary,
+                                      color: AppColors.accent(context),
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -583,10 +592,10 @@ class _AllowanceCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '$index',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -620,9 +629,9 @@ class _AllowanceCard extends StatelessWidget {
                       ),
                       child: Text(
                         allowance['allowance_type']?.toString() ?? '-',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -673,7 +682,7 @@ class _AllowanceCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_allowances', 'edit')) PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
@@ -683,7 +692,7 @@ class _AllowanceCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_allowances', 'delete')) PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [
@@ -730,7 +739,7 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.primary),
+          Icon(icon, size: 20, color: AppColors.accent(context)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

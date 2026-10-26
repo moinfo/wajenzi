@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -68,9 +70,12 @@ class _AttendanceTypesScreenState extends ConsumerState<AttendanceTypesScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Aina za Mahudhurio' : 'Attendance Types'),
+        title: Text(isSwahili ? 'Aina za Mahudhurio' : 'Attendance Types'), actions: [],
       ),
       body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_attendance_types')),
+          Expanded(child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
@@ -169,7 +174,7 @@ class _AttendanceTypesScreenState extends ConsumerState<AttendanceTypesScreen> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                     itemCount: filteredItems.length,
                     itemBuilder: (context, index) {
                       final item = filteredItems[index] as Map<String, dynamic>;
@@ -189,15 +194,19 @@ class _AttendanceTypesScreenState extends ConsumerState<AttendanceTypesScreen> {
             ),
           ),
         ],
+      )),
+        ],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 70),
+      floatingActionButton: canAct(context, 'hr_settings_attendance_types', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openFormSheet(context, ref),
           backgroundColor: AppColors.primary,
           child: const Icon(Icons.add, color: Colors.white),
         ),
-      ),
+      )
+          : null,
     );
   }
 
@@ -241,9 +250,9 @@ class _AttendanceTypesScreenState extends ConsumerState<AttendanceTypesScreen> {
                           backgroundColor: AppColors.primary.withValues(
                             alpha: 0.1,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.schedule,
-                            color: AppColors.primary,
+                            color: AppColors.accent(context),
                             size: 28,
                           ),
                         ),
@@ -275,6 +284,7 @@ class _AttendanceTypesScreenState extends ConsumerState<AttendanceTypesScreen> {
                     const SizedBox(height: 18),
                     Row(
                       children: [
+                        if (canAct(context, 'hr_settings_attendance_types', 'edit'))
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {
@@ -290,7 +300,10 @@ class _AttendanceTypesScreenState extends ConsumerState<AttendanceTypesScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        if (canAct(context, 'hr_settings_attendance_types', 'edit') &&
+                            canAct(context, 'hr_settings_attendance_types', 'delete'))
+                          const SizedBox(width: 12),
+                        if (canAct(context, 'hr_settings_attendance_types', 'delete'))
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () {
@@ -455,10 +468,10 @@ class _AttendanceTypeCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '$index',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -516,7 +529,7 @@ class _AttendanceTypeCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_attendance_types', 'edit')) PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
@@ -526,7 +539,7 @@ class _AttendanceTypeCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_attendance_types', 'delete')) PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [
@@ -573,7 +586,7 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.primary),
+          Icon(icon, size: 20, color: AppColors.accent(context)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -716,7 +729,7 @@ class _AttendanceTypeFormSheetState
                         ),
                         child: Icon(
                           isEditing ? Icons.edit : Icons.add,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const SizedBox(width: 16),

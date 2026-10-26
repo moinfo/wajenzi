@@ -55,7 +55,7 @@ class PositionsScreen extends ConsumerWidget {
         title: Text(isSwahili ? 'Nafasi za Kazi' : 'Positions'),
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openForm(context, ref),
           child: const Icon(Icons.add_rounded),
@@ -192,7 +192,7 @@ class PositionsScreen extends ConsumerWidget {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final item = filtered[index];
@@ -329,9 +329,9 @@ class _PositionCard extends StatelessWidget {
           child: Text(
             abbreviation.isNotEmpty ? abbreviation : '${index + 1}',
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+              color: AppColors.accent(context),
             ),
           ),
         ),
@@ -551,6 +551,7 @@ class _PositionFormSheetState extends ConsumerState<_PositionFormSheet> {
                         .toList();
 
                     return DropdownButtonFormField<int?>(
+      isExpanded: true,
                       value: _reportToId,
                       decoration: InputDecoration(
                         labelText: isSwahili ? 'Ripoti Kwa' : 'Reports To',
@@ -580,6 +581,7 @@ class _PositionFormSheetState extends ConsumerState<_PositionFormSheet> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
+      isExpanded: true,
                   value: _status,
                   decoration: InputDecoration(
                     labelText: isSwahili ? 'Hali' : 'Status',

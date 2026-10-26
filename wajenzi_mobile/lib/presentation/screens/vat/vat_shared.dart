@@ -545,6 +545,7 @@ Widget vatDropdown<T>({
   return Padding(
     padding: const EdgeInsets.only(bottom: 14),
     child: DropdownButtonFormField<T>(
+      isExpanded: true,
       // ignore: deprecated_member_use
       value: value,
       items: items

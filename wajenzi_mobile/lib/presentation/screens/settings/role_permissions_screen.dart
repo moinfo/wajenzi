@@ -138,6 +138,7 @@ class _RolePermissionsScreenState extends ConsumerState<RolePermissionsScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: DropdownButtonFormField<String>(
+      isExpanded: true,
                   initialValue: _type,
                   isDense: true,
                   decoration: InputDecoration(

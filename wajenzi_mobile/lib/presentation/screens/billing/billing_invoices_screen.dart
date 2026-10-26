@@ -9,7 +9,9 @@ import '../../../core/network/api_client.dart';
 import '../../../core/services/export_service.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+import '../../widgets/common/date_filter_bar.dart';
 import '../vat/vat_shared.dart';
+import 'invoice_actions.dart';
 
 final _invoiceSearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
@@ -45,7 +47,11 @@ final _invoiceListProvider =
       final response = await _getWithRetry(
         api,
         '/billing/documents',
-        queryParameters: {'document_type': 'invoice', 'per_page': 100},
+        queryParameters: {
+          'document_type': 'invoice',
+          'per_page': 100,
+          ...dateRangeQuery(ref.watch(dateRangeProvider('billing_invoice'))),
+        },
       );
 
       final data = response.data is Map<String, dynamic>
@@ -119,6 +125,8 @@ class _BillingInvoicesScreenState extends ConsumerState<BillingInvoicesScreen> {
       ),
       body: Column(
         children: [
+          const InvoiceSummaryCards(),
+          const ExportAndDateBar(id: 'billing_invoice'),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -298,13 +306,20 @@ class _BillingInvoicesScreenState extends ConsumerState<BillingInvoicesScreen> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                     itemCount: filteredItems.length,
                     itemBuilder: (context, index) {
                       final item = filteredItems[index];
                       final id = _toInt(item['id']);
                       final itemStatus = _text(item['status']);
-                      final isDraft = itemStatus.toLowerCase() == 'draft';
+                      final st = itemStatus.toLowerCase();
+                      // The web's rules: Edit and Delete while draft, pending,
+                      // sent or viewed; Record Payment while there is a balance
+                      // and the invoice is not paid; Void unless already void.
+                      final isEditable =
+                          const ['draft', 'pending', 'sent', 'viewed'].contains(st);
+                      final balance =
+                          double.tryParse('${item['balance_amount']}') ?? 0;
 
                       return _InvoiceCard(
                         item: item,
@@ -314,13 +329,20 @@ class _BillingInvoicesScreenState extends ConsumerState<BillingInvoicesScreen> {
                         onTap: id > 0
                             ? () => _showInvoiceSheet(context, ref, id)
                             : null,
-                        onEdit: isDraft
+                        onEdit: isEditable
                             ? () =>
                                   _openInvoiceForm(context, ref, invoice: item)
                             : null,
-                        onDelete: isDraft
+                        onDelete: isEditable
                             ? () => _deleteInvoice(context, ref, item)
                             : null,
+                        onPay: st != 'paid' && balance > 0
+                            ? () => _payInvoice(context, ref, item)
+                            : null,
+                        onVoid: st != 'void'
+                            ? () => _voidInvoice(context, ref, item)
+                            : null,
+                        onDuplicate: () => _duplicateInvoice(context, ref, item),
                       );
                     },
                   );
@@ -331,7 +353,7 @@ class _BillingInvoicesScreenState extends ConsumerState<BillingInvoicesScreen> {
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 70),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openInvoiceForm(context, ref),
           backgroundColor: AppColors.primary,
@@ -393,6 +415,9 @@ class _InvoiceCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onPay;
+  final VoidCallback? onVoid;
+  final VoidCallback? onDuplicate;
 
   const _InvoiceCard({
     required this.item,
@@ -402,6 +427,9 @@ class _InvoiceCard extends StatelessWidget {
     this.onTap,
     this.onEdit,
     this.onDelete,
+    this.onPay,
+    this.onVoid,
+    this.onDuplicate,
   });
 
   @override
@@ -437,10 +465,10 @@ class _InvoiceCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '$index',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -494,9 +522,9 @@ class _InvoiceCard extends StatelessWidget {
                             ),
                             child: Text(
                               _text(project['project_name']),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 10,
-                                color: AppColors.primary,
+                                color: AppColors.accent(context),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -536,6 +564,12 @@ class _InvoiceCard extends StatelessWidget {
                     onTap?.call();
                   } else if (value == 'edit') {
                     onEdit?.call();
+                  } else if (value == 'pay') {
+                    onPay?.call();
+                  } else if (value == 'duplicate') {
+                    onDuplicate?.call();
+                  } else if (value == 'void') {
+                    onVoid?.call();
                   } else if (value == 'delete') {
                     onDelete?.call();
                   }
@@ -559,6 +593,42 @@ class _InvoiceCard extends StatelessWidget {
                           const Icon(Icons.edit_outlined, size: 20),
                           const SizedBox(width: 10),
                           Text(isSwahili ? 'Hariri' : 'Edit'),
+                        ],
+                      ),
+                    ),
+                  if (onPay != null)
+                    PopupMenuItem(
+                      value: 'pay',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.payments_outlined, size: 20, color: Color(0xFF22C55E)),
+                          const SizedBox(width: 10),
+                          Text(isSwahili ? 'Rekodi Malipo' : 'Record Payment'),
+                        ],
+                      ),
+                    ),
+                  if (onDuplicate != null)
+                    PopupMenuItem(
+                      value: 'duplicate',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.copy_outlined, size: 20),
+                          const SizedBox(width: 10),
+                          Text(isSwahili ? 'Nakili' : 'Duplicate'),
+                        ],
+                      ),
+                    ),
+                  if (onVoid != null)
+                    PopupMenuItem(
+                      value: 'void',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.block_outlined, size: 20, color: Color(0xFFD97706)),
+                          const SizedBox(width: 10),
+                          Text(
+                            isSwahili ? 'Batilisha' : 'Void',
+                            style: const TextStyle(color: Color(0xFFD97706)),
+                          ),
                         ],
                       ),
                     ),
@@ -624,6 +694,68 @@ Future<void> _openInvoiceForm(
   }
 }
 
+void _say(BuildContext context, String text, {bool error = false}) {
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(backgroundColor: error ? AppColors.error : AppColors.success, content: Text(text)),
+  );
+}
+
+String _apiMessage(Object e, String fallback) {
+  if (e is DioException) {
+    final data = e.response?.data;
+    if (data is Map && data['message'] != null) return '${data['message']}';
+  }
+  return fallback;
+}
+
+Future<void> _payInvoice(BuildContext context, WidgetRef ref, Map<String, dynamic> invoice) async {
+  final saved = await showRecordPaymentDialog(context, invoice);
+  if (!saved) return;
+  ref.invalidate(_invoiceListProvider);
+  ref.invalidate(invoiceSummaryProvider);
+  _say(context, 'Payment recorded successfully.');
+}
+
+Future<void> _voidInvoice(BuildContext context, WidgetRef ref, Map<String, dynamic> invoice) async {
+  final isSwahili = ref.read(isSwahiliProvider);
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(isSwahili ? 'Batilisha Invoice' : 'Void Invoice'),
+      content: Text(isSwahili ? 'Batilisha invoice hii?' : 'Void this invoice?'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(isSwahili ? 'Hapana' : 'No')),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(isSwahili ? 'Ndiyo' : 'Void', style: const TextStyle(color: Color(0xFFD97706))),
+        ),
+      ],
+    ),
+  );
+  if (ok != true) return;
+
+  try {
+    await ref.read(apiClientProvider).post('/billing/invoices/${invoice['id']}/void');
+    ref.invalidate(_invoiceListProvider);
+    ref.invalidate(invoiceSummaryProvider);
+    _say(context, 'Invoice voided successfully.');
+  } catch (e) {
+    _say(context, _apiMessage(e, 'Could not void the invoice'), error: true);
+  }
+}
+
+Future<void> _duplicateInvoice(BuildContext context, WidgetRef ref, Map<String, dynamic> invoice) async {
+  try {
+    await ref.read(apiClientProvider).post('/billing/invoices/${invoice['id']}/duplicate');
+    ref.invalidate(_invoiceListProvider);
+    ref.invalidate(invoiceSummaryProvider);
+    _say(context, 'Invoice duplicated successfully.');
+  } catch (e) {
+    _say(context, _apiMessage(e, 'Could not duplicate the invoice'), error: true);
+  }
+}
+
 Future<void> _deleteInvoice(
   BuildContext context,
   WidgetRef ref,
@@ -673,12 +805,13 @@ Future<void> _deleteInvoice(
         .read(apiClientProvider)
         .delete('/billing/documents/${invoice['id']}');
     ref.invalidate(_invoiceListProvider);
+    ref.invalidate(invoiceSummaryProvider);
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.success,
-          content: Text(isSwahili ? 'Invoice imefutwa' : 'Invoice deleted'),
+          content: Text(isSwahili ? 'Invoice imefutwa' : 'Invoice cancelled successfully.'),
         ),
       );
     }
@@ -765,9 +898,9 @@ void _showInvoiceSheet(BuildContext context, WidgetRef ref, int id) {
                                   backgroundColor: AppColors.primary.withValues(
                                     alpha: 0.1,
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.receipt_long,
-                                    color: AppColors.primary,
+                                    color: AppColors.accent(context),
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -1213,7 +1346,7 @@ class _InvoiceFormSheetState extends ConsumerState<_InvoiceFormSheet> {
                           ),
                           child: Icon(
                             widget.invoice == null ? Icons.add : Icons.edit,
-                            color: AppColors.primary,
+                            color: AppColors.accent(context),
                           ),
                         ),
                         const SizedBox(width: 16),

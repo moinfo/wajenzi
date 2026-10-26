@@ -1677,10 +1677,10 @@ class _ScheduleTab extends ConsumerWidget {
                                   ),
                                   child: Text(
                                     a.activityCode!,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.primary,
+                                      color: AppColors.accent(context),
                                     ),
                                   ),
                                 ),
@@ -2006,7 +2006,7 @@ class _FinancialSectionState extends State<_FinancialSection> {
           onTap: () => setState(() => _expanded = !_expanded),
           child: Row(
             children: [
-              Icon(widget.icon, size: 20, color: AppColors.primary),
+              Icon(widget.icon, size: 20, color: AppColors.accent(context)),
               const SizedBox(width: 8),
               Text(
                 widget.title,
@@ -2027,10 +2027,10 @@ class _FinancialSectionState extends State<_FinancialSection> {
                 ),
                 child: Text(
                   '${widget.count}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+                    color: AppColors.accent(context),
                   ),
                 ),
               ),
@@ -2299,9 +2299,9 @@ class _DocumentsTab extends ConsumerWidget {
                 ),
                 trailing: d.fileUrl != null
                     ? IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.download_rounded,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                         onPressed: () async {
                           final uri = Uri.parse(d.fileUrl!);

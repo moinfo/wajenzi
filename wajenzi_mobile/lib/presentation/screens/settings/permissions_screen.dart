@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -49,14 +51,16 @@ class PermissionsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(tr('Permissions', 'الصلاحيات')),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _openForm(context, ref),
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_permissions')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_permissionsProvider);
           ref.invalidate(_permissionReferenceProvider);
@@ -98,10 +102,10 @@ class PermissionsScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.key_outlined,
                           size: 56,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -158,9 +162,9 @@ class PermissionsScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.key_outlined,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -254,11 +258,11 @@ class PermissionsScreen extends ConsumerWidget {
                           }
                         },
                         itemBuilder: (_) => [
-                          PopupMenuItem(
+                          if (canAct(context, 'hr_settings_permissions', 'edit')) PopupMenuItem(
                             value: 'edit',
                             child: Text(tr('Edit', 'تعديل')),
                           ),
-                          PopupMenuItem(
+                          if (canAct(context, 'hr_settings_permissions', 'delete')) PopupMenuItem(
                             value: 'delete',
                             child: Text(tr('Delete', 'حذف')),
                           ),
@@ -272,12 +276,16 @@ class PermissionsScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: canAct(context, 'hr_settings_permissions', 'add')
+          ? FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
         label: Text(tr('New Permission', 'صلاحية جديدة')),
-      ),
+      )
+          : null,
     );
   }
 
@@ -451,6 +459,7 @@ class _PermissionFormSheetState extends ConsumerState<_PermissionFormSheet> {
                   loading: () => const LinearProgressIndicator(),
                   error: (_, _) => const SizedBox.shrink(),
                   data: (types) => DropdownButtonFormField<String>(
+      isExpanded: true,
                     value: types.contains(_permissionType)
                         ? _permissionType
                         : (types.isNotEmpty ? types.first : 'MENU'),

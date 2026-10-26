@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -92,9 +94,12 @@ class _StaffLoansScreenState extends ConsumerState<StaffLoansScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Mikopo ya Wafanyakazi' : 'Staff Loans'),
+        title: Text(isSwahili ? 'Mikopo ya Wafanyakazi' : 'Staff Loans'), actions: [],
       ),
       body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_staff_loan')),
+          Expanded(child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
@@ -268,7 +273,7 @@ class _StaffLoansScreenState extends ConsumerState<StaffLoansScreen> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final item = filtered[index];
@@ -301,15 +306,19 @@ class _StaffLoansScreenState extends ConsumerState<StaffLoansScreen> {
             ),
           ),
         ],
+      )),
+        ],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 70),
+      floatingActionButton: canAct(context, 'hr_settings_staff_loan', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openForm(context, ref),
           backgroundColor: AppColors.primary,
           child: const Icon(Icons.add, color: Colors.white),
         ),
-      ),
+      )
+          : null,
     );
   }
 
@@ -372,9 +381,9 @@ class _StaffLoansScreenState extends ConsumerState<StaffLoansScreen> {
                             backgroundColor: AppColors.primary.withValues(
                               alpha: 0.1,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.savings,
-                              color: AppColors.primary,
+                              color: AppColors.accent(context),
                               size: 28,
                             ),
                           ),
@@ -622,10 +631,10 @@ class _StaffLoanCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '$index',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -718,7 +727,7 @@ class _StaffLoanCard extends StatelessWidget {
                     ),
                   ),
                   if (canMutate)
-                    PopupMenuItem(
+                    if (canAct(context, 'hr_settings_staff_loan', 'edit')) PopupMenuItem(
                       value: 'edit',
                       child: Row(
                         children: [
@@ -729,7 +738,7 @@ class _StaffLoanCard extends StatelessWidget {
                       ),
                     ),
                   if (canMutate)
-                    PopupMenuItem(
+                    if (canAct(context, 'hr_settings_staff_loan', 'delete')) PopupMenuItem(
                       value: 'delete',
                       child: Row(
                         children: [
@@ -778,7 +787,7 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.primary),
+          Icon(icon, size: 20, color: AppColors.accent(context)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -903,7 +912,7 @@ class _StaffLoanFormSheetState extends ConsumerState<_StaffLoanFormSheet> {
                               ),
                               child: Icon(
                                 widget.item == null ? Icons.add : Icons.edit,
-                                color: AppColors.primary,
+                                color: AppColors.accent(context),
                               ),
                             ),
                             const SizedBox(width: 16),

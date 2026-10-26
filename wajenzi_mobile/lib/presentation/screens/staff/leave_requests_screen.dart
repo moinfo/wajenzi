@@ -349,7 +349,7 @@ class _LeaveRequestsScreenState extends ConsumerState<LeaveRequestsScreen> {
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 70),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openLeaveRequestForm(context, ref),
           backgroundColor: AppColors.primary,
@@ -649,7 +649,7 @@ class _LeaveBalanceCard extends StatelessWidget {
               children: [
                 Icon(
                   Icons.account_balance_wallet_outlined,
-                  color: AppColors.primary,
+                  color: AppColors.accent(context),
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -879,7 +879,7 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.primary),
+          Icon(icon, size: 20, color: AppColors.accent(context)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1191,7 +1191,7 @@ class _LeaveRequestFormSheetState
                         ),
                         child: Icon(
                           widget.request == null ? Icons.add : Icons.edit,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const SizedBox(width: 16),

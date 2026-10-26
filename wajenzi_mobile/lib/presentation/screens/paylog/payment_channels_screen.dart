@@ -88,7 +88,7 @@ class _PaymentChannelsScreenState extends ConsumerState<PaymentChannelsScreen> {
                 }
                 return ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 90),
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
                   itemCount: channels.length,
                   itemBuilder: (context, i) => _ChannelCard(
                     channel: channels[i],
@@ -320,6 +320,7 @@ class _AddChannelSheetState extends State<_AddChannelSheet> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
+      isExpanded: true,
               initialValue: _type,
               decoration: const InputDecoration(
                 labelText: 'Type *',

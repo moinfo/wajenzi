@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -30,14 +32,16 @@ class FinancialChargeCategoriesScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Financial Charge Categories'),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _openForm(context, ref),
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_financial_charge_categories')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_financialChargeCategoriesProvider),
         child: asyncData.when(
           loading: () => const LoadingWidget(
@@ -73,10 +77,10 @@ class FinancialChargeCategoriesScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.percent_outlined,
                           size: 56,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                         const SizedBox(height: 12),
                         const Text(
@@ -130,9 +134,9 @@ class FinancialChargeCategoriesScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.percent_outlined,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -207,9 +211,9 @@ class FinancialChargeCategoriesScreen extends ConsumerWidget {
                             _deleteItem(context, ref, item);
                           }
                         },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                        itemBuilder: (_) => [
+                          if (canAct(context, 'hr_settings_financial_charge_categories', 'edit')) const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                          if (canAct(context, 'hr_settings_financial_charge_categories', 'delete')) const PopupMenuItem(value: 'delete', child: Text('Delete')),
                         ],
                       ),
                     ),
@@ -220,12 +224,16 @@ class FinancialChargeCategoriesScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: canAct(context, 'hr_settings_financial_charge_categories', 'add')
+          ? FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
         label: const Text('New Financial Charge Category'),
-      ),
+      )
+          : null,
     );
   }
 

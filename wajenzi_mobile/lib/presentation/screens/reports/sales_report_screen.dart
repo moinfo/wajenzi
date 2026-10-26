@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../widgets/common/date_range_sheet.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
@@ -81,8 +83,7 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
             ar: 'تقرير المبيعات',
           ),
         ),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.calendar_today),
             tooltip: _salesTr(
               language,
@@ -92,7 +93,7 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
               ar: 'اختر التاريخ',
             ),
             onPressed: () async {
-              final picked = await showDateRangePicker(
+              final picked = await showDateRangeSheet(
                 context: context,
                 firstDate: DateTime(2020),
                 lastDate: DateTime.now(),
@@ -117,6 +118,9 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
         ],
       ),
       body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('reports_sales_report')),
+          Expanded(child: Column(
         children: [
           if (_dateRange != null)
             Container(
@@ -196,6 +200,8 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
                   : _SalesReportContent(data: data, language: language),
             ),
           ),
+        ],
+      )),
         ],
       ),
     );

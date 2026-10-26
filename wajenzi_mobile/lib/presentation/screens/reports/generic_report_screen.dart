@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../widgets/common/date_range_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/services/export_service.dart';
-import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../../widgets/common/empty_state_widget.dart';
@@ -190,61 +190,12 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading:
-            widget.apiEndpoint == '/reports/statutory-category-report' ||
-                widget.apiEndpoint == '/reports/statutory-payment-report' ||
-                widget.apiEndpoint == '/reports/statutory-schedules-report'
-            ? Consumer(
-                builder: (context, ref, _) {
-                  final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
-                  return IconButton(
-                    icon: const Icon(Icons.menu_rounded),
-                    onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
-                  );
-                },
-              )
-            : IconButton(
-                icon: const Icon(Icons.arrow_back_rounded),
-                onPressed: () => context.go('/reports'),
-              ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => context.go('/reports'),
+        ),
         title: Text(title),
         actions: [
-          if (widget.apiEndpoint == '/reports/daily-attendances-report')
-            ExportMenuButton(
-              options: [
-                ExportOption(
-                  'Excel (CSV)',
-                  'daily-attendance-report/excel',
-                  icon: Icons.table_chart_outlined,
-                  query: {
-                    if (_dateRange != null)
-                      'start_date': DateFormat(
-                        'yyyy-MM-dd',
-                      ).format(_dateRange!.start),
-                  },
-                ),
-              ],
-            ),
-          if (widget.apiEndpoint == '/reports/attendances-report')
-            ExportMenuButton(
-              options: [
-                ExportOption(
-                  'Excel (CSV)',
-                  'attendance-report/excel',
-                  icon: Icons.table_chart_outlined,
-                  query: {
-                    if (_dateRange != null)
-                      'start_date': DateFormat(
-                        'yyyy-MM-dd',
-                      ).format(_dateRange!.start),
-                    if (_dateRange != null)
-                      'end_date': DateFormat(
-                        'yyyy-MM-dd',
-                      ).format(_dateRange!.end),
-                  },
-                ),
-              ],
-            ),
           if (widget.apiEndpoint != '/reports/statutory-category-report' &&
               widget.apiEndpoint != '/reports/statutory-payment-report' &&
               widget.apiEndpoint != '/reports/statutory-schedules-report')
@@ -258,7 +209,7 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
                 ar: 'اختر التاريخ',
               ),
               onPressed: () async {
-                final picked = await showDateRangePicker(
+                final picked = await showDateRangeSheet(
                   context: context,
                   firstDate: DateTime(2020),
                   lastDate: DateTime.now(),
@@ -284,6 +235,38 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
         ],
       ),
       body: Column(
+        children: [
+          if (widget.apiEndpoint == '/reports/daily-attendances-report') ExportButtonsBar(options: [
+                ExportOption(
+                  'Excel (CSV)',
+                  'daily-attendance-report/excel',
+                  icon: Icons.table_chart_outlined,
+                  query: {
+                    if (_dateRange != null)
+                      'start_date': DateFormat(
+                        'yyyy-MM-dd',
+                      ).format(_dateRange!.start),
+                  },
+                ),
+              ]),
+          if (widget.apiEndpoint == '/reports/attendances-report') ExportButtonsBar(options: [
+                ExportOption(
+                  'Excel (CSV)',
+                  'attendance-report/excel',
+                  icon: Icons.table_chart_outlined,
+                  query: {
+                    if (_dateRange != null)
+                      'start_date': DateFormat(
+                        'yyyy-MM-dd',
+                      ).format(_dateRange!.start),
+                    if (_dateRange != null)
+                      'end_date': DateFormat(
+                        'yyyy-MM-dd',
+                      ).format(_dateRange!.end),
+                  },
+                ),
+              ]),
+          Expanded(child: Column(
         children: [
           Container(
             width: double.infinity,
@@ -413,6 +396,8 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
                   : _ReportContent(data: data, language: language),
             ),
           ),
+        ],
+      )),
         ],
       ),
     );

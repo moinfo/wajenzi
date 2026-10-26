@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/network/api_client.dart';
@@ -9,6 +10,7 @@ import '../../widgets/common/empty_state_widget.dart';
 import '../../widgets/common/filter_bottom_sheet.dart';
 import 'labor_inspection_create_screen.dart';
 import 'labor_inspection_detail_screen.dart';
+import '../../widgets/common/date_filter_bar.dart';
 
 class LaborInspectionsScreen extends ConsumerStatefulWidget {
   const LaborInspectionsScreen({super.key});
@@ -28,7 +30,11 @@ class _LaborInspectionsScreenState
   List<dynamic> _inspections = [];
   List<dynamic> _projects = [];
   List<dynamic> _contracts = [];
-  Map<String, dynamic> _filters = {};
+  // Starts with the current month, like the web's date filters.
+  Map<String, dynamic> _filters = {
+    'start_date': DateFilterBar.format(defaultStartDate()),
+    'end_date': DateFilterBar.format(today()),
+  };
 
   @override
   void initState() {
@@ -317,8 +323,7 @@ class _LaborInspectionsScreenState
               ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
         ),
         title: Text(isSwahili ? 'Ukaguzi wa Labor' : 'Labor Inspections'),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.dashboard_rounded),
             tooltip: isSwahili ? 'Dashibodi' : 'Dashboard',
             onPressed: () => context.go('/labor-dashboard'),
@@ -338,7 +343,43 @@ class _LaborInspectionsScreenState
         icon: const Icon(Icons.add),
         label: Text(isSwahili ? 'Ukaguzi' : 'New'),
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(
+            options: webTableExportOptions(
+              'labor.inspections.index',
+              params: {
+                'start_date': _filters['start_date']?.toString(),
+                'end_date': _filters['end_date']?.toString(),
+              },
+            ),
+          ),
+          // Start Date / End Date, always visible like the web's filter bar.
+          DateFilterBar(
+            start: DateTime.tryParse('${_filters['start_date'] ?? ''}'),
+            end: DateTime.tryParse('${_filters['end_date'] ?? ''}'),
+            onStart: (d) {
+              setState(() {
+                if (d == null) {
+                  _filters.remove('start_date');
+                } else {
+                  _filters['start_date'] = DateFilterBar.format(d);
+                }
+              });
+              _loadData(refresh: true);
+            },
+            onEnd: (d) {
+              setState(() {
+                if (d == null) {
+                  _filters.remove('end_date');
+                } else {
+                  _filters['end_date'] = DateFilterBar.format(d);
+                }
+              });
+              _loadData(refresh: true);
+            },
+          ),
+          Expanded(child: RefreshIndicator(
         onRefresh: () => _loadData(refresh: true),
         child: Column(
           children: [
@@ -395,6 +436,8 @@ class _LaborInspectionsScreenState
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }

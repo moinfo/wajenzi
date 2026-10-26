@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'date_range_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -88,7 +89,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
   }
 
   Future<void> _selectDateRange() async {
-    final picked = await showDateRangePicker(
+    final picked = await showDateRangeSheet(
       context: context,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),

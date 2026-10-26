@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -41,14 +43,16 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(tr('Allowance Subscriptions', 'اشتراكات البدلات')),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _openForm(context, ref),
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('allowance_subscriptions')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_allowanceSubscriptionsProvider),
         child: asyncData.when(
           loading: () => LoadingWidget(
@@ -102,10 +106,10 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.payments_outlined,
                           size: 56,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -167,9 +171,9 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.payments_outlined,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -203,8 +207,8 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
                         _money(totalAmount),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.primary,
+                        style: TextStyle(
+                          color: AppColors.accent(context),
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -274,11 +278,11 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
                                   }
                                 },
                                 itemBuilder: (_) => [
-                                  PopupMenuItem(
+                                  if (canAct(context, 'allowance_subscriptions', 'edit')) PopupMenuItem(
                                     value: 'edit',
                                     child: Text(tr('Edit', 'تعديل')),
                                   ),
-                                  PopupMenuItem(
+                                  if (canAct(context, 'allowance_subscriptions', 'delete')) PopupMenuItem(
                                     value: 'delete',
                                     child: Text(tr('Delete', 'حذف')),
                                   ),
@@ -311,12 +315,16 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: canAct(context, 'allowance_subscriptions', 'add')
+          ? FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
         label: Text(tr('New Subscription', 'اشتراك جديد')),
-      ),
+      )
+          : null,
     );
   }
 

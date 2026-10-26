@@ -122,7 +122,7 @@ class _SiteSupervisorAssignmentsScreenState
         ),
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showCreateForm(context, ref, isDark, isSwahili),
           child: const Icon(Icons.add_rounded),
@@ -316,7 +316,7 @@ class _SiteSupervisorAssignmentsScreenState
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
                       if (unassignedSites.isNotEmpty) ...[
@@ -497,7 +497,7 @@ class _SiteSupervisorAssignmentsScreenState
                           isSwahili,
                         );
                       },
-                      icon: Icon(Icons.edit_rounded, color: AppColors.primary),
+                      icon: Icon(Icons.edit_rounded, color: AppColors.accent(context)),
                     ),
                     IconButton(
                       onPressed: () {
@@ -703,6 +703,7 @@ class _SiteSupervisorAssignmentsScreenState
                   ),
                   const SizedBox(height: 20),
                   DropdownButtonFormField<int>(
+      isExpanded: true,
                     value: selectedSiteId,
                     decoration: InputDecoration(
                       labelText: isSwahili ? 'Eneo *' : 'Site *',
@@ -767,6 +768,7 @@ class _SiteSupervisorAssignmentsScreenState
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<int>(
+      isExpanded: true,
                     value: selectedSupervisorId,
                     decoration: InputDecoration(
                       labelText: isSwahili ? 'Msimamizi *' : 'Supervisor *',
@@ -1046,6 +1048,7 @@ class _SiteSupervisorAssignmentsScreenState
                   ),
                   const SizedBox(height: 20),
                   DropdownButtonFormField<int>(
+      isExpanded: true,
                     value: selectedSiteId,
                     decoration: InputDecoration(
                       labelText: isSwahili ? 'Eneo *' : 'Site *',
@@ -1110,6 +1113,7 @@ class _SiteSupervisorAssignmentsScreenState
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<int>(
+      isExpanded: true,
                     value: selectedSupervisorId,
                     decoration: InputDecoration(
                       labelText: isSwahili ? 'Msimamizi *' : 'Supervisor *',

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -68,17 +70,22 @@ class SuppliersScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Wauzaji' : 'Suppliers'),
+        title: Text(isSwahili ? 'Wauzaji' : 'Suppliers'), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'hr_settings_suppliers', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openSupplierForm(context, ref),
           child: const Icon(Icons.add_rounded),
           tooltip: isSwahili ? 'Ongeza Muuzaji' : 'Add Supplier',
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_suppliers')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_suppliersProvider);
           ref.invalidate(_supplierReferenceProvider);
@@ -207,7 +214,7 @@ class SuppliersScreen extends ConsumerWidget {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final item = filtered[index];
@@ -225,6 +232,8 @@ class SuppliersScreen extends ConsumerWidget {
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -367,7 +376,7 @@ class _SupplierCard extends ConsumerWidget {
             }
           },
           itemBuilder: (_) => [
-            PopupMenuItem(
+            if (canAct(context, 'hr_settings_suppliers', 'edit')) PopupMenuItem(
               value: 'edit',
               child: Row(
                 children: [
@@ -387,7 +396,7 @@ class _SupplierCard extends ConsumerWidget {
                 ],
               ),
             ),
-            PopupMenuItem(
+            if (canAct(context, 'hr_settings_suppliers', 'delete')) PopupMenuItem(
               value: 'delete',
               child: Row(
                 children: [
@@ -562,7 +571,7 @@ class _SupplierContactTile extends ConsumerWidget {
           }
         },
         itemBuilder: (_) => [
-          PopupMenuItem(
+          if (canAct(context, 'hr_settings_suppliers', 'edit')) PopupMenuItem(
             value: 'edit',
             child: Row(
               children: [
@@ -572,7 +581,7 @@ class _SupplierContactTile extends ConsumerWidget {
               ],
             ),
           ),
-          PopupMenuItem(
+          if (canAct(context, 'hr_settings_suppliers', 'delete')) PopupMenuItem(
             value: 'delete',
             child: Row(
               children: [
@@ -735,6 +744,7 @@ class _SupplierFormSheetState extends ConsumerState<_SupplierFormSheet> {
                     final systems =
                         reference['systems'] ?? const <Map<String, dynamic>>[];
                     return DropdownButtonFormField<int>(
+      isExpanded: true,
                       value: _systemId,
                       decoration: InputDecoration(
                         labelText: isSwahili ? 'Mfumo' : 'System',
@@ -935,6 +945,7 @@ class _SupplierContactFormSheetState
                     return Column(
                       children: [
                         DropdownButtonFormField<int>(
+      isExpanded: true,
                           value: _supplierId,
                           decoration: InputDecoration(
                             labelText: isSwahili ? 'Muuzaji' : 'Supplier',
@@ -963,6 +974,7 @@ class _SupplierContactFormSheetState
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<int>(
+      isExpanded: true,
                           value: _bankId,
                           decoration: InputDecoration(
                             labelText: isSwahili ? 'Benki' : 'Bank',

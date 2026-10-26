@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../widgets/common/date_filter_bar.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -73,7 +76,7 @@ Future<Response<dynamic>> _uploadWithFallback(
 }
 
 final _purchasesStartProvider = StateProvider.autoDispose<DateTime>(
-  (ref) => DateTime.now(),
+  (ref) => defaultStartDate(),
 );
 final _purchasesEndProvider = StateProvider.autoDispose<DateTime>(
   (ref) => DateTime.now(),
@@ -168,17 +171,22 @@ class PurchasesScreen extends ConsumerWidget {
             sw: 'Manunuzi',
             ar: 'المشتريات',
           ),
-        ),
+        ), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'purchases', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showPurchaseForm(context, ref),
           tooltip: _trLocale(context, en: 'Add', sw: 'Ongeza', ar: 'إضافة'),
           child: const Icon(Icons.add),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('purchases')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_purchasesProvider);
         },
@@ -306,6 +314,8 @@ class PurchasesScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
     );
   }
@@ -1924,7 +1934,7 @@ class _PurchaseCard extends StatelessWidget {
                       if (value == 'delete') onDelete();
                     },
                     itemBuilder: (ctx) => [
-                      PopupMenuItem(
+                      if (canAct(context, 'purchases', 'edit')) PopupMenuItem(
                         value: 'edit',
                         child: Row(
                           children: [
@@ -1941,7 +1951,7 @@ class _PurchaseCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      PopupMenuItem(
+                      if (canAct(context, 'purchases', 'delete')) PopupMenuItem(
                         value: 'delete',
                         child: Row(
                           children: [

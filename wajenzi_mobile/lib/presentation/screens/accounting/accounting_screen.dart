@@ -231,10 +231,10 @@ class _MetricCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: AppColors.text(context),
             ),
           ),
         ],
@@ -305,9 +305,9 @@ class _MonthRow extends StatelessWidget {
           ),
           Text(
             'TZS $amount',
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+              color: AppColors.accent(context),
             ),
           ),
         ],
@@ -381,9 +381,9 @@ class _InvoiceRow extends StatelessWidget {
         children: [
           Text(
             'TZS ${_money(invoice['balance_amount'])}',
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: AppColors.text(context),
             ),
           ),
           Text(

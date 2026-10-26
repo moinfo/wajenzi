@@ -312,7 +312,7 @@ class _KpiSelfAssessScreenState extends ConsumerState<KpiSelfAssessScreen> {
         top: false,
         // Extra bottom space so the action bar sits above the outer curved
         // bottom nav (MainScaffold uses extendBody:true).
-        minimum: const EdgeInsets.only(bottom: 90),
+        minimum: const EdgeInsets.only(bottom: 8),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           child: Column(

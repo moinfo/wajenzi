@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
@@ -100,17 +102,22 @@ class ProjectMaterialsScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Vifurushi vya Mradi' : 'Project Materials'),
+        title: Text(isSwahili ? 'Vifurushi vya Mradi' : 'Project Materials'), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'project_materials', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showMaterialForm(context, ref),
           child: const Icon(Icons.add_rounded),
           tooltip: isSwahili ? 'Ongeza' : 'Add',
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('project_materials')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_materialsProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -254,7 +261,7 @@ class ProjectMaterialsScreen extends ConsumerWidget {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final material = materials[index];
@@ -275,6 +282,8 @@ class ProjectMaterialsScreen extends ConsumerWidget {
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -657,7 +666,7 @@ class _MaterialCard extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      PopupMenuItem(
+                      if (canAct(context, 'project_materials', 'edit')) PopupMenuItem(
                         value: 'edit',
                         child: Row(
                           children: [
@@ -667,7 +676,7 @@ class _MaterialCard extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      PopupMenuItem(
+                      if (canAct(context, 'project_materials', 'delete')) PopupMenuItem(
                         value: 'delete',
                         child: Row(
                           children: [

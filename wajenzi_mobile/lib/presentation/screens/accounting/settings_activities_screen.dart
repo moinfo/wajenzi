@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -83,13 +85,14 @@ class _SettingsActivitiesScreenState
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Activities' : 'Activities'),
+        title: Text(isSwahili ? 'Activities' : 'Activities'), actions: [],
       ),
-      floatingActionButton: activitiesAsync.maybeWhen(
+      floatingActionButton: canAct(context, 'hr_settings_activities', 'add')
+          ? activitiesAsync.maybeWhen(
         data: (payload) => payload['unavailable_on_live'] == true
             ? null
             : Padding(
-                padding: const EdgeInsets.only(bottom: 80),
+                padding: const EdgeInsets.only(bottom: 0),
                 child: FloatingActionButton(
                   onPressed: () => _openForm(context, ref),
                   child: const Icon(Icons.add_rounded),
@@ -97,15 +100,19 @@ class _SettingsActivitiesScreenState
                 ),
               ),
         orElse: () => Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 0),
           child: FloatingActionButton(
             onPressed: () => _openForm(context, ref),
             child: const Icon(Icons.add_rounded),
             tooltip: isSwahili ? 'Add Activity' : 'Add Activity',
           ),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_activities')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_activitiesProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -256,7 +263,7 @@ class _SettingsActivitiesScreenState
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final activity = filteredActivities[index];
@@ -276,6 +283,8 @@ class _SettingsActivitiesScreenState
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -428,10 +437,10 @@ class _ActivityCard extends StatelessWidget {
               child: Center(
                 child: Text(
                   '${index + 1}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+                    color: AppColors.accent(context),
                   ),
                 ),
               ),
@@ -554,7 +563,7 @@ class _ActivityCard extends StatelessWidget {
                 }
               },
               itemBuilder: (_) => [
-                PopupMenuItem(
+                if (canAct(context, 'hr_settings_activities', 'edit')) PopupMenuItem(
                   value: 'edit',
                   child: Row(
                     children: [
@@ -564,7 +573,7 @@ class _ActivityCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                PopupMenuItem(
+                if (canAct(context, 'hr_settings_activities', 'delete')) PopupMenuItem(
                   value: 'delete',
                   child: Row(
                     children: [

@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,6 +9,7 @@ import '../../../core/router/app_router.dart';
 import '../../../data/models/procurement/purchase_order_models.dart';
 import '../../../data/repositories/purchase_orders_repository.dart';
 import 'procurement_shared.dart';
+import '../../widgets/common/date_filter_bar.dart';
 
 final _poSearchProvider = StateProvider.autoDispose<String>((_) => '');
 final _poStatusFilterProvider = StateProvider.autoDispose<String?>((_) => null);
@@ -17,7 +19,13 @@ final _purchaseOrdersProvider =
   final repo = ref.watch(purchaseOrdersRepositoryProvider);
   final search = ref.watch(_poSearchProvider);
   final status = ref.watch(_poStatusFilterProvider);
-  return repo.listPurchaseOrders(search: search, status: status);
+  final range = ref.watch(dateRangeProvider('purchase_orders'));
+  return repo.listPurchaseOrders(
+    search: search,
+    status: status,
+    startDate: DateFilterBar.format(range.start),
+    endDate: DateFilterBar.format(range.end),
+  );
 });
 
 final _poDetailProvider = FutureProvider.autoDispose
@@ -45,9 +53,12 @@ class PurchaseOrdersScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: const Text('Purchase Orders'),
+        title: const Text('Purchase Orders'), actions: [],
       ),
       body: Column(
+        children: [
+          const ExportAndDateBar(id: 'purchase_orders', route: 'purchase_orders'),
+          Expanded(child: Column(
         children: [
           _SearchAndStatusFilter(
             search: search,
@@ -80,7 +91,7 @@ class PurchaseOrdersScreen extends ConsumerWidget {
                   }
                   return ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 90),
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
                     itemCount: orders.length,
                     itemBuilder: (context, i) => _PoCard(
                       po: orders[i],
@@ -96,6 +107,8 @@ class PurchaseOrdersScreen extends ConsumerWidget {
               ),
             ),
           ),
+        ],
+      )),
         ],
       ),
     );

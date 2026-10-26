@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../widgets/common/date_range_sheet.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -83,8 +85,7 @@ class _VatAnalysisReportScreenState
             ar: 'تقرير تحليل ضريبة القيمة المضافة',
           ),
         ),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.calendar_today),
             tooltip: _vatTr(
               language,
@@ -94,7 +95,7 @@ class _VatAnalysisReportScreenState
               ar: 'اختر التاريخ',
             ),
             onPressed: () async {
-              final picked = await showDateRangePicker(
+              final picked = await showDateRangeSheet(
                 context: context,
                 firstDate: DateTime(2020),
                 lastDate: DateTime.now(),
@@ -119,6 +120,9 @@ class _VatAnalysisReportScreenState
         ],
       ),
       body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('reports_vat_analysis')),
+          Expanded(child: Column(
         children: [
           if (_dateRange != null)
             Container(
@@ -198,6 +202,8 @@ class _VatAnalysisReportScreenState
                   : _VatAnalysisContent(data: data, language: language),
             ),
           ),
+        ],
+      )),
         ],
       ),
     );

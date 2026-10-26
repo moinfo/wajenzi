@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -85,13 +87,14 @@ class _ConstructionStagesScreenState
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Hatua za Ujenzi' : 'Construction Stages'),
+        title: Text(isSwahili ? 'Hatua za Ujenzi' : 'Construction Stages'), actions: [],
       ),
-      floatingActionButton: stagesAsync.maybeWhen(
+      floatingActionButton: canAct(context, 'hr_settings_construction_stages', 'add')
+          ? stagesAsync.maybeWhen(
         data: (payload) => payload['unavailable_on_live'] == true
             ? null
             : Padding(
-                padding: const EdgeInsets.only(bottom: 80),
+                padding: const EdgeInsets.only(bottom: 0),
                 child: FloatingActionButton(
                   onPressed: () => _openForm(context, ref),
                   child: const Icon(Icons.add_rounded),
@@ -99,15 +102,19 @@ class _ConstructionStagesScreenState
                 ),
               ),
         orElse: () => Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 0),
           child: FloatingActionButton(
             onPressed: () => _openForm(context, ref),
             child: const Icon(Icons.add_rounded),
             tooltip: isSwahili ? 'Ongeza Hatua' : 'Add Stage',
           ),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_construction_stages')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_constructionStagesProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -263,7 +270,7 @@ class _ConstructionStagesScreenState
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final stage = filteredStages[index];
@@ -282,6 +289,8 @@ class _ConstructionStagesScreenState
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -559,7 +568,7 @@ class _StageCard extends StatelessWidget {
                 }
               },
               itemBuilder: (_) => [
-                PopupMenuItem(
+                if (canAct(context, 'hr_settings_construction_stages', 'edit')) PopupMenuItem(
                   value: 'edit',
                   child: Row(
                     children: [
@@ -569,7 +578,7 @@ class _StageCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                PopupMenuItem(
+                if (canAct(context, 'hr_settings_construction_stages', 'delete')) PopupMenuItem(
                   value: 'delete',
                   child: Row(
                     children: [

@@ -132,6 +132,12 @@ import '../../presentation/screens/accounting/petty_cash_refill_requests_screen.
 import '../../presentation/screens/staff/staff_bank_details_screen.dart';
 import '../../presentation/screens/staff/adjustments_screen.dart';
 import '../../presentation/screens/staff/payroll_screen.dart';
+import '../../presentation/screens/settings/settings_hub_screen.dart';
+import '../../presentation/screens/settings/generic_crud_screen.dart';
+import '../../presentation/screens/approvals/document_approval_screen.dart';
+import '../../presentation/screens/reports/web_table_screen.dart';
+import '../../presentation/screens/procurement/project_stock_screens.dart';
+import '../../presentation/screens/staff/staff_payroll_screen.dart';
 import '../../presentation/screens/staff/payroll_administration_screen.dart';
 import '../../presentation/screens/staff/salary_slips_screen.dart';
 import '../../presentation/screens/staff/allowances_screen.dart';
@@ -1058,6 +1064,54 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const SettingsScreen(),
           ),
           GoRoute(
+            path: '/document-approvals/:type/:id',
+            name: 'document-approval',
+            builder: (context, state) => DocumentApprovalScreen(
+              type: state.pathParameters['type']!,
+              id: int.parse(state.pathParameters['id']!),
+            ),
+          ),
+          GoRoute(
+            path: '/project-stock',
+            name: 'project-stock',
+            builder: (context, state) => ProjectStockScreen(
+              projectId: state.uri.queryParameters['project_id'],
+            ),
+          ),
+          GoRoute(
+            path: '/project-stock-receipts',
+            name: 'project-stock-receipts',
+            builder: (context, state) => ProjectStockReceiptsScreen(
+              projectId: state.uri.queryParameters['project_id'],
+            ),
+          ),
+          GoRoute(
+            path: '/project-stock-receipts/new',
+            name: 'project-stock-receipt-new',
+            builder: (context, state) => StockReceiptFormScreen(
+              projectId: state.uri.queryParameters['project_id'],
+            ),
+          ),
+          GoRoute(
+            path: '/tables/:route',
+            name: 'web-table',
+            builder: (context, state) => WebTableScreen(
+              route: state.pathParameters['route']!,
+              projectId: state.uri.queryParameters['project_id'],
+            ),
+          ),
+          GoRoute(
+            path: '/settings/crud/:resource',
+            name: 'settings-crud',
+            builder: (context, state) =>
+                GenericCrudScreen(resource: state.pathParameters['resource']!),
+          ),
+          GoRoute(
+            path: '/settings-hub',
+            name: 'settings-hub',
+            builder: (context, state) => const SettingsHubScreen(),
+          ),
+          GoRoute(
             path: '/settings/process-approval-flows',
             name: 'settings-process-approval-flows',
             builder: (context, state) => const ProcessApprovalFlowsScreen(),
@@ -1249,6 +1303,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/payroll',
             name: 'payroll',
             builder: (context, state) => const PayrollScreen(),
+          ),
+          GoRoute(
+            path: '/payroll/staff',
+            name: 'staff-payroll',
+            builder: (context, state) => const StaffPayrollScreen(),
           ),
           GoRoute(
             path: '/salary-slips',
@@ -1670,7 +1729,9 @@ class MainScaffold extends ConsumerWidget {
 
     return Scaffold(
       key: scaffoldKey,
-      extendBody: true,
+      // The body stops where the bottom bar starts, so no screen is covered by it
+      // and no screen has to pad itself for it.
+      extendBody: false,
       drawer: MainDrawer(isClient: isClient),
       body: child,
       bottomNavigationBar: CurvedInternalNav(
@@ -2598,8 +2659,27 @@ String? _mapWebRoute(String webRoute) {
     'reports_daily_attendances_report': '/attendance',
     'reports_attendances_report': '/attendance',
     'settings': '/settings',
-    'hr_settings': '/settings',
-    'system_settings': '/settings',
+    'hr_settings': '/settings-hub',
+    'project_dashboard': '/tables/project_dashboard',
+    'project_payments': '/tables/project_payments',
+    'project_team_members': '/tables/project_team_members',
+    'project_boq_templates': '/tables/project_boq_templates',
+    'project_boq_items': '/tables/project_boq_items',
+    'project_stock.index': '/project-stock',
+    'project_stock_receipts.index': '/project-stock-receipts',
+    'withholding_taxes': '/tables/withholding_taxes',
+    'adjusted_assessment_taxes': '/tables/adjusted_assessment_taxes',
+    'hr_settings_supervisors': '/settings/crud/supervisors',
+    'hr_settings_banks': '/settings/crud/banks',
+    'hr_settings_assets': '/settings/crud/assets',
+    'hr_settings_asset_properties': '/settings/crud/asset-properties',
+    'hr_settings_user_groups': '/settings/crud/user-groups',
+    'hr_settings_assign_user_groups': '/settings/crud/assign-user-groups',
+    'hr_settings_categories': '/settings/crud/statutory-categories',
+    'hr_settings_sub_categories': '/settings/crud/statutory-sub-categories',
+    'hr_settings_activity_templates': '/settings/crud/activity-templates',
+    'client_sources': '/settings/crud/client-sources',
+    'system_settings': '/settings/crud/system-settings',
     'user_settings': '/settings',
     'hr_settings_process_approval_flows': '/settings/process-approval-flows',
     'settings/process_approval_flows': '/settings/process-approval-flows',
@@ -3078,7 +3158,6 @@ String? _mapWebRoute(String webRoute) {
     'finance/imprest-management/imprest-requests': '/imprest-requests',
     'statutory_payment': '/accounting',
     'hr_settings_statutory_payment': '/accounting',
-    'client_sources': '/settings',
     'system_credit': '/accounting',
     'system_credits': '/accounting',
     'system_inventory': '/procurement',

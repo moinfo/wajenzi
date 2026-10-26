@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -34,17 +36,22 @@ class SiteVisitLocationsScreen extends ConsumerWidget {
             en: 'Site Visit Locations',
             sw: 'Maeneo ya Ziara',
             fr: 'Lieux de visite',
-            ar: 'مواقع الزيارة')),
+            ar: 'مواقع الزيارة')), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'hr_settings_site_visit_locations', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton.extended(
           onPressed: () => _openForm(context, ref),
           icon: const Icon(Icons.add_rounded),
           label: Text(tr(lang, en: 'New', sw: 'Mpya')),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_site_visit_locations')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_locationsProvider),
         child: CalcAsyncBody<List<SiteVisitLocationDto>>(
           async: async,
@@ -54,7 +61,7 @@ class SiteVisitLocationsScreen extends ConsumerWidget {
               en: 'No locations yet', sw: 'Hakuna maeneo bado'),
           isEmpty: (d) => d.isEmpty,
           builder: (items) => ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             itemCount: items.length,
             itemBuilder: (_, i) {
               final l = items[i];
@@ -110,11 +117,11 @@ class SiteVisitLocationsScreen extends ConsumerWidget {
                               if (v == 'delete') _delete(context, ref, l);
                             },
                             itemBuilder: (_) => [
-                              PopupMenuItem(
+                              if (canAct(context, 'hr_settings_site_visit_locations', 'edit')) PopupMenuItem(
                                   value: 'edit',
                                   child: Text(tr(lang,
                                       en: 'Edit', sw: 'Hariri'))),
-                              PopupMenuItem(
+                              if (canAct(context, 'hr_settings_site_visit_locations', 'delete')) PopupMenuItem(
                                   value: 'delete',
                                   child: Text(
                                     tr(lang, en: 'Delete', sw: 'Futa'),
@@ -143,6 +150,8 @@ class SiteVisitLocationsScreen extends ConsumerWidget {
             },
           ),
         ),
+      )),
+        ],
       ),
     );
   }

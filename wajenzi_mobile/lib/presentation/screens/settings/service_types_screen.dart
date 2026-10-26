@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -33,14 +35,16 @@ class ServiceTypesScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(tr('Service Types', 'أنواع الخدمات')),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _openForm(context, ref),
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_service_types')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_serviceTypesProvider),
         child: asyncData.when(
           loading: () => LoadingWidget(
@@ -82,10 +86,10 @@ class ServiceTypesScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.miscellaneous_services_outlined,
                           size: 56,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -142,9 +146,9 @@ class ServiceTypesScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.miscellaneous_services_outlined,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -218,11 +222,11 @@ class ServiceTypesScreen extends ConsumerWidget {
                           }
                         },
                         itemBuilder: (_) => [
-                          PopupMenuItem(
+                          if (canAct(context, 'hr_settings_service_types', 'edit')) PopupMenuItem(
                             value: 'edit',
                             child: Text(tr('Edit', 'تعديل')),
                           ),
-                          PopupMenuItem(
+                          if (canAct(context, 'hr_settings_service_types', 'delete')) PopupMenuItem(
                             value: 'delete',
                             child: Text(tr('Delete', 'حذف')),
                           ),
@@ -236,12 +240,16 @@ class ServiceTypesScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: canAct(context, 'hr_settings_service_types', 'add')
+          ? FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
         label: Text(tr('New Service Type', 'نوع خدمة جديد')),
-      ),
+      )
+          : null,
     );
   }
 

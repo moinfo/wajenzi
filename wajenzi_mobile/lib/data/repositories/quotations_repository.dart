@@ -14,11 +14,15 @@ class QuotationsRepository {
     String? search,
     String? status,
     int? materialRequestId,
+    String? startDate,
+    String? endDate,
   }) =>
       _remote.listQuotations(
         search: search,
         status: status,
         materialRequestId: materialRequestId,
+        startDate: startDate,
+        endDate: endDate,
       );
 
   Future<SupplierQuotationDto> quotation(int id) => _remote.showQuotation(id);
@@ -37,8 +41,18 @@ class QuotationsRepository {
   Future<void> deleteQuotation(int id) => _remote.deleteQuotation(id);
 
   // Comparisons
-  Future<List<ComparisonListItemDto>> comparisons({String? search, String? status}) =>
-      _remote.listComparisons(search: search, status: status);
+  Future<List<ComparisonListItemDto>> comparisons({
+    String? search,
+    String? status,
+    String? startDate,
+    String? endDate,
+  }) =>
+      _remote.listComparisons(
+        search: search,
+        status: status,
+        startDate: startDate,
+        endDate: endDate,
+      );
 
   Future<ComparisonDetailDto> comparison(int id) => _remote.showComparison(id);
 

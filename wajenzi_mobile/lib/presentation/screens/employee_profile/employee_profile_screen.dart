@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/common/date_filter_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -29,7 +30,7 @@ String _employeeTr(
 
 final _selectedStaffIdProvider = StateProvider.autoDispose<int?>((ref) => null);
 final _startDateProvider = StateProvider.autoDispose<DateTime>(
-    (ref) => DateTime(DateTime.now().year, 1, 1));
+    (ref) => defaultStartDate());
 final _endDateProvider = StateProvider.autoDispose<DateTime>(
     (ref) => DateTime.now());
 

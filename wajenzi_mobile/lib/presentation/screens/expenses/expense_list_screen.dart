@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+import '../../widgets/common/date_filter_bar.dart';
 import '../../../l10n/app_localizations.dart';
 
 class ExpenseFilter {
@@ -70,7 +73,8 @@ class ExpenseFilter {
 }
 
 final expenseFilterProvider = StateProvider.autoDispose<ExpenseFilter>((ref) {
-  return ExpenseFilter();
+  // The current month so far, like the web's filter bar.
+  return ExpenseFilter(startDate: defaultStartDate(), endDate: today());
 });
 
 final projectExpensesModeProvider = StateProvider.autoDispose<bool>((ref) {
@@ -204,6 +208,7 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
     final isDarkMode = ref.watch(isDarkModeProvider);
     final appLocalizations = AppLocalizations.of(context)!;
 
+    final dateFilter = ref.watch(expenseFilterProvider);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -214,17 +219,40 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
           widget.projectExpensesMode
               ? appLocalizations.expensesProjectExpenses
               : appLocalizations.expensesTitle,
-        ),
+        ), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, widget.projectExpensesMode ? 'project_expenses' : 'expenses', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showExpenseForm(context),
           tooltip: appLocalizations.expensesAddExpense,
           child: const Icon(Icons.add_rounded),
         ),
-      ),
+      )
+          : null,
       body: Column(
+        children: [
+          ExportButtonsBar(
+            options: webTableExportOptions(
+              widget.projectExpensesMode ? 'project_expenses' : 'expenses',
+              params: {
+                'start_date': DateFilterBar.format(dateFilter.startDate),
+                'end_date': DateFilterBar.format(dateFilter.endDate),
+                'project_id': dateFilter.projectId?.toString(),
+              },
+            ),
+          ),
+          // Start Date / End Date, always visible like the web's filter bar.
+          DateFilterBar(
+            start: dateFilter.startDate,
+            end: dateFilter.endDate,
+            onStart: (d) => ref.read(expenseFilterProvider.notifier).state =
+                dateFilter.copyWith(startDate: d, clearStartDate: d == null),
+            onEnd: (d) => ref.read(expenseFilterProvider.notifier).state =
+                dateFilter.copyWith(endDate: d, clearEndDate: d == null),
+          ),
+          Expanded(child: Column(
         children: [
           _ExpenseStatsSection(language: language, isDarkMode: isDarkMode),
           if (widget.projectExpensesMode)
@@ -384,6 +412,8 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
               ),
             ),
           ),
+        ],
+      )),
         ],
       ),
     );
@@ -1776,6 +1806,7 @@ class _ExpenseCard extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
+                  if (canAct(context, isProjectExpenses ? 'project_expenses' : 'expenses', 'edit'))
                   TextButton.icon(
                     onPressed: onEdit,
                     icon: const Icon(Icons.edit, size: 16),
@@ -1792,7 +1823,7 @@ class _ExpenseCard extends StatelessWidget {
                       foregroundColor: const Color(0xFF193340),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  if (canAct(context, isProjectExpenses ? 'project_expenses' : 'expenses', 'delete'))
                   TextButton.icon(
                     onPressed: onDelete,
                     icon: const Icon(Icons.delete, size: 16),

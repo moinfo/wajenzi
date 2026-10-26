@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../../core/config/theme_config.dart';
@@ -94,10 +96,11 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
             fr: 'Types de projets',
             ar: 'أنواع المشاريع',
           ),
-        ),
+        ), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'project_types', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showTypeForm(context),
           child: const Icon(Icons.add_rounded),
@@ -109,8 +112,12 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
             ar: 'إضافة',
           ),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('project_types')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () => ref.refresh(_projectTypesProvider.future),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -244,7 +251,7 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       return _TypeCard(
@@ -263,6 +270,8 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -505,7 +514,7 @@ class _TypeCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      PopupMenuItem(
+                      if (canAct(context, 'project_types', 'edit')) PopupMenuItem(
                         value: 'edit',
                         child: Row(
                           children: [
@@ -523,7 +532,7 @@ class _TypeCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      PopupMenuItem(
+                      if (canAct(context, 'project_types', 'delete')) PopupMenuItem(
                         value: 'delete',
                         child: Row(
                           children: [

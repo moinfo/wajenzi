@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -87,13 +89,14 @@ class _DeductionSubscriptionsScreenState
         ),
         title: Text(
           isSwahili ? 'Usajili wa Makato' : 'Deduction Subscriptions',
-        ),
+        ), actions: [],
       ),
-      floatingActionButton: subscriptionsAsync.maybeWhen(
+      floatingActionButton: canAct(context, 'hr_settings_deduction_subscriptions', 'add')
+          ? subscriptionsAsync.maybeWhen(
         data: (payload) => payload['unavailable_on_live'] == true
             ? null
             : Padding(
-                padding: const EdgeInsets.only(bottom: 80),
+                padding: const EdgeInsets.only(bottom: 0),
                 child: FloatingActionButton(
                   onPressed: () => _openForm(context, ref),
                   child: const Icon(Icons.add_rounded),
@@ -101,15 +104,19 @@ class _DeductionSubscriptionsScreenState
                 ),
               ),
         orElse: () => Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 0),
           child: FloatingActionButton(
             onPressed: () => _openForm(context, ref),
             child: const Icon(Icons.add_rounded),
             tooltip: isSwahili ? 'Ongeza Usajili' : 'Add Subscription',
           ),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_deduction_subscriptions')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_deductionSubscriptionsProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -268,7 +275,7 @@ class _DeductionSubscriptionsScreenState
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final item = filteredItems[index];
@@ -290,6 +297,8 @@ class _DeductionSubscriptionsScreenState
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -514,10 +523,10 @@ class _SubscriptionCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '${index + 1}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -609,7 +618,7 @@ class _SubscriptionCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_deduction_subscriptions', 'edit')) PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
@@ -619,7 +628,7 @@ class _SubscriptionCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_deduction_subscriptions', 'delete')) PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [

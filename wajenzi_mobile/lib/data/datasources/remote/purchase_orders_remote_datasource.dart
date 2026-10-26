@@ -15,10 +15,14 @@ class PurchaseOrdersRemoteDataSource {
   Future<List<PurchaseOrderListItem>> listPurchaseOrders({
     String? search,
     String? status,
+    String? startDate,
+    String? endDate,
   }) async {
     final qp = <String, dynamic>{'per_page': 100, 'procurement_only': true};
     if (search != null && search.isNotEmpty) qp['search'] = search;
     if (status != null && status.isNotEmpty) qp['status'] = status;
+    if (startDate != null) qp['start_date'] = startDate;
+    if (endDate != null) qp['end_date'] = endDate;
     final res = await _api.get('/procurement/purchases', queryParameters: qp);
     return _list(res.data)
         .map((e) => PurchaseOrderListItem.fromJson(Map<String, dynamic>.from(e)))
@@ -118,10 +122,14 @@ class PurchaseOrdersRemoteDataSource {
   Future<List<ReceivingListItem>> listReceivings({
     String? search,
     String? status,
+    String? startDate,
+    String? endDate,
   }) async {
     final qp = <String, dynamic>{'per_page': 100};
     if (search != null && search.isNotEmpty) qp['search'] = search;
     if (status != null && status.isNotEmpty) qp['status'] = status;
+    if (startDate != null) qp['start_date'] = startDate;
+    if (endDate != null) qp['end_date'] = endDate;
     final res = await _api.get('/procurement/receivings', queryParameters: qp);
     return _list(res.data)
         .map((e) => ReceivingListItem.fromJson(Map<String, dynamic>.from(e)))

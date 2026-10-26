@@ -6,6 +6,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/services/export_service.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+import '../../widgets/common/date_filter_bar.dart';
 import '../vat/vat_shared.dart';
 
 final _proformaSearchProvider = StateProvider.autoDispose<String>((ref) => '');
@@ -19,7 +20,11 @@ final _proformaListProvider =
       final api = ref.watch(apiClientProvider);
       final response = await api.get(
         '/billing/documents',
-        queryParameters: {'document_type': 'proforma', 'per_page': 100},
+        queryParameters: {
+          'document_type': 'proforma',
+          'per_page': 100,
+          ...dateRangeQuery(ref.watch(dateRangeProvider('billing_proforma'))),
+        },
       );
 
       final data = response.data is Map<String, dynamic>
@@ -94,6 +99,7 @@ class _BillingProformasScreenState
       ),
       body: Column(
         children: [
+          const ExportAndDateBar(id: 'billing_proforma'),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -263,7 +269,7 @@ class _BillingProformasScreenState
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                     itemCount: filteredItems.length,
                     itemBuilder: (context, index) {
                       final item = filteredItems[index];
@@ -299,7 +305,7 @@ class _BillingProformasScreenState
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 70),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openProformaForm(context, ref),
           backgroundColor: AppColors.primary,
@@ -1296,10 +1302,10 @@ class _ProformaCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '$index',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -1353,9 +1359,9 @@ class _ProformaCard extends StatelessWidget {
                             ),
                             child: Text(
                               _text(project['project_name']),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 10,
-                                color: AppColors.primary,
+                                color: AppColors.accent(context),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1376,12 +1382,6 @@ class _ProformaCard extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-              ExportMenuButton(
-                tooltip: isSwahili ? 'Pakua' : 'Export',
-                options: [
-                  ExportOption('PDF', 'billing/proformas/${item['id']}/pdf'),
-                ],
               ),
               PopupMenuButton<String>(
                 onSelected: (value) {

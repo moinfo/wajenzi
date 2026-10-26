@@ -44,6 +44,8 @@ class InspectionsRepository {
   Future<InspectionDto> reject(int id, String reason) =>
       _remote.reject(id, reason);
 
+  Future<void> delete(int id) => _remote.delete(id);
+
   Future<InspectionDto> updateStock(int id) => _remote.updateStock(id);
 }
 

@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +9,7 @@ import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+import 'payroll_create_sheet.dart';
 import '../vat/vat_shared.dart';
 
 final _payrollAdminSearchProvider = StateProvider.autoDispose<String>(
@@ -90,13 +93,13 @@ class _PayrollAdministrationScreenState
         ),
         title: Text(
           isSwahili ? 'Usimamizi wa Payroll' : 'Payroll Administration',
-        ),
+        ), actions: [],
       ),
       floatingActionButton: payrollsAsync.maybeWhen(
         data: (payload) => payload['unavailable_on_live'] == true
             ? null
             : Padding(
-                padding: const EdgeInsets.only(bottom: 80),
+                padding: const EdgeInsets.only(bottom: 0),
                 child: FloatingActionButton(
                   onPressed: () => _openForm(context, ref),
                   child: const Icon(Icons.add_rounded),
@@ -104,7 +107,7 @@ class _PayrollAdministrationScreenState
                 ),
               ),
         orElse: () => Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 0),
           child: FloatingActionButton(
             onPressed: () => _openForm(context, ref),
             child: const Icon(Icons.add_rounded),
@@ -112,7 +115,10 @@ class _PayrollAdministrationScreenState
           ),
         ),
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('payroll_administration')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_payrollAdminProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -359,7 +365,7 @@ class _PayrollAdministrationScreenState
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final payroll = filteredPayrolls[index];
@@ -368,7 +374,6 @@ class _PayrollAdministrationScreenState
                         index: index,
                         isSwahili: isSwahili,
                         isDarkMode: isDarkMode,
-                        onEdit: () => _openForm(context, ref, payroll: payroll),
                         onDelete: () => _deletePayroll(context, ref, payroll),
                         onTap: () => _showDetails(
                           context,
@@ -384,21 +389,18 @@ class _PayrollAdministrationScreenState
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
 
-  Future<void> _openForm(
-    BuildContext context,
-    WidgetRef ref, {
-    Map<String, dynamic>? payroll,
-  }) async {
-    final refs = await ref.read(_payrollAdminRefsProvider.future);
+  Future<void> _openForm(BuildContext context, WidgetRef ref) async {
     final result = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => _PayrollAdminFormSheet(refs: refs, payroll: payroll),
+      builder: (_) => const PayrollCreateSheet(),
     );
     if (result == true) ref.invalidate(_payrollAdminProvider);
   }
@@ -631,7 +633,6 @@ class _PayrollCard extends StatelessWidget {
   final int index;
   final bool isSwahili;
   final bool isDarkMode;
-  final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onTap;
 
@@ -640,7 +641,6 @@ class _PayrollCard extends StatelessWidget {
     required this.index,
     required this.isSwahili,
     required this.isDarkMode,
-    required this.onEdit,
     required this.onDelete,
     required this.onTap,
   });
@@ -689,10 +689,10 @@ class _PayrollCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '${index + 1}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -802,8 +802,6 @@ class _PayrollCard extends StatelessWidget {
                 onSelected: (value) {
                   if (value == 'view') {
                     onTap();
-                  } else if (value == 'edit') {
-                    onEdit();
                   } else if (value == 'delete') {
                     onDelete();
                   }
@@ -819,17 +817,11 @@ class _PayrollCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.edit_rounded, size: 20),
-                        const SizedBox(width: 8),
-                        Text(isSwahili ? 'Hariri' : 'Edit'),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
+                  // Like the web: Delete needs "Delete Payroll" and is hidden
+                  // once the payroll is APPROVED.
+                  if (canAct(context, 'payroll_administration', 'delete') &&
+                      status.toUpperCase() != 'APPROVED')
+                    PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [
@@ -892,317 +884,6 @@ class _DetailRow extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _PayrollAdminFormSheet extends ConsumerStatefulWidget {
-  final Map<String, dynamic> refs;
-  final Map<String, dynamic>? payroll;
-
-  const _PayrollAdminFormSheet({required this.refs, this.payroll});
-
-  @override
-  ConsumerState<_PayrollAdminFormSheet> createState() =>
-      _PayrollAdminFormSheetState();
-}
-
-class _PayrollAdminFormSheetState
-    extends ConsumerState<_PayrollAdminFormSheet> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _documentNumberController;
-  late final TextEditingController _payrollNumberController;
-  late final TextEditingController _yearController;
-  late final TextEditingController _submittedDateController;
-  int? _month;
-  String _status = 'CREATED';
-  bool _saving = false;
-
-  bool get _isEdit => widget.payroll != null;
-
-  @override
-  void initState() {
-    super.initState();
-    _documentNumberController = TextEditingController(
-      text: widget.payroll?['document_number']?.toString() ?? '',
-    );
-    _payrollNumberController = TextEditingController(
-      text: widget.payroll?['payroll_number']?.toString() ?? '',
-    );
-    _yearController = TextEditingController(
-      text:
-          widget.payroll?['year']?.toString() ?? DateTime.now().year.toString(),
-    );
-    _submittedDateController = TextEditingController(
-      text: _dateValue(widget.payroll?['submitted_date']?.toString()),
-    );
-    _month = _toNullableInt(widget.payroll?['month']) ?? DateTime.now().month;
-    _status = widget.payroll?['status']?.toString().toUpperCase() ?? 'CREATED';
-  }
-
-  @override
-  void dispose() {
-    _documentNumberController.dispose();
-    _payrollNumberController.dispose();
-    _yearController.dispose();
-    _submittedDateController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
-    final isDarkMode = ref.watch(isDarkModeProvider);
-    final statuses = _toNameList(widget.refs['statuses']);
-    final months = _toMaps(widget.refs['months']);
-
-    final bgColor = isDarkMode ? const Color(0xFF1A1A2E) : Colors.white;
-    final inputBg = isDarkMode ? const Color(0xFF0F1923) : Colors.grey[100];
-    final textColor = isDarkMode ? Colors.white : AppColors.textPrimary;
-
-    InputDecoration inputStyle(String label) => InputDecoration(
-      labelText: label,
-      filled: true,
-      fillColor: inputBg,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    );
-
-    return Container(
-      height: 0.9 * MediaQuery.of(context).size.height,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 44,
-              height: 5,
-              decoration: BoxDecoration(
-                color: isDarkMode ? Colors.white24 : Colors.black12,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    20,
-                    16,
-                    20,
-                    MediaQuery.of(context).viewInsets.bottom + 24,
-                  ),
-                  children: [
-                    Text(
-                      _isEdit
-                          ? (isSwahili ? 'Hariri Payroll' : 'Edit Payroll')
-                          : (isSwahili ? 'Payroll Mpya' : 'New Payroll'),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: textColor,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _documentNumberController,
-                      validator: (value) =>
-                          (value == null || value.trim().isEmpty)
-                          ? (isSwahili ? 'Hitaji' : 'Required')
-                          : null,
-                      decoration: inputStyle(
-                        isSwahili ? 'Namba ya Hati *' : 'Document Number *',
-                      ),
-                      style: TextStyle(color: textColor),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _payrollNumberController,
-                      validator: (value) =>
-                          (value == null || value.trim().isEmpty)
-                          ? (isSwahili ? 'Hitaji' : 'Required')
-                          : null,
-                      decoration: inputStyle(
-                        isSwahili ? 'Namba ya Payroll *' : 'Payroll Number *',
-                      ),
-                      style: TextStyle(color: textColor),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<int>(
-                      isExpanded: true,
-                      value: months.any((item) => _toInt(item['id']) == _month)
-                          ? _month
-                          : null,
-                      decoration: inputStyle(isSwahili ? 'Mwezi *' : 'Month *'),
-                      dropdownColor: bgColor,
-                      validator: (selected) => selected == null
-                          ? (isSwahili ? 'Hitaji' : 'Required')
-                          : null,
-                      items: months
-                          .map(
-                            (item) => DropdownMenuItem<int>(
-                              value: _toInt(item['id']),
-                              child: Text(
-                                item['name']?.toString() ?? '-',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: textColor),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) => setState(() => _month = value),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _yearController,
-                      keyboardType: TextInputType.number,
-                      validator: (value) =>
-                          (value == null || value.trim().isEmpty)
-                          ? (isSwahili ? 'Hitaji' : 'Required')
-                          : null,
-                      decoration: inputStyle(isSwahili ? 'Mwaka *' : 'Year *'),
-                      style: TextStyle(color: textColor),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      isExpanded: true,
-                      value:
-                          statuses.any(
-                            (s) => s.toUpperCase() == _status.toUpperCase(),
-                          )
-                          ? _status.toUpperCase()
-                          : (statuses.isNotEmpty ? statuses.first : null),
-                      decoration: inputStyle(isSwahili ? 'Hali *' : 'Status *'),
-                      dropdownColor: bgColor,
-                      validator: (selected) => selected == null
-                          ? (isSwahili ? 'Hitaji' : 'Required')
-                          : null,
-                      items: statuses
-                          .map(
-                            (item) => DropdownMenuItem<String>(
-                              value: item.toUpperCase(),
-                              child: Text(
-                                item,
-                                style: TextStyle(color: textColor),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) => setState(
-                        () => _status = (value ?? 'CREATED').toUpperCase(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _submittedDateController,
-                      readOnly: true,
-                      validator: (value) =>
-                          (value == null || value.trim().isEmpty)
-                          ? (isSwahili ? 'Hitaji' : 'Required')
-                          : null,
-                      decoration: inputStyle(
-                        isSwahili
-                            ? 'Tarehe ya Kujisalimisha *'
-                            : 'Submitted Date *',
-                      ),
-                      style: TextStyle(color: textColor),
-                      onTap: () async {
-                        final initialDate =
-                            DateTime.tryParse(_submittedDateController.text) ??
-                            DateTime.now();
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: initialDate,
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2100),
-                        );
-                        if (picked != null) {
-                          _submittedDateController.text = DateFormat(
-                            'yyyy-MM-dd',
-                          ).format(picked);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _saving ? null : _submit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: _saving
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(
-                              _isEdit
-                                  ? (isSwahili ? 'Sasisha' : 'Update')
-                                  : (isSwahili ? 'Hifadhi' : 'Save'),
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _saving = true);
-
-    try {
-      final api = ref.read(apiClientProvider);
-      final data = {
-        'document_number': _documentNumberController.text.trim(),
-        'payroll_number': _payrollNumberController.text.trim(),
-        'year': int.tryParse(_yearController.text.trim()),
-        'month': _month,
-        'status': _status,
-        'submitted_date': _submittedDateController.text.trim(),
-      };
-
-      if (_isEdit) {
-        await api.put(
-          '/payroll-administration/${widget.payroll!['id']}',
-          data: data,
-        );
-      } else {
-        await api.post('/payroll-administration', data: data);
-      }
-
-      if (mounted) Navigator.pop(context, true);
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              vatErrorMessage(error, isSwahili: ref.read(isSwahiliProvider)),
-            ),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
   }
 }
 

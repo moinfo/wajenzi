@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../core/utils/permissions.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../providers/settings_provider.dart';
@@ -37,9 +40,19 @@ class PayrollScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isSwahili ? 'Slip za Mishahara' : 'Salary Slips'),
+        title: Text(isSwahili ? 'Slip za Mishahara' : 'Salary Slips'), actions: [
+          if (hasPermission(ref, 'Employee Management'))
+            IconButton(
+              tooltip: isSwahili ? 'Mishahara ya Wafanyakazi' : 'Staff Payroll',
+              icon: const Icon(Icons.groups_outlined),
+              onPressed: () => context.push('/payroll/staff'),
+            ),
+          ],
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('payroll')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () => ref.refresh(_payslipsProvider.future),
         child: payrollAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -97,6 +110,8 @@ class PayrollScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
     );
   }

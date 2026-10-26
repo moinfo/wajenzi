@@ -387,7 +387,7 @@ class _KpiReviewerScreenState extends ConsumerState<KpiReviewerScreen> {
       child: SafeArea(
         top: false,
         // Lift the action bar above the outer curved bottom nav.
-        minimum: const EdgeInsets.only(bottom: 90),
+        minimum: const EdgeInsets.only(bottom: 8),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           child: Column(

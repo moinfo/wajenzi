@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -56,14 +58,16 @@ class UsersScreen extends ConsumerWidget {
               ? tr('Inactive Users', 'المستخدمون غير النشطين')
               : tr('Active Users', 'المستخدمون النشطون'),
         ),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _openForm(context, ref),
           ),
         ],
       ),
       body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_users')),
+          Expanded(child: Column(
         children: [
           _UsersFilterHeader(
             status: status,
@@ -120,10 +124,10 @@ class UsersScreen extends ConsumerWidget {
                           ),
                           child: Column(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.groups_outlined,
                                 size: 56,
-                                color: AppColors.primary,
+                                color: AppColors.accent(context),
                               ),
                               const SizedBox(height: 12),
                               Text(
@@ -158,7 +162,7 @@ class UsersScreen extends ConsumerWidget {
                   }
 
                   return ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     children: [
                       ...List.generate(items.length, (index) {
                         final item = items[index];
@@ -178,12 +182,16 @@ class UsersScreen extends ConsumerWidget {
             ),
           ),
         ],
+      )),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: canAct(context, 'hr_settings_users', 'add')
+          ? FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
         label: Text(tr('New User', 'مستخدم جديد')),
-      ),
+      )
+          : null,
     );
   }
 
@@ -393,9 +401,9 @@ class _UsersFilterHeader extends StatelessWidget {
                     color: AppColors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.groups_outlined,
-                    color: AppColors.primary,
+                    color: AppColors.accent(context),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -525,7 +533,7 @@ class _UserCard extends StatelessWidget {
                     }
                   },
                   itemBuilder: (_) => [
-                    PopupMenuItem(
+                    if (canAct(context, 'hr_settings_users', 'edit')) PopupMenuItem(
                       value: 'edit',
                       child: Text(tr('Edit', 'تعديل')),
                     ),
@@ -537,7 +545,7 @@ class _UserCard extends StatelessWidget {
                             : tr('Activate', 'تفعيل'),
                       ),
                     ),
-                    PopupMenuItem(
+                    if (canAct(context, 'hr_settings_users', 'delete')) PopupMenuItem(
                       value: 'delete',
                       child: Text(tr('Delete', 'حذف')),
                     ),
@@ -1042,6 +1050,7 @@ class _UserFormSheetState extends ConsumerState<_UserFormSheet> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: DropdownButtonFormField<T>(
+      isExpanded: true,
         value: items.contains(value) ? value : null,
         decoration: InputDecoration(
           labelText: label,

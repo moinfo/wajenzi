@@ -1,4 +1,6 @@
 import 'dart:io';
+import '../../widgets/common/date_filter_bar.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
@@ -11,7 +13,7 @@ import '../../providers/settings_provider.dart';
 import 'vat_shared.dart';
 
 final _startProvider = StateProvider.autoDispose<DateTime>(
-    (ref) => DateTime.now());
+    (ref) => defaultStartDate());
 final _endProvider =
     StateProvider.autoDispose<DateTime>((ref) => DateTime.now());
 final _paymentSearchProvider =
@@ -47,16 +49,19 @@ class VatPaymentsScreen extends ConsumerWidget {
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
         title: Text(isSwahili ? 'Malipo ya VAT' : 'VAT Payments'),
-        backgroundColor: isDark ? vatDarkCard : null,
+        backgroundColor: isDark ? vatDarkCard : null, actions: [],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showPaymentForm(context, ref, isDark, isSwahili),
           child: const Icon(Icons.add),
         ),
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('vat_payment')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () => ref.refresh(_dataProvider.future),
         child: dataAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -156,6 +161,8 @@ class VatPaymentsScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
     );
   }

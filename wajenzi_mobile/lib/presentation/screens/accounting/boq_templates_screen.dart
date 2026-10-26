@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -86,13 +88,14 @@ class _BoqTemplatesScreenState extends ConsumerState<BoqTemplatesScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'BOQ Templates' : 'BOQ Templates'),
+        title: Text(isSwahili ? 'BOQ Templates' : 'BOQ Templates'), actions: [],
       ),
-      floatingActionButton: templatesAsync.maybeWhen(
+      floatingActionButton: canAct(context, 'hr_settings_boq_templates', 'add')
+          ? templatesAsync.maybeWhen(
         data: (payload) => payload['unavailable_on_live'] == true
             ? null
             : Padding(
-                padding: const EdgeInsets.only(bottom: 80),
+                padding: const EdgeInsets.only(bottom: 0),
                 child: FloatingActionButton(
                   onPressed: () => _openForm(context, ref),
                   child: const Icon(Icons.add_rounded),
@@ -100,15 +103,19 @@ class _BoqTemplatesScreenState extends ConsumerState<BoqTemplatesScreen> {
                 ),
               ),
         orElse: () => Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 0),
           child: FloatingActionButton(
             onPressed: () => _openForm(context, ref),
             child: const Icon(Icons.add_rounded),
             tooltip: isSwahili ? 'Add Template' : 'Add Template',
           ),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_boq_templates')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_boqTemplatesProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -328,7 +335,7 @@ class _BoqTemplatesScreenState extends ConsumerState<BoqTemplatesScreen> {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final template = filteredTemplates[index];
@@ -354,6 +361,8 @@ class _BoqTemplatesScreenState extends ConsumerState<BoqTemplatesScreen> {
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -691,10 +700,10 @@ class _BoqTemplateCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '${index + 1}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -869,7 +878,7 @@ class _BoqTemplateCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_boq_templates', 'edit')) PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
@@ -879,7 +888,7 @@ class _BoqTemplateCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_boq_templates', 'delete')) PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [
@@ -1078,6 +1087,7 @@ class _BoqTemplateFormSheetState extends ConsumerState<_BoqTemplateFormSheet> {
                       children: [
                         Expanded(
                           child: DropdownButtonFormField<String?>(
+      isExpanded: true,
                             value: _roofType,
                             decoration: inputStyle(
                               isSwahili ? 'Roof Type' : 'Roof Type',
@@ -1108,6 +1118,7 @@ class _BoqTemplateFormSheetState extends ConsumerState<_BoqTemplateFormSheet> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: DropdownButtonFormField<String?>(
+      isExpanded: true,
                             value: _rooms,
                             decoration: inputStyle(
                               isSwahili ? 'Rooms' : 'Rooms',

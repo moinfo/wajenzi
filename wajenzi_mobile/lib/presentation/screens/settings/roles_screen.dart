@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -45,15 +47,17 @@ class RolesScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(tr('Roles', 'الأدوار')),
-        actions: [
-          if (canAdd)
+        actions: [if (canAdd)
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: () => _openForm(context, ref),
             ),
         ],
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_roles')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_rolesProvider),
         child: asyncData.when(
           loading: () => LoadingWidget(
@@ -92,10 +96,10 @@ class RolesScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.admin_panel_settings_outlined,
                           size: 56,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -153,9 +157,9 @@ class RolesScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.admin_panel_settings_outlined,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -266,12 +270,12 @@ class RolesScreen extends ConsumerWidget {
                                     ),
                                   ),
                                 if (canEdit)
-                                  PopupMenuItem(
+                                  if (canAct(context, 'hr_settings_roles', 'edit')) PopupMenuItem(
                                     value: 'edit',
                                     child: Text(tr('Edit', 'تعديل')),
                                   ),
                                 if (canDelete)
-                                  PopupMenuItem(
+                                  if (canAct(context, 'hr_settings_roles', 'delete')) PopupMenuItem(
                                     value: 'delete',
                                     child: Text(tr('Delete', 'حذف')),
                                   ),
@@ -286,13 +290,17 @@ class RolesScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
-      floatingActionButton: canAdd
+      floatingActionButton: canAct(context, 'hr_settings_roles', 'add')
+          ? canAdd
           ? FloatingActionButton.extended(
               onPressed: () => _openForm(context, ref),
               icon: const Icon(Icons.add),
               label: Text(tr('New Role', 'دور جديد')),
             )
+          : null
           : null,
     );
   }

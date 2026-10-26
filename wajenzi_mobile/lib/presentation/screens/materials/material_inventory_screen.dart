@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
@@ -153,17 +155,22 @@ class _MaterialInventoryScreenState
           widget.stockRegisterMode
               ? (isSwahili ? 'Daftari la Stock' : 'Stock Register')
               : (isSwahili ? 'Hisa ya Vifurushi' : 'Material Inventory'),
-        ),
+        ), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'project_material_inventory', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showInventoryForm(context),
           child: const Icon(Icons.add_rounded),
           tooltip: isSwahili ? 'Ongeza' : 'Add',
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('project_material_inventory')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_inventoryProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -362,7 +369,7 @@ class _MaterialInventoryScreenState
                   ),
                 ),
                 data: (projects) => SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
                       Text(
@@ -467,7 +474,7 @@ class _MaterialInventoryScreenState
                   }
 
                   return SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
                         return _InventoryCard(
@@ -491,6 +498,8 @@ class _MaterialInventoryScreenState
               ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -1081,11 +1090,11 @@ class _InventoryCard extends StatelessWidget {
                           value: 'view',
                           child: Text(isSwahili ? 'Tazama' : 'View'),
                         ),
-                        PopupMenuItem(
+                        if (canAct(context, 'project_material_inventory', 'edit')) PopupMenuItem(
                           value: 'edit',
                           child: Text(isSwahili ? 'Hariri' : 'Edit'),
                         ),
-                        PopupMenuItem(
+                        if (canAct(context, 'project_material_inventory', 'delete')) PopupMenuItem(
                           value: 'delete',
                           child: Text(
                             isSwahili ? 'Futa' : 'Delete',

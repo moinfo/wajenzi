@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
@@ -72,15 +75,31 @@ class _BoqListScreenState extends ConsumerState<BoqListScreen> {
         title: Text(isSwahili ? 'Usimamizi wa BOQ' : 'BOQ Management'),
         actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'project_boqs', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showBoqForm(context),
           child: const Icon(Icons.add_rounded),
           tooltip: isSwahili ? 'Ongeza BOQ' : 'Add BOQ',
         ),
-      ),
+      )
+          : null,
       body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('project_boqs')),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/tables/project_boq_templates'),
+                icon: const Icon(Icons.layers_outlined, size: 18),
+                label: Text(isSwahili ? 'Violezo vya BOQ' : 'BOQ Templates'),
+              ),
+            ),
+          ),
+          Expanded(child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
@@ -188,6 +207,8 @@ class _BoqListScreenState extends ConsumerState<BoqListScreen> {
               ),
             ),
           ),
+        ],
+      )),
         ],
       ),
     );
@@ -474,22 +495,24 @@ class _BoqListScreenState extends ConsumerState<BoqListScreen> {
                                 ),
                               ],
                             ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Color(0xFF193340),
+                            if (canAct(ctx, 'project_boqs', 'edit'))
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Color(0xFF193340),
+                                ),
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  _showBoqForm(context, boq: boq);
+                                },
+                                tooltip: isSwahili ? 'Hariri' : 'Edit',
                               ),
-                              onPressed: () {
-                                Navigator.pop(ctx);
-                                _showBoqForm(context, boq: boq);
-                              },
-                              tooltip: isSwahili ? 'Hariri' : 'Edit',
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _deleteBoq(context, ref, boq),
-                              tooltip: isSwahili ? 'Futa' : 'Delete',
-                            ),
+                            if (canAct(ctx, 'project_boqs', 'delete'))
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _deleteBoq(context, ref, boq),
+                                tooltip: isSwahili ? 'Futa' : 'Delete',
+                              ),
                             IconButton(
                               icon: const Icon(Icons.close),
                               onPressed: () => Navigator.pop(ctx),
@@ -1407,21 +1430,22 @@ class _BoqCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                TextButton.icon(
-                  onPressed: onEdit,
-                  icon: const Icon(Icons.edit, size: 16),
-                  label: Text(isSwahili ? 'Hariri' : 'Edit'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF193340),
+                if (canAct(context, 'project_boqs', 'edit'))
+                  TextButton.icon(
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit, size: 16),
+                    label: Text(isSwahili ? 'Hariri' : 'Edit'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF193340),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                TextButton.icon(
-                  onPressed: onDelete,
-                  icon: const Icon(Icons.delete, size: 16),
-                  label: Text(isSwahili ? 'Futa' : 'Delete'),
-                  style: TextButton.styleFrom(foregroundColor: Colors.red),
-                ),
+                if (canAct(context, 'project_boqs', 'delete'))
+                  TextButton.icon(
+                    onPressed: onDelete,
+                    icon: const Icon(Icons.delete, size: 16),
+                    label: Text(isSwahili ? 'Futa' : 'Delete'),
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  ),
               ],
             ),
           ),

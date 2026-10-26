@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -40,9 +41,12 @@ class RecordDeliveriesScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: const Text('Record Deliveries'),
+        title: const Text('Record Deliveries'), actions: [],
       ),
       body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('record_deliveries')),
+          Expanded(child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
@@ -82,7 +86,7 @@ class RecordDeliveriesScreen extends ConsumerWidget {
                   final _ = search; // search drives the provider
                   return ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 90),
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
                     itemCount: list.length,
                     itemBuilder: (context, i) => _PendingCard(
                       po: list[i],
@@ -110,6 +114,8 @@ class RecordDeliveriesScreen extends ConsumerWidget {
               ),
             ),
           ),
+        ],
+      )),
         ],
       ),
     );
@@ -300,6 +306,7 @@ class _RecordDeliveryScreenState
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
+      isExpanded: true,
               initialValue: _condition,
               decoration: const InputDecoration(
                 labelText: 'Condition',

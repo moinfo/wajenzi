@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -79,13 +81,14 @@ class _BoqItemsScreenState extends ConsumerState<BoqItemsScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'BOQ Items' : 'BOQ Items'),
+        title: Text(isSwahili ? 'BOQ Items' : 'BOQ Items'), actions: [],
       ),
-      floatingActionButton: itemsAsync.maybeWhen(
+      floatingActionButton: canAct(context, 'hr_settings_boq_items', 'add')
+          ? itemsAsync.maybeWhen(
         data: (payload) => payload['unavailable_on_live'] == true
             ? null
             : Padding(
-                padding: const EdgeInsets.only(bottom: 80),
+                padding: const EdgeInsets.only(bottom: 0),
                 child: FloatingActionButton(
                   onPressed: () => _openForm(context, ref),
                   child: const Icon(Icons.add_rounded),
@@ -93,15 +96,19 @@ class _BoqItemsScreenState extends ConsumerState<BoqItemsScreen> {
                 ),
               ),
         orElse: () => Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 0),
           child: FloatingActionButton(
             onPressed: () => _openForm(context, ref),
             child: const Icon(Icons.add_rounded),
             tooltip: isSwahili ? 'Add BOQ Item' : 'Add BOQ Item',
           ),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_boq_items')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_boqItemsProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -251,7 +258,7 @@ class _BoqItemsScreenState extends ConsumerState<BoqItemsScreen> {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final item = filteredItems[index];
@@ -272,6 +279,8 @@ class _BoqItemsScreenState extends ConsumerState<BoqItemsScreen> {
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -524,10 +533,10 @@ class _BoqItemCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '${index + 1}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -654,7 +663,7 @@ class _BoqItemCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_boq_items', 'edit')) PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
@@ -664,7 +673,7 @@ class _BoqItemCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_boq_items', 'delete')) PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [

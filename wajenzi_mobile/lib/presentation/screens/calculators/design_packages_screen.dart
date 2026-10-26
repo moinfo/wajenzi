@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -34,17 +36,22 @@ class DesignPackagesScreen extends ConsumerWidget {
             en: 'Design Packages',
             sw: 'Pakeji za Ubunifu',
             fr: 'Forfaits design',
-            ar: 'حزم التصميم')),
+            ar: 'حزم التصميم')), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'hr_settings_design_packages', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton.extended(
           onPressed: () => _openForm(context, ref),
           icon: const Icon(Icons.add_rounded),
           label: Text(tr(lang, en: 'New', sw: 'Mpya', fr: 'Nouveau', ar: 'جديد')),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_design_packages')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_packagesProvider),
         child: CalcAsyncBody<List<DesignPackageDto>>(
           async: async,
@@ -60,7 +67,7 @@ class DesignPackagesScreen extends ConsumerWidget {
             final low = items.where((p) => p.riseType == 'low').toList();
             final high = items.where((p) => p.riseType == 'high').toList();
             return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               children: [
                 if (low.isNotEmpty)
                   CalcSectionTitle(
@@ -84,6 +91,8 @@ class DesignPackagesScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
     );
   }
@@ -114,9 +123,9 @@ class DesignPackagesScreen extends ConsumerWidget {
                 ),
                 Text(
                   'USD ${p.priceUsd.round()}',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                       fontSize: 16),
                 ),
                 PopupMenuButton<String>(
@@ -125,14 +134,14 @@ class DesignPackagesScreen extends ConsumerWidget {
                     if (v == 'delete') _delete(context, ref, p);
                   },
                   itemBuilder: (_) => [
-                    PopupMenuItem(
+                    if (canAct(context, 'hr_settings_design_packages', 'edit')) PopupMenuItem(
                         value: 'edit',
                         child: Text(tr(lang,
                             en: 'Edit',
                             sw: 'Hariri',
                             fr: 'Éditer',
                             ar: 'تعديل'))),
-                    PopupMenuItem(
+                    if (canAct(context, 'hr_settings_design_packages', 'delete')) PopupMenuItem(
                         value: 'delete',
                         child: Text(
                           tr(lang, en: 'Delete', sw: 'Futa', fr: 'Supprimer', ar: 'حذف'),

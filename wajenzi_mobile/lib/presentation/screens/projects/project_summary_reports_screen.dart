@@ -277,7 +277,7 @@ class ProjectSummaryReportsScreen extends ConsumerWidget {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
                       Row(
@@ -551,10 +551,10 @@ class _ProjectSummaryStatChip extends StatelessWidget {
         children: [
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+              color: AppColors.accent(context),
             ),
           ),
           const SizedBox(height: 4),
@@ -901,9 +901,9 @@ class _ProjectSummaryDetailRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textPrimary,
+                color: AppColors.text(context),
               ),
             ),
           ),

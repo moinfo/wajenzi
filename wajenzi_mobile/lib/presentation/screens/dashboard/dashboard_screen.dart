@@ -80,22 +80,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         ),
         actions: [
-          ExportMenuButton(
-            tooltip: 'Export calendar',
-            options: [
-              const ExportOption(
-                'Follow-ups calendar (.ics)',
-                'calendar/followups',
-                icon: Icons.event_outlined,
-              ),
-              if (hasPermission(ref, 'View All Invoice Due Dates'))
-                const ExportOption(
-                  'Invoice due dates (.ics)',
-                  'calendar/invoices',
-                  icon: Icons.event_note_outlined,
-                ),
-            ],
-          ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () => context.push('/notifications'),
@@ -857,8 +841,8 @@ class _SectionHeader extends StatelessWidget {
             ),
             child: Text(
               badge!,
-              style: const TextStyle(
-                color: AppColors.primary,
+              style: TextStyle(
+                color: AppColors.accent(context),
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
               ),

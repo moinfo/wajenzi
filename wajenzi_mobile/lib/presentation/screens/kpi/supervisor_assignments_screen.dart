@@ -106,7 +106,7 @@ class _MatrixBody extends ConsumerWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
       itemCount: data.users.length + 1,
       itemBuilder: (context, i) {
         if (i == 0) return _StatsHeader(stats: data.stats);

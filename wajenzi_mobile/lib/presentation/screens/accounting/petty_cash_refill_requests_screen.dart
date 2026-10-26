@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -9,6 +11,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/external_launcher_service.dart';
 import '../../providers/settings_provider.dart';
+import '../../widgets/common/date_filter_bar.dart';
 import '../vat/vat_shared.dart';
 
 final _pettyCashSearchProvider = StateProvider.autoDispose<String>((ref) => '');
@@ -20,7 +23,10 @@ final _pettyCashRefillRequestsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
       try {
-        final response = await api.get('/petty-cash-refill-requests');
+        final response = await api.get(
+          '/petty-cash-refill-requests',
+          queryParameters: dateRangeQuery(ref.watch(dateRangeProvider('petty_cash'))),
+        );
         final data = response.data is Map<String, dynamic>
             ? response.data as Map<String, dynamic>
             : const <String, dynamic>{};
@@ -94,13 +100,14 @@ class _PettyCashRefillRequestsScreenState
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Petty Cash Refill' : 'Petty Cash Refill'),
+        title: Text(isSwahili ? 'Petty Cash Refill' : 'Petty Cash Refill'), actions: [],
       ),
-      floatingActionButton: requestsAsync.maybeWhen(
+      floatingActionButton: canAct(context, 'petty_cash_refill_requests', 'add')
+          ? requestsAsync.maybeWhen(
         data: (payload) => payload['unavailable_on_live'] == true
             ? null
             : Padding(
-                padding: const EdgeInsets.only(bottom: 80),
+                padding: const EdgeInsets.only(bottom: 0),
                 child: FloatingActionButton(
                   onPressed: () => _openForm(context, ref),
                   child: const Icon(Icons.add_rounded),
@@ -108,15 +115,19 @@ class _PettyCashRefillRequestsScreenState
                 ),
               ),
         orElse: () => Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 0),
           child: FloatingActionButton(
             onPressed: () => _openForm(context, ref),
             child: const Icon(Icons.add_rounded),
             tooltip: isSwahili ? 'Ongeza' : 'Add',
           ),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          const ExportAndDateBar(id: 'petty_cash', route: 'petty_cash_refill_requests'),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_pettyCashRefillRequestsProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -355,7 +366,7 @@ class _PettyCashRefillRequestsScreenState
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
                       _SummaryCard(
@@ -381,6 +392,8 @@ class _PettyCashRefillRequestsScreenState
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -786,7 +799,7 @@ class _RequestCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'petty_cash_refill_requests', 'edit')) PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
@@ -796,7 +809,7 @@ class _RequestCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'petty_cash_refill_requests', 'delete')) PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [

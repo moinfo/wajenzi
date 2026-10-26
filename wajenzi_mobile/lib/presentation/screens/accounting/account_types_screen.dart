@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -73,17 +75,22 @@ class _AccountTypesScreenState extends ConsumerState<AccountTypesScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Aina za Akaunti' : 'Account Types'),
+        title: Text(isSwahili ? 'Aina za Akaunti' : 'Account Types'), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'account_types', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openForm(context, ref),
           child: const Icon(Icons.add_rounded),
           tooltip: isSwahili ? 'Ongeza' : 'Add',
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('account_types')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_accountTypesProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -234,7 +241,7 @@ class _AccountTypesScreenState extends ConsumerState<AccountTypesScreen> {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final type = filteredTypes[index];
@@ -258,6 +265,8 @@ class _AccountTypesScreenState extends ConsumerState<AccountTypesScreen> {
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -544,7 +553,7 @@ class _AccountTypeCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'account_types', 'edit')) PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
@@ -554,7 +563,7 @@ class _AccountTypeCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'account_types', 'delete')) PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [

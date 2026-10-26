@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
@@ -15,12 +16,24 @@ final _approvalsProvider =
   };
 });
 
+/// Pending approvals of the document types that were approved on the web only
+/// (payroll, project BOQ, imprest, petty cash, loans, statutory payments, ...).
+final _documentApprovalsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/document-approvals/pending');
+  return (response.data['data'] as List? ?? const [])
+      .cast<Map<String, dynamic>>();
+});
+
 class ApprovalsScreen extends ConsumerWidget {
   const ApprovalsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final approvalsAsync = ref.watch(_approvalsProvider);
+    final otherItems = ref.watch(_documentApprovalsProvider).valueOrNull ??
+        const <Map<String, dynamic>>[];
     final isSwahili = ref.watch(isSwahiliProvider);
 
     return Scaffold(
@@ -28,7 +41,10 @@ class ApprovalsScreen extends ConsumerWidget {
         title: Text(isSwahili ? 'Idhini' : 'Approvals'),
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.refresh(_approvalsProvider.future),
+        onRefresh: () async {
+          ref.invalidate(_documentApprovalsProvider);
+          await ref.refresh(_approvalsProvider.future);
+        },
         child: approvalsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => _ApprovalErrorView(
@@ -42,7 +58,7 @@ class ApprovalsScreen extends ConsumerWidget {
             final meta =
                 payload['meta'] as Map<String, dynamic>? ?? const {};
 
-            if (items.isEmpty) {
+            if (items.isEmpty && otherItems.isEmpty) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(32),
@@ -65,33 +81,47 @@ class ApprovalsScreen extends ConsumerWidget {
               );
             }
 
-            return ListView.builder(
+            final total = (meta['total'] ?? items.length) + otherItems.length;
+            return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
-              itemCount: items.length + 2,
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  final total = meta['total'] ?? items.length;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      isSwahili
-                          ? 'Jumla zinazongoja: $total'
-                          : 'Total pending: $total',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    isSwahili
+                        ? 'Jumla zinazongoja: $total'
+                        : 'Total pending: $total',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
                     ),
-                  );
-                }
-
-                if (index == items.length + 1) return const SizedBox(height: 90);
-
-                final item = items[index - 1];
-                return _ApprovalCard(item: item, isSwahili: isSwahili);
-              },
+                  ),
+                ),
+                for (final item in items)
+                  _ApprovalCard(item: item, isSwahili: isSwahili),
+                for (final item in otherItems)
+                  Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: ListTile(
+                      leading: const Icon(Icons.fact_check_outlined),
+                      title: Text('${item['title'] ?? '-'}'),
+                      subtitle: Text(
+                        '${item['submitted_by'] ?? '-'}'
+                        '${item['submitted_at'] != null ? ' · ${_formatDate(item['submitted_at'] as String?)}' : ''}',
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () async {
+                        await context.push(
+                          '/document-approvals/${item['type']}/${item['id']}',
+                        );
+                        ref.invalidate(_documentApprovalsProvider);
+                      },
+                    ),
+                  ),
+                const SizedBox(height: 90),
+              ],
             );
           },
         ),

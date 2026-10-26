@@ -1,4 +1,6 @@
 ﻿import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -62,16 +64,21 @@ class StatutoryPaymentsScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Malipo ya Kisheria' : 'Statutory Payments'),
+        title: Text(isSwahili ? 'Malipo ya Kisheria' : 'Statutory Payments'), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'hr_settings_statutory_payments', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openForm(context, ref),
           child: const Icon(Icons.add_rounded),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_statutory_payments')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_statutoryPaymentsProvider),
         child: paymentsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -121,9 +128,9 @@ class StatutoryPaymentsScreen extends ConsumerWidget {
                       backgroundColor: AppColors.primary.withValues(
                         alpha: 0.12,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.account_balance_wallet_outlined,
-                        color: AppColors.primary,
+                        color: AppColors.accent(context),
                       ),
                     ),
                     title: Text(
@@ -152,11 +159,11 @@ class StatutoryPaymentsScreen extends ConsumerWidget {
                           value: 'view',
                           child: Text(isSwahili ? 'Tazama' : 'View'),
                         ),
-                        PopupMenuItem(
+                        if (canAct(context, 'hr_settings_statutory_payments', 'edit')) PopupMenuItem(
                           value: 'edit',
                           child: Text(isSwahili ? 'Hariri' : 'Edit'),
                         ),
-                        PopupMenuItem(
+                        if (canAct(context, 'hr_settings_statutory_payments', 'delete')) PopupMenuItem(
                           value: 'delete',
                           child: Text(isSwahili ? 'Futa' : 'Delete'),
                         ),
@@ -169,6 +176,8 @@ class StatutoryPaymentsScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
     );
   }
@@ -829,7 +838,7 @@ Widget _detailLine(String label, dynamic value) {
     padding: const EdgeInsets.only(bottom: 10),
     child: RichText(
       text: TextSpan(
-        style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+        style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
         children: [
           TextSpan(
             text: '$label: ',

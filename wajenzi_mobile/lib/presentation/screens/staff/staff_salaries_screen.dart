@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -88,9 +90,12 @@ class _StaffSalariesScreenState extends ConsumerState<StaffSalariesScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Mishahara ya Wafanyakazi' : 'Staff Salaries'),
+        title: Text(isSwahili ? 'Mishahara ya Wafanyakazi' : 'Staff Salaries'), actions: [],
       ),
       body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_staff_salary')),
+          Expanded(child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
@@ -218,7 +223,7 @@ class _StaffSalariesScreenState extends ConsumerState<StaffSalariesScreen> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final item = filtered[index];
@@ -243,12 +248,15 @@ class _StaffSalariesScreenState extends ConsumerState<StaffSalariesScreen> {
             ),
           ),
         ],
+      )),
+        ],
       ),
-      floatingActionButton: itemsAsync.maybeWhen(
+      floatingActionButton: canAct(context, 'hr_settings_staff_salary', 'add')
+          ? itemsAsync.maybeWhen(
         data: (payload) => payload['unavailable_on_live'] == true
             ? null
             : Padding(
-                padding: const EdgeInsets.only(bottom: 70),
+                padding: const EdgeInsets.only(bottom: 0),
                 child: FloatingActionButton(
                   onPressed: () => _openForm(context, ref),
                   backgroundColor: AppColors.primary,
@@ -256,14 +264,15 @@ class _StaffSalariesScreenState extends ConsumerState<StaffSalariesScreen> {
                 ),
               ),
         orElse: () => Padding(
-          padding: const EdgeInsets.only(bottom: 70),
+          padding: const EdgeInsets.only(bottom: 0),
           child: FloatingActionButton(
             onPressed: () => _openForm(context, ref),
             backgroundColor: AppColors.primary,
             child: const Icon(Icons.add, color: Colors.white),
           ),
         ),
-      ),
+      )
+          : null,
     );
   }
 
@@ -326,9 +335,9 @@ class _StaffSalariesScreenState extends ConsumerState<StaffSalariesScreen> {
                             backgroundColor: AppColors.primary.withValues(
                               alpha: 0.1,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.account_balance_wallet_outlined,
-                              color: AppColors.primary,
+                              color: AppColors.accent(context),
                               size: 28,
                             ),
                           ),
@@ -502,10 +511,10 @@ class _StaffSalaryCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '$index',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -564,7 +573,7 @@ class _StaffSalaryCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_staff_salary', 'edit')) PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
@@ -574,7 +583,7 @@ class _StaffSalaryCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_staff_salary', 'delete')) PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [
@@ -623,7 +632,7 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.primary),
+          Icon(icon, size: 20, color: AppColors.accent(context)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -740,7 +749,7 @@ class _StaffSalaryFormSheetState extends ConsumerState<_StaffSalaryFormSheet> {
                               ),
                               child: Icon(
                                 widget.item == null ? Icons.add : Icons.edit,
-                                color: AppColors.primary,
+                                color: AppColors.accent(context),
                               ),
                             ),
                             const SizedBox(width: 16),

@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -82,13 +84,14 @@ class _SettingsSubActivitiesScreenState
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Sub-Activities' : 'Sub-Activities'),
+        title: Text(isSwahili ? 'Sub-Activities' : 'Sub-Activities'), actions: [],
       ),
-      floatingActionButton: subActivitiesAsync.maybeWhen(
+      floatingActionButton: canAct(context, 'hr_settings_sub_activities', 'add')
+          ? subActivitiesAsync.maybeWhen(
         data: (payload) => payload['unavailable_on_live'] == true
             ? null
             : Padding(
-                padding: const EdgeInsets.only(bottom: 80),
+                padding: const EdgeInsets.only(bottom: 0),
                 child: FloatingActionButton(
                   onPressed: () => _openForm(context, ref),
                   child: const Icon(Icons.add_rounded),
@@ -96,15 +99,19 @@ class _SettingsSubActivitiesScreenState
                 ),
               ),
         orElse: () => Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 0),
           child: FloatingActionButton(
             onPressed: () => _openForm(context, ref),
             child: const Icon(Icons.add_rounded),
             tooltip: isSwahili ? 'Add Sub-Activity' : 'Add Sub-Activity',
           ),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_sub_activities')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_subActivitiesProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -257,7 +264,7 @@ class _SettingsSubActivitiesScreenState
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final subActivity = filteredSubActivities[index];
@@ -284,6 +291,8 @@ class _SettingsSubActivitiesScreenState
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -760,7 +769,7 @@ class _SubActivityCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_sub_activities', 'edit')) PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
@@ -770,7 +779,7 @@ class _SubActivityCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  if (canAct(context, 'hr_settings_sub_activities', 'delete')) PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [
@@ -1004,6 +1013,7 @@ class _SubActivityFormSheetState extends ConsumerState<_SubActivityFormSheet> {
                         Expanded(
                           flex: 1,
                           child: DropdownButtonFormField<String>(
+      isExpanded: true,
                             value: _durationUnit,
                             decoration: inputStyle(isSwahili ? 'Unit' : 'Unit'),
                             dropdownColor: bgColor,
@@ -1035,6 +1045,7 @@ class _SubActivityFormSheetState extends ConsumerState<_SubActivityFormSheet> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
+      isExpanded: true,
                       value: _skillLevel,
                       decoration: inputStyle(
                         isSwahili ? 'Skill Level' : 'Skill Level',

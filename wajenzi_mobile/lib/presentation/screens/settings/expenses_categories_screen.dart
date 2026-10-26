@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -43,17 +45,22 @@ class ExpensesCategoriesScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Kundi la Masuala' : 'Expense Categories'),
+        title: Text(isSwahili ? 'Kundi la Masuala' : 'Expense Categories'), actions: [],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'hr_settings_expenses_categories', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _openForm(context, ref),
           child: const Icon(Icons.add_rounded),
           tooltip: isSwahili ? 'Ongeza Kundi' : 'Add Category',
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_expenses_categories')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_expensesCategoriesProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -185,7 +192,7 @@ class ExpensesCategoriesScreen extends ConsumerWidget {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final item = filtered[index];
@@ -204,6 +211,8 @@ class ExpensesCategoriesScreen extends ConsumerWidget {
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -322,9 +331,9 @@ class _ExpenseCategoryCard extends StatelessWidget {
           ),
           child: Text(
             '${index + 1}',
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+              color: AppColors.accent(context),
             ),
           ),
         ),
@@ -343,7 +352,7 @@ class _ExpenseCategoryCard extends StatelessWidget {
             }
           },
           itemBuilder: (_) => [
-            PopupMenuItem(
+            if (canAct(context, 'hr_settings_expenses_categories', 'edit')) PopupMenuItem(
               value: 'edit',
               child: Row(
                 children: [
@@ -353,7 +362,7 @@ class _ExpenseCategoryCard extends StatelessWidget {
                 ],
               ),
             ),
-            PopupMenuItem(
+            if (canAct(context, 'hr_settings_expenses_categories', 'delete')) PopupMenuItem(
               value: 'delete',
               child: Row(
                 children: [

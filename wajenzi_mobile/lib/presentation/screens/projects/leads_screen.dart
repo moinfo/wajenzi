@@ -532,7 +532,7 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
             return null;
           }
           return Padding(
-            padding: const EdgeInsets.only(bottom: 80),
+            padding: const EdgeInsets.only(bottom: 0),
             child: FloatingActionButton(
               onPressed: () => _openForm(context),
               child: const Icon(Icons.add_rounded),
@@ -547,7 +547,7 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
           );
         },
         orElse: () => Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 0),
           child: FloatingActionButton(
             onPressed: () => _openForm(context),
             child: const Icon(Icons.add_rounded),
@@ -1191,9 +1191,9 @@ class _LeadCard extends StatelessWidget {
                   color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.person_search,
-                  color: AppColors.primary,
+                  color: AppColors.accent(context),
                 ),
               ),
               const SizedBox(width: 16),
@@ -1230,10 +1230,10 @@ class _LeadCard extends StatelessWidget {
                             ),
                             child: Text(
                               lead['lead_status_name'] as String? ?? '-',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
+                                color: AppColors.accent(context),
                               ),
                             ),
                           ),

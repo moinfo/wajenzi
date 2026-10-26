@@ -27,6 +27,8 @@ class _ContentCreatorScreenState extends ConsumerState<ContentCreatorScreen> {
   String _search = '';
   String? _statusFilter;
   int _refreshTick = 0;
+  String _month =
+      '${DateTime.now().year.toString().padLeft(4, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}';
 
   String _tr(bool sw, String en, String swText) => sw ? swText : en;
 
@@ -37,7 +39,9 @@ class _ContentCreatorScreenState extends ConsumerState<ContentCreatorScreen> {
     final isSwahili = ref.watch(isSwahiliProvider);
     final scaffoldKey = ref.watch(rootScaffoldKeyProvider);
 
-    return Scaffold(
+    return DefaultTabController(
+      length: 4,
+      child: Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.menu_rounded),
@@ -48,6 +52,23 @@ class _ContentCreatorScreenState extends ConsumerState<ContentCreatorScreen> {
           style: AppType.display(18),
         ),
         actions: [
+          TextButton.icon(
+            onPressed: () async {
+              final p = _month.split('-');
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: DateTime(int.parse(p[0]), int.parse(p[1]), 1),
+                firstDate: DateTime(2020),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+              );
+              if (picked != null) {
+                setState(() => _month =
+                    '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}');
+              }
+            },
+            icon: const Icon(Icons.calendar_month_rounded, size: 18),
+            label: Text(_month),
+          ),
           IconButton(
             tooltip: _tr(isSwahili, 'Set target', 'Weka lengo'),
             onPressed: () => _openTargetSheet(context),
@@ -68,13 +89,55 @@ class _ContentCreatorScreenState extends ConsumerState<ContentCreatorScreen> {
           if (saved == true && mounted) _bump();
         },
       ),
-      body: _BoardView(
-        search: _search,
-        statusFilter: _statusFilter,
-        refreshTick: _refreshTick,
-        onSearchChanged: (s) => setState(() => _search = s),
-        onStatusChanged: (s) => setState(() => _statusFilter = s),
-        onTaskChanged: _bump,
+      body: Column(
+        children: [
+          const SizedBox(height: 8),
+          _CcStatsRow(
+            key: ValueKey('st$_month$_refreshTick'),
+            month: _month,
+            sw: isSwahili,
+          ),
+          TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            tabs: [
+              Tab(text: _tr(isSwahili, 'Content Calendar', 'Kalenda ya Maudhui')),
+              Tab(text: _tr(isSwahili, 'Crew Workability', 'Mzigo wa Timu')),
+              Tab(text: _tr(isSwahili, 'Task Board', 'Bodi ya Kazi')),
+              Tab(text: _tr(isSwahili, 'Targets & Matrix', 'Malengo na Majukumu')),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _CalendarTab(key: ValueKey('c$_refreshTick'), sw: isSwahili),
+                _WorkabilityTab(
+                  key: ValueKey('w$_month$_refreshTick'),
+                  month: _month,
+                  sw: isSwahili,
+                ),
+                _BoardView(
+                  search: _search,
+                  statusFilter: _statusFilter,
+                  refreshTick: _refreshTick,
+                  onSearchChanged: (s) => setState(() => _search = s),
+                  onStatusChanged: (s) => setState(() => _statusFilter = s),
+                  onTaskChanged: _bump,
+                ),
+                _TargetsTab(
+                  key: ValueKey('t$_month$_refreshTick'),
+                  month: _month,
+                  sw: isSwahili,
+                  onSetTarget: () async {
+                    await _openTargetSheet(context);
+                    if (mounted) _bump();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
       ),
     );
   }
@@ -253,9 +316,6 @@ class _BoardViewState extends ConsumerState<_BoardView> {
           final board = data['board'] is Map
               ? Map<String, dynamic>.from(data['board'] as Map)
               : const <String, dynamic>{};
-          final stats = data['stats'] is Map
-              ? Map<String, dynamic>.from(data['stats'] as Map)
-              : const <String, dynamic>{};
           final crew = (data['crew'] as List?) ?? const [];
 
           // Pull statuses from reference data if available, else use the
@@ -324,11 +384,9 @@ class _BoardViewState extends ConsumerState<_BoardView> {
             });
 
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             children: [
-              _CcHero(stats: stats, isSwahili: isSwahili),
               if (crew.isNotEmpty) ...[
-                const SizedBox(height: 16),
                 _CrewSection(
                   crew: crew,
                   isSwahili: isSwahili,
@@ -440,82 +498,673 @@ class _BoardViewState extends ConsumerState<_BoardView> {
   }
 }
 
-// ───────────────────────────────────── Hero ─────────────────────────────────
+// ───────────────────────────── Web tabs (calendar, workability, targets) ────
 
-class _CcHero extends StatelessWidget {
-  final Map<String, dynamic> stats;
-  final bool isSwahili;
-  const _CcHero({required this.stats, required this.isSwahili});
+String _ccErr(Object e) {
+  try {
+    final data = (e as dynamic).response?.data;
+    if (data is Map && data['message'] is String) return data['message'];
+  } catch (_) {}
+  return e.toString();
+}
+
+int _ccInt(dynamic v) => v is num ? v.toInt() : int.tryParse('$v') ?? 0;
+
+List<Map<String, dynamic>> _ccMaps(dynamic v) => (v as List? ?? const [])
+    .whereType<Map>()
+    .map((e) => Map<String, dynamic>.from(e))
+    .toList();
+
+/// Loads one content-creator endpoint and hands its `data` to [builder].
+class _CcRemote extends ConsumerStatefulWidget {
+  final String path;
+  final Map<String, dynamic> query;
+  final Widget Function(BuildContext context, dynamic data) builder;
+
+  const _CcRemote({
+    super.key,
+    required this.path,
+    required this.query,
+    required this.builder,
+  });
+
+  @override
+  ConsumerState<_CcRemote> createState() => _CcRemoteState();
+}
+
+class _CcRemoteState extends ConsumerState<_CcRemote> {
+  late Future<dynamic> _future = _load();
+
+  Future<dynamic> _load() async {
+    final res = await ref
+        .read(apiClientProvider)
+        .get(widget.path, queryParameters: widget.query);
+    return res.data is Map ? res.data['data'] : null;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.brandBlue, AppColors.brandGreen],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
+    return RefreshIndicator(
+      onRefresh: () async => setState(() => _future = _load()),
+      child: FutureBuilder<dynamic>(
+        future: _future,
+        builder: (context, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snap.hasError) {
+            return _ErrorView(
+              message: _ccErr(snap.error!),
+              onRetry: () => setState(() => _future = _load()),
+            );
+          }
+          return widget.builder(context, snap.data);
+        },
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    );
+  }
+}
+
+/// The web's five stat tiles (posts, videos, designs, on-time rate, overdue).
+class _CcStatsRow extends StatelessWidget {
+  final String month;
+  final bool sw;
+
+  const _CcStatsRow({super.key, required this.month, required this.sw});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 112,
+      child: _CcRemote(
+        path: '/content-creator/stats',
+        query: {'month': month},
+        builder: (context, data) {
+          final s = data is Map ? Map<String, dynamic>.from(data) : const <String, dynamic>{};
+          final published = _ccInt(s['published']);
+          final videos = _ccInt(s['videos']);
+          final designs = _ccInt(s['designs']);
+          final rate = _ccInt(s['on_time_rate']);
+          final overdue = _ccInt(s['overdue']);
+          final total = _ccInt(s['total']);
+
+          Widget tile(String label, String value, Color color, IconData icon, int pct) =>
+              Container(
+                width: 132,
+                margin: const EdgeInsets.only(right: 10),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border(top: BorderSide(color: color, width: 3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(icon, color: color, size: 18),
+                    const SizedBox(height: 4),
+                    Text(value,
+                        style: AppType.display(22,
+                            weight: FontWeight.w800, color: color)),
+                    Text(label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 11)),
+                    const Spacer(),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: pct.clamp(0, 100) / 100,
+                        minHeight: 4,
+                        color: color,
+                        backgroundColor: color.withValues(alpha: 0.15),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+
+          return ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 4, 6, 4),
             children: [
-              const Icon(Icons.movie_creation_outlined,
-                  color: Colors.white, size: 28),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  isSwahili ? 'Bodi ya Maudhui' : 'Content Board',
-                  style: AppType.display(20, color: Colors.white),
+              tile(sw ? 'Machapisho' : 'Posts Published', '$published',
+                  AppColors.brandBlue, Icons.campaign_outlined, published * 5),
+              tile(sw ? 'Video Zilizopigwa' : 'Videos Shot', '$videos',
+                  Colors.deepPurple, Icons.videocam_outlined, videos * 10),
+              tile(sw ? 'Miundo' : 'Designs Made', '$designs', Colors.lightBlue,
+                  Icons.palette_outlined, designs * 10),
+              tile(sw ? 'Kwa Wakati' : 'On-Time Rate', '$rate%',
+                  AppColors.brandGreen, Icons.check_circle_outline, rate),
+              tile(sw ? 'Zilizochelewa' : 'Overdue Tasks', '$overdue',
+                  AppColors.error, Icons.warning_amber_rounded,
+                  total > 0 ? (overdue * 100 / total).round() : 0),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+Color _ccTypeColor(String? type) => switch (type) {
+      'video_shoot' => Colors.deepPurple,
+      'post_publish' => AppColors.brandBlue,
+      'design_task' => Colors.teal,
+      'review_approval' => AppColors.brandGreen,
+      'day_off' => AppColors.error,
+      _ => Colors.blueGrey,
+    };
+
+/// Content Calendar tab: a week grid, a row per crew member.
+class _CalendarTab extends ConsumerStatefulWidget {
+  final bool sw;
+  const _CalendarTab({super.key, required this.sw});
+
+  @override
+  ConsumerState<_CalendarTab> createState() => _CalendarTabState();
+}
+
+class _CalendarTabState extends ConsumerState<_CalendarTab> {
+  DateTime _week = DateTime.now();
+
+  static String _fmt(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  static const _dow = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  @override
+  Widget build(BuildContext context) {
+    final sw = widget.sw;
+    final isDark = ref.watch(isDarkModeProvider);
+    final today = _fmt(DateTime.now());
+
+    return _CcRemote(
+      key: ValueKey(_fmt(_week)),
+      path: '/content-creator/calendar',
+      query: {'week': _fmt(_week)},
+      builder: (context, data) {
+        final d = data is Map ? Map<String, dynamic>.from(data) : const <String, dynamic>{};
+        final days = (d['days'] as List? ?? const []).map((e) => '$e').toList();
+        final members = _ccMaps(d['members']);
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  tooltip: sw ? 'Wiki iliyopita' : 'Previous week',
+                  icon: const Icon(Icons.chevron_left_rounded),
+                  onPressed: () => setState(
+                      () => _week = _week.subtract(const Duration(days: 7))),
+                ),
+                Expanded(
+                  child: Text(
+                    '${d['start'] ?? ''} – ${d['end'] ?? ''}',
+                    textAlign: TextAlign.center,
+                    style: AppType.display(14, weight: FontWeight.w700),
+                  ),
+                ),
+                IconButton(
+                  tooltip: sw ? 'Wiki ijayo' : 'Next week',
+                  icon: const Icon(Icons.chevron_right_rounded),
+                  onPressed: () =>
+                      setState(() => _week = _week.add(const Duration(days: 7))),
+                ),
+                TextButton(
+                  onPressed: () => setState(() => _week = DateTime.now()),
+                  child: Text(sw ? 'Leo' : 'Today'),
+                ),
+              ],
+            ),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final e in {
+                  'video_shoot': sw ? 'Video' : 'Video Shoot',
+                  'post_publish': sw ? 'Chapisho' : 'Post/Publish',
+                  'design_task': sw ? 'Muundo' : 'Design',
+                  'review_approval': sw ? 'Mapitio' : 'Review',
+                  'day_off': sw ? 'Siku ya mapumziko' : 'Day Off',
+                }.entries)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: _ccTypeColor(e.key).withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(e.value,
+                        style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: _ccTypeColor(e.key))),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (members.isEmpty)
+              _EmptyState(
+                icon: Icons.groups_outlined,
+                title: sw
+                    ? 'Hakuna wanatimu. Ongeza timu ili kujaza kalenda.'
+                    : 'No crew members. Add crew to populate the calendar.',
+              )
+            else
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        _cell(isDark, 96, Text(sw ? 'Mwanatimu' : 'Member',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w800, fontSize: 11)),
+                            header: true),
+                        for (var i = 0; i < days.length; i++)
+                          _cell(
+                            isDark,
+                            104,
+                            Column(
+                              children: [
+                                Text(_dow[i],
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 11)),
+                                Text(days[i].substring(8),
+                                    style: const TextStyle(fontSize: 11)),
+                              ],
+                            ),
+                            header: true,
+                            highlight: days[i] == today,
+                          ),
+                      ],
+                    ),
+                    for (final m in members)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _cell(
+                            isDark,
+                            96,
+                            Text('${m['name'] ?? '-'}',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700, fontSize: 11)),
+                          ),
+                          for (final day in days)
+                            _cell(
+                              isDark,
+                              104,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  for (final it in _ccMaps(
+                                      (m['days'] is Map ? m['days'][day] : null)))
+                                    Container(
+                                      width: double.infinity,
+                                      margin: const EdgeInsets.only(bottom: 3),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 5, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: _ccTypeColor(
+                                                it['task_type']?.toString())
+                                            .withValues(alpha: 0.16),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text('${it['title']}',
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w600,
+                                              color: _ccTypeColor(
+                                                  it['task_type']?.toString()))),
+                                    ),
+                                ],
+                              ),
+                              highlight: day == today,
+                            ),
+                        ],
+                      ),
+                  ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              _heroStat(
-                isSwahili ? 'Jumla' : 'Total',
-                '${stats['total'] ?? 0}',
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _cell(bool isDark, double w, Widget child,
+      {bool header = false, bool highlight = false}) {
+    final line = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.black.withValues(alpha: 0.10);
+    return Container(
+      width: w,
+      constraints: BoxConstraints(minHeight: header ? 44 : 56),
+      padding: const EdgeInsets.all(5),
+      alignment: header ? Alignment.center : Alignment.topLeft,
+      decoration: BoxDecoration(
+        color: highlight
+            ? AppColors.brandBlue.withValues(alpha: 0.10)
+            : (header
+                ? (isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.black.withValues(alpha: 0.03))
+                : null),
+        border: Border.all(color: line, width: 0.5),
+      ),
+      child: child,
+    );
+  }
+}
+
+/// Crew Workability tab.
+class _WorkabilityTab extends StatelessWidget {
+  final String month;
+  final bool sw;
+
+  const _WorkabilityTab({super.key, required this.month, required this.sw});
+
+  static const _dots = {
+    'online': AppColors.brandGreen,
+    'busy': Colors.orange,
+    'away': Colors.amber,
+    'offline': Colors.grey,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return _CcRemote(
+      path: '/content-creator/workability',
+      query: {'month': month},
+      builder: (context, data) {
+        final rows = _ccMaps(data);
+        if (rows.isEmpty) {
+          return ListView(children: [
+            const SizedBox(height: 40),
+            _EmptyState(
+              icon: Icons.groups_outlined,
+              title: sw
+                  ? 'Hakuna data ya timu kwa kipindi hiki.'
+                  : 'No crew workability data for this period.',
+            ),
+          ]);
+        }
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            for (final w in rows)
+              Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: AppColors.brandBlue,
+                            child: Text(
+                              '${w['name'] ?? 'U'}'
+                                  .padRight(2)
+                                  .substring(0, 2)
+                                  .toUpperCase(),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('${w['name'] ?? 'Unknown'}',
+                                    style: AppType.display(14,
+                                        weight: FontWeight.w700)),
+                                Text('${w['role'] ?? ''}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary)),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.circle,
+                              size: 12,
+                              color: _dots['${w['online_status']}'] ??
+                                  Colors.grey),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                          '${sw ? 'Mzigo wa kazi' : 'Workload'}: ${_ccInt(w['workload'])}%',
+                          style: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: _ccInt(w['workload']) / 100,
+                          minHeight: 8,
+                          color: AppColors.brandBlue,
+                          backgroundColor:
+                              AppColors.brandBlue.withValues(alpha: 0.15),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _line(Icons.check_circle, AppColors.brandGreen,
+                          sw ? 'Imekamilika' : 'Done', _ccInt(w['done'])),
+                      _line(Icons.autorenew_rounded, AppColors.brandBlue,
+                          sw ? 'Inaendelea' : 'In Progress',
+                          _ccInt(w['in_progress'])),
+                      _line(Icons.checklist_rounded, Colors.blueGrey,
+                          sw ? 'Jumla ya kazi' : 'Total Tasks',
+                          _ccInt(w['total'])),
+                      if (_ccInt(w['overdue']) > 0)
+                        _line(Icons.warning_amber_rounded, AppColors.error,
+                            sw ? 'Zilizochelewa' : 'Overdue',
+                            _ccInt(w['overdue']),
+                            bold: true),
+                      if ((w['skills'] as List? ?? const []).isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            for (final s in (w['skills'] as List))
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.brandBlue
+                                      .withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text('$s',
+                                    style: const TextStyle(fontSize: 10)),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
-              _heroStat(
-                isSwahili ? 'Zimechapishwa' : 'Published',
-                '${stats['published'] ?? 0}',
-              ),
-              _heroStat(
-                isSwahili ? 'Zimechelewa' : 'Overdue',
-                '${stats['overdue'] ?? 0}',
-              ),
-              _heroStat(
-                isSwahili ? 'Kwa wakati' : 'On time',
-                '${stats['on_time_rate'] ?? 0}%',
-              ),
-            ],
-          ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _line(IconData icon, Color color, String label, int value,
+      {bool bold = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 6),
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 12))),
+          Text('$value',
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: bold ? color : null)),
         ],
       ),
     );
   }
-
-  Widget _heroStat(String label, String value) => Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(value,
-                style: AppType.display(20,
-                    color: Colors.white, weight: FontWeight.w800)),
-            Text(label,
-                style: const TextStyle(color: Colors.white70, fontSize: 11)),
-          ],
-        ),
-      );
 }
 
-// ───────────────────────────────────── Task card ────────────────────────────
+/// Targets & Matrix tab.
+class _TargetsTab extends StatelessWidget {
+  final String month;
+  final bool sw;
+  final VoidCallback onSetTarget;
+
+  const _TargetsTab({
+    super.key,
+    required this.month,
+    required this.sw,
+    required this.onSetTarget,
+  });
+
+  static const _platformColors = {
+    'instagram': Color(0xFFE1306C),
+    'tiktok': Color(0xFF555555),
+    'facebook': Color(0xFF1877F2),
+    'linkedin': Color(0xFF0A66C2),
+    'youtube': Color(0xFFFF0000),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return _CcRemote(
+      path: '/content-creator/targets',
+      query: {'month': month},
+      builder: (context, data) {
+        final d = data is Map ? Map<String, dynamic>.from(data) : const <String, dynamic>{};
+        final platforms = _ccMaps(d['platforms']);
+        final matrix = _ccMaps(d['matrix']);
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${sw ? 'Malengo ya Machapisho' : 'Post Targets'} — $month',
+                    style: AppType.display(15, weight: FontWeight.w700),
+                  ),
+                ),
+                FilledButton.tonalIcon(
+                  onPressed: onSetTarget,
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: Text(sw ? 'Weka Lengo' : 'Set Target'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            for (final p in platforms)
+              Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${p['platform']}'.replaceRange(
+                                  0, 1, '${p['platform']}'[0].toUpperCase()),
+                              style: const TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                          Text(
+                              '${_ccInt(p['current'])} / ${_ccInt(p['target']) == 0 ? '—' : _ccInt(p['target'])}'),
+                          const SizedBox(width: 10),
+                          Text(
+                            '${_ccInt(p['percent'])}%',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: _ccInt(p['percent']) >= 100
+                                  ? AppColors.brandGreen
+                                  : (_ccInt(p['percent']) >= 60
+                                      ? Colors.orange
+                                      : AppColors.error),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: _ccInt(p['percent']) / 100,
+                          minHeight: 8,
+                          color: _platformColors['${p['platform']}'] ??
+                              AppColors.brandBlue,
+                          backgroundColor:
+                              (_platformColors['${p['platform']}'] ??
+                                      AppColors.brandBlue)
+                                  .withValues(alpha: 0.15),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 16),
+            Text(sw ? 'Jedwali la Majukumu' : 'Responsibility Matrix',
+                style: AppType.display(15, weight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                columnSpacing: 18,
+                headingRowHeight: 40,
+                dataRowMinHeight: 40,
+                dataRowMaxHeight: 48,
+                columns: [
+                  DataColumn(label: Text(sw ? 'Aina ya Kazi' : 'Task Type')),
+                  const DataColumn(label: Text('PRIMARY')),
+                  const DataColumn(label: Text('SUPPORT')),
+                  const DataColumn(label: Text('REVIEW')),
+                  const DataColumn(label: Text('OVERSIGHT')),
+                ],
+                rows: [
+                  for (final r in matrix)
+                    DataRow(cells: [
+                      DataCell(Text('${r['task_type']}',
+                          style:
+                              const TextStyle(fontWeight: FontWeight.w700))),
+                      DataCell(Text('${r['primary']}')),
+                      DataCell(Text('${r['support']}')),
+                      DataCell(Text('${r['review']}')),
+                      DataCell(Text('${r['oversight']}')),
+                    ]),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
 
 class _TaskCard extends ConsumerWidget {
   final Map<String, dynamic> task;
@@ -1043,6 +1692,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<int?>(
+      isExpanded: true,
                       value: _assignedTo,
                       decoration:
                           _dec(isSwahili ? 'Mhusika' : 'Assignee (optional)'),
@@ -1097,6 +1747,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
+      isExpanded: true,
                       value: _priority,
                       decoration: _dec(isSwahili ? 'Kipaumbele' : 'Priority'),
                       items: priorityItems
@@ -1110,6 +1761,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
+      isExpanded: true,
                       value: _platform,
                       decoration: _dec(isSwahili ? 'Jukwaa' : 'Platform'),
                       items: platformItems
@@ -1123,6 +1775,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
+      isExpanded: true,
                       value: _taskType,
                       decoration:
                           _dec(isSwahili ? 'Aina ya kazi' : 'Task type'),
@@ -1138,6 +1791,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                     if (widget.task != null && _statuses.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
+      isExpanded: true,
                         value: _status,
                         decoration: _dec(isSwahili ? 'Hali' : 'Status'),
                         items: _statuses
@@ -1963,6 +2617,7 @@ class _TargetFormSheetState extends ConsumerState<_TargetFormSheet> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
+      isExpanded: true,
                 value: _platform,
                 decoration: _dec(_tr('Platform', 'Jukwaa')),
                 items: _platforms
@@ -1988,6 +2643,7 @@ class _TargetFormSheetState extends ConsumerState<_TargetFormSheet> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
+      isExpanded: true,
                 value: _month,
                 decoration: _dec(_tr('Month', 'Mwezi')),
                 items: [
@@ -1998,6 +2654,7 @@ class _TargetFormSheetState extends ConsumerState<_TargetFormSheet> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
+      isExpanded: true,
                 value: years.contains(_year) ? _year : years.first,
                 decoration: _dec(_tr('Year', 'Mwaka')),
                 items: years

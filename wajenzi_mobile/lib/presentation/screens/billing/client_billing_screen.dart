@@ -955,7 +955,7 @@ class _BillingSectionState extends State<_BillingSection> {
           onTap: () => setState(() => _expanded = !_expanded),
           child: Row(
             children: [
-              Icon(widget.icon, size: 20, color: AppColors.primary),
+              Icon(widget.icon, size: 20, color: AppColors.accent(context)),
               const SizedBox(width: 8),
               Text(
                 widget.title,
@@ -976,10 +976,10 @@ class _BillingSectionState extends State<_BillingSection> {
                 ),
                 child: Text(
                   '${widget.count}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+                    color: AppColors.accent(context),
                   ),
                 ),
               ),

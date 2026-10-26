@@ -147,7 +147,7 @@ class LandingAdminScaffold extends ConsumerWidget {
       floatingActionButton: onAdd == null
           ? null
           : Padding(
-              padding: const EdgeInsets.only(bottom: 80),
+              padding: const EdgeInsets.only(bottom: 0),
               child: FloatingActionButton(
                 onPressed: onAdd,
                 tooltip: isSwahili ? fabTooltipSw : fabTooltipEn,

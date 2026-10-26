@@ -7,38 +7,48 @@ import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/services/export_service.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/utils/permissions.dart';
 import '../../providers/settings_provider.dart';
+import '../../widgets/common/date_filter_bar.dart';
+import '../../widgets/common/motion.dart';
 
-final _salesDailyReportsSearchProvider = StateProvider.autoDispose<String>(
-  (ref) => '',
-);
-
+/// The web page's filters: Start Date, End Date, Status, Prepared By.
 class _SalesDailyReportFilter {
   final DateTime? startDate;
   final DateTime? endDate;
   final String? status;
+  final String? userId;
 
-  const _SalesDailyReportFilter({this.startDate, this.endDate, this.status});
+  const _SalesDailyReportFilter({
+    this.startDate,
+    this.endDate,
+    this.status,
+    this.userId,
+  });
 
-  _SalesDailyReportFilter copyWith({
-    DateTime? startDate,
-    DateTime? endDate,
-    String? status,
-    bool clearStart = false,
-    bool clearEnd = false,
-    bool clearStatus = false,
-  }) {
-    return _SalesDailyReportFilter(
-      startDate: clearStart ? null : (startDate ?? this.startDate),
-      endDate: clearEnd ? null : (endDate ?? this.endDate),
-      status: clearStatus ? null : (status ?? this.status),
-    );
-  }
+  /// Query for the API (ISO dates).
+  Map<String, dynamic> toApiQuery() => {
+        if (startDate != null) 'start_date': DateFilterBar.format(startDate),
+        if (endDate != null) 'end_date': DateFilterBar.format(endDate),
+        if (status != null && status!.isNotEmpty) 'status': status,
+        if (userId != null && userId!.isNotEmpty) 'user_id': userId,
+      };
+
+  /// Query for the summary downloads: the web's export reads dates as d/m/Y.
+  Map<String, dynamic> toExportQuery() => {
+        if (startDate != null) 'start_date': DateFormat('dd/MM/yyyy').format(startDate!),
+        if (endDate != null) 'end_date': DateFormat('dd/MM/yyyy').format(endDate!),
+        if (status != null && status!.isNotEmpty) 'status': status,
+        if (userId != null && userId!.isNotEmpty) 'user_id': userId,
+      };
 }
 
 final _salesDailyReportsFilterProvider =
     StateProvider.autoDispose<_SalesDailyReportFilter>(
-      (ref) => const _SalesDailyReportFilter(),
+      (ref) => _SalesDailyReportFilter(
+        startDate: defaultStartDate(),
+        endDate: today(),
+      ),
     );
 
 final _salesDailyReportsProvider =
@@ -48,15 +58,7 @@ final _salesDailyReportsProvider =
       try {
         final response = await api.get(
           '/sales-daily-reports',
-          queryParameters: {
-            'per_page': 100,
-            if (filter.startDate != null)
-              'start_date': DateFormat('yyyy-MM-dd').format(filter.startDate!),
-            if (filter.endDate != null)
-              'end_date': DateFormat('yyyy-MM-dd').format(filter.endDate!),
-            if (filter.status != null && filter.status!.isNotEmpty)
-              'status': filter.status,
-          },
+          queryParameters: {'per_page': 100, ...filter.toApiQuery()},
         );
         final payload = response.data['data'];
         final items = switch (payload) {
@@ -64,27 +66,49 @@ final _salesDailyReportsProvider =
           List data => data,
           _ => const [],
         };
-        final meta = response.data['meta'] as Map<String, dynamic>? ?? const {};
-        final normalized = _normalizeSalesDailyReports(items);
         return {
-          'items': normalized,
-          'meta': {
-            ...meta,
-            'api_total': _asInt(meta['total']) ?? normalized.length,
-            'visible_total': normalized.length,
-          },
+          'items': _normalizeSalesDailyReports(items),
+          'summary': Map<String, dynamic>.from(
+            response.data['summary'] as Map? ?? const {},
+          ),
+          'filters': Map<String, dynamic>.from(
+            response.data['filters'] as Map? ?? const {},
+          ),
+          'meta': Map<String, dynamic>.from(
+            response.data['meta'] as Map? ?? const {},
+          ),
           'unavailable_on_live': false,
         };
       } catch (e) {
         if ('$e'.contains('404')) {
           return {
             'items': const <Map<String, dynamic>>[],
+            'summary': const <String, dynamic>{},
+            'filters': const <String, dynamic>{},
             'meta': const <String, dynamic>{},
             'unavailable_on_live': true,
           };
         }
         rethrow;
       }
+    });
+
+/// The top information (summary cards, by-preparer table, the users of the
+/// Prepared By filter). It does not read the list's filters, so it is always
+/// there whatever dates are chosen below.
+final _salesDailyReportsSummaryProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+      final response = await ref
+          .watch(apiClientProvider)
+          .get('/sales-daily-reports', queryParameters: {'per_page': 1});
+      return {
+        'summary': Map<String, dynamic>.from(
+          response.data['summary'] as Map? ?? const {},
+        ),
+        'filters': Map<String, dynamic>.from(
+          response.data['filters'] as Map? ?? const {},
+        ),
+      };
     });
 
 final _salesDailyReportDetailProvider = FutureProvider.autoDispose
@@ -107,20 +131,17 @@ String _salesDailyReportErrorMessage(Object error, bool isSwahili) {
   return isSwahili ? 'Hitilafu imetokea' : 'Something went wrong';
 }
 
+/// The web's Sales Daily Reports page, in the web's order: the four summary
+/// cards, "Invoices Written - by Preparer" with its two downloads, the Filters
+/// card, and the Reports List.
 class SalesDailyReportsScreen extends ConsumerWidget {
   const SalesDailyReportsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
-    final reportsAsync = ref.watch(_salesDailyReportsProvider);
-    final filter = ref.watch(_salesDailyReportsFilterProvider);
+    final topAsync = ref.watch(_salesDailyReportsSummaryProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
-    final isDarkMode = ref.watch(isDarkModeProvider);
-    final search = ref
-        .watch(_salesDailyReportsSearchProvider)
-        .trim()
-        .toLowerCase();
 
     return Scaffold(
       appBar: AppBar(
@@ -129,209 +150,52 @@ class SalesDailyReportsScreen extends ConsumerWidget {
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
         title: Text(isSwahili ? 'Ripoti za Mauzo' : 'Sales Daily Reports'),
-        actions: [
-          ExportMenuButton(
-            tooltip: isSwahili ? 'Pakua Muhtasari' : 'Export Summary',
-            options: [
-              ExportOption('Summary PDF', 'sales-daily-reports/summary/pdf'),
-              ExportOption(
-                'Summary Excel',
-                'sales-daily-reports/summary/excel',
-                icon: Icons.table_chart_outlined,
-              ),
-            ],
-          ),
-        ],
-      ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
-        child: FloatingActionButton(
-          onPressed: () => _showSalesDailyReportForm(context, ref),
-          child: const Icon(Icons.add_rounded),
-        ),
       ),
       body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(_salesDailyReportsProvider),
-        child: CustomScrollView(
+        onRefresh: () async {
+          ref.invalidate(_salesDailyReportsSummaryProvider);
+          ref.invalidate(_salesDailyReportsProvider);
+        },
+        child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    TextField(
-                      onChanged: (value) => ref
-                          .read(_salesDailyReportsSearchProvider.notifier)
-                          .state = value,
-                      decoration: InputDecoration(
-                        hintText: isSwahili
-                            ? 'Tafuta ripoti za mauzo...'
-                            : 'Search sales reports...',
-                        prefixIcon: const Icon(Icons.search_rounded),
-                        suffixIcon: search.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () => ref
-                                    .read(
-                                      _salesDailyReportsSearchProvider.notifier,
-                                    )
-                                    .state = '',
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: isDarkMode
-                            ? const Color(0xFF2A2A3E)
-                            : Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _SalesDailyReportFilters(
-                      filter: filter,
-                      isSwahili: isSwahili,
-                      isDarkMode: isDarkMode,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            reportsAsync.when(
-              loading: () => const SliverFillRemaining(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          children: [
+            // Top information: never filtered by the dates below.
+            topAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (e, _) => SliverFillRemaining(
-                child: _SalesDailyReportErrorView(
-                  error: _salesDailyReportErrorMessage(e, isSwahili),
-                  isSwahili: isSwahili,
-                  onRetry: () => ref.invalidate(_salesDailyReportsProvider),
-                ),
+              error: (e, _) => _SalesDailyReportErrorView(
+                error: _salesDailyReportErrorMessage(e, isSwahili),
+                isSwahili: isSwahili,
+                onRetry: () => ref.invalidate(_salesDailyReportsSummaryProvider),
               ),
-              data: (payload) {
-                if (payload['unavailable_on_live'] == true) {
-                  return SliverFillRemaining(
-                    child: _SalesDailyReportEmptyState(
-                      isSwahili: isSwahili,
-                      message: isSwahili
-                          ? 'Sales Daily Reports haipatikani kwenye live API kwa sasa'
-                          : 'Sales Daily Reports is not available on the live API right now',
-                    ),
-                  );
-                }
-
-                final allItems = (payload['items'] as List)
+              data: (top) {
+                final summary = top['summary'] as Map<String, dynamic>;
+                final byUser = (summary['by_user'] as List? ?? const [])
                     .cast<Map<String, dynamic>>();
-                final meta = payload['meta'] as Map<String, dynamic>;
-                final items = search.isEmpty
-                    ? allItems
-                    : allItems.where((item) {
-                        final haystack = [
-                          item['report_number'] ?? '',
-                          item['prepared_by_name'] ?? '',
-                          item['notes'] ?? '',
-                          item['challenges'] ?? '',
-                          item['next_steps'] ?? '',
-                          item['status'] ?? '',
-                          item['report_date'] ?? '',
-                        ].join(' ').toLowerCase();
-                        return haystack.contains(search);
-                      }).toList();
-
-                if (items.isEmpty) {
-                  return SliverFillRemaining(
-                    child: _SalesDailyReportEmptyState(
-                      isSwahili: isSwahili,
-                      message: allItems.isEmpty
-                          ? (isSwahili
-                              ? 'Hakuna ripoti za mauzo'
-                              : 'No sales daily reports found')
-                          : (isSwahili
-                              ? 'Hakuna matokeo yanayolingana'
-                              : 'No reports match your search'),
-                    ),
-                  );
-                }
-
-                return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isSwahili
-                                  ? 'Chanzo: Sales Daily Reports API'
-                                  : 'Source: Sales Daily Reports API',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: isDarkMode
-                                    ? Colors.white70
-                                    : AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _StatChip(
-                                    label: isSwahili ? 'API Jumla' : 'API Total',
-                                    value:
-                                        '${meta['api_total'] ?? items.length}',
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: _StatChip(
-                                    label: isSwahili ? 'Inaonekana' : 'Visible',
-                                    value:
-                                        '${meta['visible_total'] ?? items.length}',
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: _StatChip(
-                                    label: isSwahili ? 'Rasimu' : 'Draft',
-                                    value:
-                                        '${items.where((e) => (e['status'] as String?) == 'draft').length}',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      ...items.map(
-                        (item) => _SalesDailyReportCard(
-                          item: item,
-                          isSwahili: isSwahili,
-                          isDarkMode: isDarkMode,
-                          onTap: () => _showSalesDailyReportDetail(
-                            context,
-                            ref,
-                            item,
-                          ),
-                          onEdit: () =>
-                              _showSalesDailyReportForm(context, ref, report: item),
-                          onDelete: () => _deleteSalesDailyReport(
-                            context,
-                            ref,
-                            item,
-                            isSwahili,
-                          ),
-                        ),
-                      ),
-                    ]),
-                  ),
+                return Column(
+                  children: [
+                    _SdrSummaryCards(summary: summary, isSwahili: isSwahili),
+                    const SizedBox(height: 16),
+                    _SdrByPreparerCard(byUser: byUser, isSwahili: isSwahili),
+                  ],
                 );
               },
             ),
+            const SizedBox(height: 16),
+            _SdrFiltersCard(
+              canViewAll:
+                  (topAsync.valueOrNull?['filters'] as Map?)?['can_view_all'] == true,
+              users: ((topAsync.valueOrNull?['filters'] as Map?)?['users'] as List? ??
+                      const [])
+                  .cast<Map<String, dynamic>>(),
+              isSwahili: isSwahili,
+            ),
+            const SizedBox(height: 16),
+            // Only this list follows Start Date / End Date / Status / Prepared By.
+            const _SdrListSection(),
           ],
         ),
       ),
@@ -339,6 +203,550 @@ class SalesDailyReportsScreen extends ConsumerWidget {
   }
 }
 
+/// The Reports List with its own loading state, so changing a filter never
+/// reloads the cards above it.
+class _SdrListSection extends ConsumerWidget {
+  const _SdrListSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(_salesDailyReportsProvider);
+    final isSwahili = ref.watch(isSwahiliProvider);
+
+    return async.when(
+      loading: () => _SdrCard(
+        title: isSwahili ? 'Orodha ya Ripoti' : 'Reports List',
+        child: const Padding(
+          padding: EdgeInsets.all(32),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ),
+      error: (e, _) => _SdrCard(
+        title: isSwahili ? 'Orodha ya Ripoti' : 'Reports List',
+        child: _SalesDailyReportErrorView(
+          error: _salesDailyReportErrorMessage(e, isSwahili),
+          isSwahili: isSwahili,
+          onRetry: () => ref.invalidate(_salesDailyReportsProvider),
+        ),
+      ),
+      data: (payload) => _SdrReportsList(
+        items: (payload['items'] as List).cast<Map<String, dynamic>>(),
+        isSwahili: isSwahili,
+      ),
+    );
+  }
+}
+String _sdrMoney(dynamic v) {
+  final n = double.tryParse('$v') ?? 0;
+  return NumberFormat('#,##0.00', 'en').format(n);
+}
+
+/// A white card with a title row, like the web's blocks.
+class _SdrCard extends StatelessWidget {
+  final String title;
+  final Widget? trailing;
+  final Widget child;
+
+  const _SdrCard({required this.title, this.trailing, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return FadeSlideIn(
+      child: Container(
+      decoration: BoxDecoration(
+        color: dark ? const Color(0xFF1E1E2E) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: dark ? Colors.white12 : const Color(0xFFE3E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                if (trailing != null) ...[
+                  const SizedBox(height: 10),
+                  trailing!,
+                ],
+              ],
+            ),
+          ),
+          Divider(height: 1, color: dark ? Colors.white12 : const Color(0xFFE3E8F0)),
+          Padding(padding: const EdgeInsets.all(12), child: child),
+        ],
+      ),
+    ));
+  }
+}
+
+class _SdrStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final String? sub;
+
+  /// When set, the value counts up to this number instead of showing [value].
+  final double? number;
+  final int decimals;
+
+  const _SdrStat({
+    required this.label,
+    required this.value,
+    required this.color,
+    this.sub,
+    this.number,
+    this.decimals = 0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+      decoration: BoxDecoration(
+        color: dark ? const Color(0xFF1E1E2E) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: dark ? Colors.white12 : const Color(0xFFE3E8F0)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(fontSize: 11, letterSpacing: 0.4, color: AppColors.textSoft(context)),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: number == null
+                ? Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: color))
+                : AnimatedNumber(
+                    value: number!,
+                    decimals: decimals,
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: color),
+                  ),
+          ),
+          if (sub != null) ...[
+            const SizedBox(height: 4),
+            Text(sub!, style: TextStyle(fontSize: 11, color: AppColors.textSoft(context))),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SdrSummaryCards extends StatelessWidget {
+  final Map<String, dynamic> summary;
+  final bool isSwahili;
+  const _SdrSummaryCards({required this.summary, required this.isSwahili});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _SdrStat(
+                label: isSwahili ? 'Ripoti' : 'Reports',
+                value: '${summary['reports_count'] ?? 0}',
+                number: (double.tryParse('${summary['reports_count']}') ?? 0),
+                color: const Color(0xFF3B8EDB),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _SdrStat(
+                label: isSwahili ? 'Ankara Zilizoandikwa' : 'Invoices Written',
+                value: '${summary['invoices_count'] ?? 0}',
+                number: (double.tryParse('${summary['invoices_count']}') ?? 0),
+                color: const Color(0xFF1FB6D1),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _SdrStat(
+                label: isSwahili ? 'Jumla ya Ankara' : 'Invoice Total',
+                value: _sdrMoney(summary['invoices_total']),
+                number: (double.tryParse('${summary['invoices_total']}') ?? 0),
+                decimals: 2,
+                color: const Color(0xFF8BC34A),
+                sub: '${isSwahili ? 'Imelipwa' : 'Paid'}: ${_sdrMoney(summary['paid_total'])}',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _SdrStat(
+                label: isSwahili ? 'Jumla Isiyolipwa' : 'Unpaid Total',
+                value: _sdrMoney(summary['unpaid_total']),
+                number: (double.tryParse('${summary['unpaid_total']}') ?? 0),
+                decimals: 2,
+                color: const Color(0xFFEF4444),
+                sub: '${isSwahili ? 'Kidogo' : 'Partial'}: ${_sdrMoney(summary['partial_total'])}',
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Table header cell style used by the two tables.
+DataColumn _sdrColumn(String label, {bool numeric = false}) => DataColumn(
+      numeric: numeric,
+      label: Text(
+        label.toUpperCase(),
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12),
+      ),
+    );
+
+Widget _sdrTable({required List<DataColumn> columns, required List<DataRow> rows}) {
+  return SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: DataTable(
+        headingRowColor: const WidgetStatePropertyAll(Color(0xFF39A3C8)),
+        headingRowHeight: 46,
+        dataRowMinHeight: 46,
+        dataRowMaxHeight: 62,
+        columnSpacing: 22,
+        border: TableBorder.symmetric(inside: const BorderSide(color: Color(0xFFE3E8F0))),
+        columns: columns,
+        rows: rows,
+      ),
+    ),
+  );
+}
+
+class _SdrByPreparerCard extends ConsumerWidget {
+  final List<Map<String, dynamic>> byUser;
+  final bool isSwahili;
+  const _SdrByPreparerCard({required this.byUser, required this.isSwahili});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // The web has exactly two buttons here: Download Excel and Download PDF.
+    Widget button(String label, IconData icon, Color color, String path) => FilledButton.icon(
+          style: FilledButton.styleFrom(
+            backgroundColor: color,
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+          ),
+          onPressed: () => downloadExport(context, ref, path),
+          icon: Icon(icon, size: 16),
+          label: Text(label),
+        );
+
+    return _SdrCard(
+      title: isSwahili ? 'Ankara Zilizoandikwa — kwa Mwandaaji' : 'Invoices Written — by Preparer',
+      trailing: Wrap(
+        spacing: 6,
+        children: [
+          button('Download Excel', Icons.table_chart_outlined, const Color(0xFF4CAF50), 'sales-daily-reports/summary/excel'),
+          button('Download PDF', Icons.picture_as_pdf_outlined, const Color(0xFFEF4444), 'sales-daily-reports/summary/pdf'),
+        ],
+      ),
+      child: byUser.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.all(16),
+              child: Center(child: Text(isSwahili ? 'Hakuna data' : 'No data')),
+            )
+          : _sdrTable(
+              columns: [
+                _sdrColumn('#'),
+                _sdrColumn(isSwahili ? 'Mwandaaji' : 'Prepared By'),
+                _sdrColumn(isSwahili ? 'Idadi ya Ankara' : 'Invoices Count', numeric: true),
+                _sdrColumn(isSwahili ? 'Jumla ya Ankara' : 'Invoice Total', numeric: true),
+                _sdrColumn(isSwahili ? 'Imelipwa' : 'Paid', numeric: true),
+                _sdrColumn(isSwahili ? 'Haijalipwa' : 'Unpaid', numeric: true),
+              ],
+              rows: [
+                for (var i = 0; i < byUser.length; i++)
+                  DataRow(cells: [
+                    DataCell(Text('${i + 1}', style: const TextStyle(color: Color(0xFF3B8EDB)))),
+                    DataCell(Text('${byUser[i]['user_name']}')),
+                    DataCell(Text('${byUser[i]['invoice_count']}', style: const TextStyle(color: Color(0xFF14A3A8), fontWeight: FontWeight.w700))),
+                    DataCell(Text(_sdrMoney(byUser[i]['invoice_total']), style: const TextStyle(color: Color(0xFF14A3A8), fontWeight: FontWeight.w700))),
+                    DataCell(Text(_sdrMoney(byUser[i]['paid_total']), style: const TextStyle(color: Color(0xFF7CB342), fontWeight: FontWeight.w700))),
+                    DataCell(Text(_sdrMoney(byUser[i]['unpaid_total']), style: const TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w700))),
+                  ]),
+              ],
+            ),
+    );
+  }
+}
+
+/// Filters card: Start Date, End Date, Status, Prepared By (only with
+/// "View All Daily Reports"), then Filter, Clear and New Report.
+class _SdrFiltersCard extends ConsumerStatefulWidget {
+  final bool canViewAll;
+  final List<Map<String, dynamic>> users;
+  final bool isSwahili;
+
+  const _SdrFiltersCard({
+    required this.canViewAll,
+    required this.users,
+    required this.isSwahili,
+  });
+
+  @override
+  ConsumerState<_SdrFiltersCard> createState() => _SdrFiltersCardState();
+}
+
+class _SdrFiltersCardState extends ConsumerState<_SdrFiltersCard> {
+  late _SalesDailyReportFilter _draft = ref.read(_salesDailyReportsFilterProvider);
+
+  @override
+  Widget build(BuildContext context) {
+    final sw = widget.isSwahili;
+    InputDecoration deco(String label) => InputDecoration(
+          isDense: true,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        );
+
+    return _SdrCard(
+      title: sw ? 'Vichungi' : 'Filters',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DateFilterBar(
+            padding: EdgeInsets.zero,
+            start: _draft.startDate,
+            end: _draft.endDate,
+            startLabel: sw ? 'Tarehe ya Kuanza' : 'Start Date',
+            endLabel: sw ? 'Tarehe ya Mwisho' : 'End Date',
+            onStart: (d) => setState(() => _draft = _SalesDailyReportFilter(
+                  startDate: d, endDate: _draft.endDate, status: _draft.status, userId: _draft.userId)),
+            onEnd: (d) => setState(() => _draft = _SalesDailyReportFilter(
+                  startDate: _draft.startDate, endDate: d, status: _draft.status, userId: _draft.userId)),
+          ),
+          const SizedBox(height: 10),
+          LabeledField(
+            label: sw ? 'Hali' : 'Status',
+            child: DropdownButtonFormField<String?>(
+            isExpanded: true,
+            initialValue: _draft.status,
+            decoration: deco(sw ? 'Hali' : 'Status'),
+            items: [
+              DropdownMenuItem<String?>(value: null, child: Text(sw ? 'Hali Zote' : 'All Status')),
+              for (final st in const ['DRAFT', 'PENDING', 'APPROVED', 'REJECTED'])
+                DropdownMenuItem<String?>(value: st, child: Text(st[0] + st.substring(1).toLowerCase())),
+            ],
+            onChanged: (v) => setState(() => _draft = _SalesDailyReportFilter(
+                  startDate: _draft.startDate, endDate: _draft.endDate, status: v, userId: _draft.userId)),
+          ),
+          ),
+          if (widget.canViewAll) ...[
+            const SizedBox(height: 10),
+            LabeledField(
+              label: sw ? 'Imeandaliwa Na' : 'Prepared By',
+              child: DropdownButtonFormField<String?>(
+              isExpanded: true,
+              initialValue: widget.users.any((u) => '${u['id']}' == _draft.userId) ? _draft.userId : null,
+              decoration: deco(sw ? 'Imeandaliwa Na' : 'Prepared By'),
+              items: [
+                DropdownMenuItem<String?>(value: null, child: Text(sw ? 'Watumiaji Wote' : 'All Users')),
+                for (final u in widget.users)
+                  DropdownMenuItem<String?>(
+                    value: '${u['id']}',
+                    child: Text('${u['name']}', overflow: TextOverflow.ellipsis),
+                  ),
+              ],
+              onChanged: (v) => setState(() => _draft = _SalesDailyReportFilter(
+                    startDate: _draft.startDate, endDate: _draft.endDate, status: _draft.status, userId: v)),
+            ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF3B8EDB),
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => ref.read(_salesDailyReportsFilterProvider.notifier).state = _draft,
+                child: Text(sw ? 'Chuja' : 'Filter'),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: () {
+                  // Clear goes back to the default: the current month.
+                  final reset = _SalesDailyReportFilter(
+                    startDate: defaultStartDate(),
+                    endDate: today(),
+                  );
+                  setState(() => _draft = reset);
+                  ref.read(_salesDailyReportsFilterProvider.notifier).state = reset;
+                },
+                child: Text(sw ? 'Futa' : 'Clear'),
+              ),
+              const Spacer(),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: const Color(0xFF4CAF50)),
+                onPressed: () => _showSalesDailyReportForm(context, ref),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(sw ? 'Ripoti Mpya' : 'New Report'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SdrBadge extends StatelessWidget {
+  final String text;
+  final Color color;
+  const _SdrBadge(this.text, this.color);
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(14)),
+        child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+      );
+}
+
+/// The Reports List table: Date, Prepared By, Department, Lead Follow-ups,
+/// Sales Activities, Client Concerns, Approvals, Status, Actions.
+class _SdrReportsList extends ConsumerWidget {
+  final List<Map<String, dynamic>> items;
+  final bool isSwahili;
+  const _SdrReportsList({required this.items, required this.isSwahili});
+
+  Color _statusColor(String status) => switch (status.toUpperCase()) {
+        'APPROVED' => const Color(0xFF16A34A),
+        'REJECTED' => const Color(0xFFDC2626),
+        'SUBMITTED' || 'PENDING' => const Color(0xFF06B6D4),
+        _ => const Color(0xFF4B5563),
+      };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sw = isSwahili;
+    final canEdit = hasPermission(ref, 'Edit Sales');
+    final canDelete = hasPermission(ref, 'Delete Sales');
+
+    Widget action(IconData icon, Color color, VoidCallback onTap, String tip) => Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: Tooltip(
+            message: tip,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(4),
+              child: Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
+                child: Icon(icon, size: 16, color: Colors.white),
+              ),
+            ),
+          ),
+        );
+
+    return _SdrCard(
+      title: sw ? 'Orodha ya Ripoti' : 'Reports List',
+      child: items.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(child: Text(sw ? 'Hakuna ripoti za mauzo' : 'No sales daily reports found')),
+            )
+          : _sdrTable(
+              columns: [
+                _sdrColumn(sw ? 'Tarehe' : 'Date'),
+                _sdrColumn(sw ? 'Mwandaaji' : 'Prepared By'),
+                _sdrColumn(sw ? 'Idara' : 'Department'),
+                _sdrColumn(sw ? 'Ufuatiliaji' : 'Lead Follow-ups'),
+                _sdrColumn(sw ? 'Shughuli' : 'Sales Activities'),
+                _sdrColumn(sw ? 'Malalamiko' : 'Client Concerns'),
+                _sdrColumn(sw ? 'Idhini' : 'Approvals'),
+                _sdrColumn(sw ? 'Hali' : 'Status'),
+                _sdrColumn(sw ? 'Vitendo' : 'Actions'),
+              ],
+              rows: [
+                for (final r in items)
+                  DataRow(cells: [
+                    DataCell(
+                      Text(
+                        _sdrDate(r['report_date']),
+                        style: const TextStyle(color: Color(0xFF3B8EDB), fontWeight: FontWeight.w700),
+                      ),
+                      onTap: () => _showSalesDailyReportDetail(context, ref, r),
+                    ),
+                    DataCell(Text('${r['prepared_by_name'] ?? '-'}')),
+                    DataCell(Text('${r['department_name'] ?? '-'}')),
+                    DataCell(_SdrBadge('${r['followups_count'] ?? 0}', const Color(0xFF06A3C2))),
+                    DataCell(Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _SdrBadge('${r['activities_count'] ?? 0}', const Color(0xFF3B9DDB)),
+                        Text('Total: ${_sdrMoney(r['activities_total'])}', style: TextStyle(fontSize: 10, color: AppColors.textSoft(context))),
+                      ],
+                    )),
+                    DataCell(_SdrBadge('${r['concerns_count'] ?? 0}', const Color(0xFFE08A00))),
+                    DataCell(Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final step in (r['approvals'] as List? ?? const []).whereType<Map>())
+                          Tooltip(
+                            message: '${step['role_name']}: ${step['action']}',
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 4),
+                              child: Icon(
+                                '${step['action']}'.toLowerCase().contains('approv')
+                                    ? Icons.check_circle
+                                    : '${step['action']}'.toLowerCase().contains('reject')
+                                        ? Icons.cancel
+                                        : Icons.schedule,
+                                size: 22,
+                                color: '${step['action']}'.toLowerCase().contains('approv')
+                                    ? const Color(0xFF16A34A)
+                                    : '${step['action']}'.toLowerCase().contains('reject')
+                                        ? const Color(0xFFDC2626)
+                                        : const Color(0xFFFFC857),
+                              ),
+                            ),
+                          ),
+                      ],
+                    )),
+                    DataCell(_SdrBadge('${r['approval_status'] ?? 'PENDING'}'.toUpperCase(), _statusColor('${r['approval_status'] ?? ''}'))),
+                    DataCell(Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        action(Icons.visibility, const Color(0xFF4CAF50), () => _showSalesDailyReportDetail(context, ref, r), 'View'),
+                        if (canEdit)
+                          action(Icons.edit, const Color(0xFF3B9DDB), () => _showSalesDailyReportForm(context, ref, report: r), 'Edit'),
+                        if (canDelete)
+                          action(Icons.close, const Color(0xFFEF4444), () => _deleteSalesDailyReport(context, ref, r, isSwahili), 'Delete'),
+                      ],
+                    )),
+                  ]),
+              ],
+            ),
+    );
+  }
+}
+
+String _sdrDate(dynamic raw) {
+  final d = DateTime.tryParse('$raw');
+  return d == null ? '$raw' : DateFormat('MMM d, yyyy').format(d);
+}
 Future<void> _showSalesDailyReportDetail(
   BuildContext context,
   WidgetRef ref,
@@ -352,329 +760,6 @@ Future<void> _showSalesDailyReportDetail(
     isScrollControlled: true,
     builder: (ctx) => _SalesDailyReportDetailSheet(reportId: id, seed: item),
   );
-}
-
-class _SalesDailyReportFilters extends ConsumerWidget {
-  final _SalesDailyReportFilter filter;
-  final bool isSwahili;
-  final bool isDarkMode;
-
-  const _SalesDailyReportFilters({
-    required this.filter,
-    required this.isSwahili,
-    required this.isDarkMode,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return ExpansionTile(
-      title: Text(isSwahili ? 'Vichungi' : 'Filters'),
-      initiallyExpanded:
-          filter.startDate != null || filter.endDate != null || filter.status != null,
-      childrenPadding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
-      backgroundColor: isDarkMode ? const Color(0xFF2A2A3E) : Colors.white,
-      collapsedBackgroundColor: isDarkMode
-          ? const Color(0xFF2A2A3E)
-          : Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      collapsedShape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
-      children: [
-        DropdownButtonFormField<String?>(
-          value: filter.status,
-          decoration: InputDecoration(
-            labelText: isSwahili ? 'Hali' : 'Status',
-          ),
-          items: const [
-            DropdownMenuItem(value: null, child: Text('All')),
-            DropdownMenuItem(value: 'draft', child: Text('Draft')),
-            DropdownMenuItem(value: 'pending', child: Text('Pending')),
-            DropdownMenuItem(value: 'approved', child: Text('Approved')),
-            DropdownMenuItem(value: 'rejected', child: Text('Rejected')),
-          ],
-          onChanged: (value) => ref
-              .read(_salesDailyReportsFilterProvider.notifier)
-              .state = filter.copyWith(status: value, clearStatus: value == null),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: filter.startDate ?? DateTime.now(),
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime.now(),
-                  );
-                  if (picked != null) {
-                    ref.read(_salesDailyReportsFilterProvider.notifier).state =
-                        filter.copyWith(startDate: picked);
-                  }
-                },
-                child: _DateTile(
-                  label: isSwahili ? 'Tarehe ya Kuanza' : 'Start Date',
-                  value: filter.startDate,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: InkWell(
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: filter.endDate ?? DateTime.now(),
-                    firstDate: filter.startDate ?? DateTime(2020),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
-                  );
-                  if (picked != null) {
-                    ref.read(_salesDailyReportsFilterProvider.notifier).state =
-                        filter.copyWith(endDate: picked);
-                  }
-                },
-                child: _DateTile(
-                  label: isSwahili ? 'Tarehe ya Mwisho' : 'End Date',
-                  value: filter.endDate,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _DateTile extends StatelessWidget {
-  final String label;
-  final DateTime? value;
-
-  const _DateTile({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.calendar_today, size: 20),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-              Text(
-                value != null ? DateFormat('dd MMM yyyy').format(value!) : '-',
-                style: const TextStyle(fontSize: 14),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SalesDailyReportCard extends StatelessWidget {
-  final Map<String, dynamic> item;
-  final bool isSwahili;
-  final bool isDarkMode;
-  final VoidCallback onTap;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  const _SalesDailyReportCard({
-    required this.item,
-    required this.isSwahili,
-    required this.isDarkMode,
-    required this.onTap,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = const Color(0xFF193340);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      isSwahili ? 'Ripoti ya Mauzo' : 'Sales Report',
-                      style: TextStyle(
-                        color: accent,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    item['report_date'] as String? ?? '-',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color:
-                          isDarkMode ? Colors.white54 : AppColors.textSecondary,
-                    ),
-                  ),
-                  ExportMenuButton(
-                    tooltip: isSwahili ? 'Pakua' : 'Export',
-                    options: [
-                      ExportOption(
-                        'PDF',
-                        'sales-daily-reports/${item['id']}/pdf',
-                      ),
-                    ],
-                  ),
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'view') onTap();
-                      if (value == 'edit') onEdit();
-                      if (value == 'delete') onDelete();
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'view',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.visibility_outlined, size: 18),
-                            const SizedBox(width: 8),
-                            Text(isSwahili ? 'Tazama' : 'View'),
-                          ],
-                        ),
-                      ),
-                      if (item['can_edit'] == true)
-                        PopupMenuItem(
-                          value: 'edit',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.edit_outlined, size: 18),
-                              const SizedBox(width: 8),
-                              Text(isSwahili ? 'Hariri' : 'Edit'),
-                            ],
-                          ),
-                        ),
-                      if ((item['status'] as String? ?? '').toLowerCase() == 'draft')
-                        PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.delete_outline,
-                                size: 18,
-                                color: Colors.red,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                isSwahili ? 'Futa' : 'Delete',
-                                style: const TextStyle(color: Colors.red),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                item['report_number'] as String? ??
-                    (isSwahili ? 'Ripoti ya Mauzo' : 'Sales Daily Report'),
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: isDarkMode ? Colors.white : AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                item['summary'] as String? ?? '-',
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Icon(Icons.person_outline, size: 16, color: accent),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      item['prepared_by_name'] as String? ?? '-',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color:
-                            isDarkMode ? Colors.white70 : AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    (item['status'] as String? ?? '-').toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: accent,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Sales: ${_formatMoney(_toDouble(item['total_sales']))}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDarkMode
-                            ? Colors.white54
-                            : AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      'Collections: ${_formatMoney(_toDouble(item['total_collections']))}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDarkMode
-                            ? Colors.white54
-                            : AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _SalesDailyReportDetailSheet extends ConsumerWidget {
@@ -1985,40 +2070,6 @@ class _SalesDailyReportErrorView extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _StatChip({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF3BA154).withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

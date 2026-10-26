@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -6,6 +7,7 @@ import '../../../core/router/app_router.dart';
 import '../../../data/models/procurement/purchase_order_models.dart';
 import '../../../data/repositories/purchase_orders_repository.dart';
 import 'procurement_shared.dart';
+import '../../widgets/common/date_filter_bar.dart';
 
 final _searchProvider = StateProvider.autoDispose<String>((_) => '');
 final _statusFilterProvider = StateProvider.autoDispose<String?>((_) => null);
@@ -15,7 +17,13 @@ final _receivingsProvider =
   final repo = ref.watch(purchaseOrdersRepositoryProvider);
   final search = ref.watch(_searchProvider);
   final status = ref.watch(_statusFilterProvider);
-  return repo.listReceivings(search: search, status: status);
+  final range = ref.watch(dateRangeProvider('supplier_receivings'));
+  return repo.listReceivings(
+    search: search,
+    status: status,
+    startDate: DateFilterBar.format(range.start),
+    endDate: DateFilterBar.format(range.end),
+  );
 });
 
 final _receivingDetailProvider = FutureProvider.autoDispose
@@ -39,9 +47,12 @@ class SupplierReceivingsScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: const Text('Supplier Receivings'),
+        title: const Text('Supplier Receivings'), actions: [],
       ),
       body: Column(
+        children: [
+          const ExportAndDateBar(id: 'supplier_receivings', route: 'supplier_receivings_procurement'),
+          Expanded(child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
@@ -100,7 +111,7 @@ class SupplierReceivingsScreen extends ConsumerWidget {
                   }
                   return ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 90),
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
                     itemCount: list.length,
                     itemBuilder: (context, i) => _ReceivingCard(
                       receiving: list[i],
@@ -116,6 +127,8 @@ class SupplierReceivingsScreen extends ConsumerWidget {
               ),
             ),
           ),
+        ],
+      )),
         ],
       ),
     );

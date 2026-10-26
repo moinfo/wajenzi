@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../widgets/common/date_filter_bar.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -13,16 +15,36 @@ final _siteReportsSearchProvider = StateProvider.autoDispose<String>(
   (ref) => '',
 );
 
+/// The filters of the web's Site Daily Reports page: site, dates and status.
+typedef _SiteReportFilter = ({
+  DateTime? start,
+  DateTime? end,
+  String? siteId,
+  String? status,
+});
+
+final _siteReportsFilterProvider =
+    StateProvider.autoDispose<_SiteReportFilter>(
+  (ref) => (start: defaultStartDate(), end: today(), siteId: null, status: null),
+);
+
 final _siteReportsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
 ) async {
   final api = ref.watch(apiClientProvider);
   final search = ref.watch(_siteReportsSearchProvider);
+  final filter = ref.watch(_siteReportsFilterProvider);
 
   try {
     final response = await api.get(
       '/site-daily-reports',
-      queryParameters: {if (search.isNotEmpty) 'search': search},
+      queryParameters: {
+        if (search.isNotEmpty) 'search': search,
+        if (filter.start != null) 'start_date': DateFilterBar.format(filter.start),
+        if (filter.end != null) 'end_date': DateFilterBar.format(filter.end),
+        if (filter.siteId != null) 'site_id': filter.siteId,
+        if (filter.status != null) 'status': filter.status,
+      },
     );
 
     final data = response.data['data'] is List
@@ -64,6 +86,7 @@ class _SiteDailyReportsScreenState
     final isDark = ref.watch(isDarkModeProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final dataAsync = ref.watch(_siteReportsProvider);
+    final filter = ref.watch(_siteReportsFilterProvider);
     final search = ref.watch(_siteReportsSearchProvider).trim().toLowerCase();
 
     return Scaffold(
@@ -74,16 +97,79 @@ class _SiteDailyReportsScreenState
         ),
         title: Text(
           isSwahili ? 'Ripoti za Kila Siku za Eneo' : 'Site Daily Reports',
-        ),
+        ), actions: [],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () => _showCreateForm(context, ref, isDark, isSwahili),
           child: const Icon(Icons.add_rounded),
         ),
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          DateFilterBar(
+            start: filter.start,
+            end: filter.end,
+            onStart: (d) => ref.read(_siteReportsFilterProvider.notifier).state =
+                (start: d, end: filter.end, siteId: filter.siteId, status: filter.status),
+            onEnd: (d) => ref.read(_siteReportsFilterProvider.notifier).state =
+                (start: filter.start, end: d, siteId: filter.siteId, status: filter.status),
+            extra: [
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String?>(
+                      isExpanded: true,
+                      initialValue: filter.siteId,
+                      decoration: InputDecoration(
+                        labelText: isSwahili ? 'Eneo' : 'Site',
+                        isDense: true,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      items: [
+                        DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text(isSwahili ? 'Maeneo Yote' : 'All Sites'),
+                        ),
+                        for (final site in ((dataAsync.valueOrNull?['sites'] as List?) ?? const [])
+                            .whereType<Map>())
+                          DropdownMenuItem<String?>(
+                            value: '${site['id']}',
+                            child: Text('${site['name'] ?? site['id']}', overflow: TextOverflow.ellipsis),
+                          ),
+                      ],
+                      onChanged: (v) => ref.read(_siteReportsFilterProvider.notifier).state =
+                          (start: filter.start, end: filter.end, siteId: v, status: filter.status),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: DropdownButtonFormField<String?>(
+                      isExpanded: true,
+                      initialValue: filter.status,
+                      decoration: InputDecoration(
+                        labelText: isSwahili ? 'Hali' : 'Status',
+                        isDense: true,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      items: [
+                        DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text(isSwahili ? 'Zote' : 'All Status'),
+                        ),
+                        for (final st in const ['DRAFT', 'PENDING', 'APPROVED', 'REJECTED'])
+                          DropdownMenuItem<String?>(value: st, child: Text(st[0] + st.substring(1).toLowerCase())),
+                      ],
+                      onChanged: (v) => ref.read(_siteReportsFilterProvider.notifier).state =
+                          (start: filter.start, end: filter.end, siteId: filter.siteId, status: v),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Expanded(child: RefreshIndicator(
         onRefresh: () => ref.refresh(_siteReportsProvider.future),
         child: CustomScrollView(
           slivers: [
@@ -198,6 +284,8 @@ class _SiteDailyReportsScreenState
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }

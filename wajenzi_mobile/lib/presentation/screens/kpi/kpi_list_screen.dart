@@ -154,7 +154,7 @@ class _KpiListTab extends ConsumerWidget {
             );
           }
           return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
             itemCount: resp.reviews.length,
             itemBuilder: (context, i) =>
                 _KpiReviewCard(item: resp.reviews[i]),

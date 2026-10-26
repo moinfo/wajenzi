@@ -1930,7 +1930,7 @@ class _ArchitectBonusScreenState extends ConsumerState<ArchitectBonusScreen> {
       ),
       floatingActionButton: _isAdmin
           ? Padding(
-              padding: const EdgeInsets.only(bottom: 80),
+              padding: const EdgeInsets.only(bottom: 0),
               child: FloatingActionButton(
                 onPressed: () => _showTaskFormSheet(),
                 tooltip: isSwahili ? 'Ongeza Kazi' : 'Add Task',
@@ -1998,7 +1998,7 @@ class _ArchitectBonusScreenState extends ConsumerState<ArchitectBonusScreen> {
                           )
                         : ListView.builder(
                             controller: _scrollController,
-                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                             itemCount: _tasks.length + (_hasMore ? 1 : 0),
                             itemBuilder: (context, index) {
                               if (index >= _tasks.length) {

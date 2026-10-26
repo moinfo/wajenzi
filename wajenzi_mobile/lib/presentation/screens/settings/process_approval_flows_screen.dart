@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -33,14 +35,16 @@ class ProcessApprovalFlowsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(tr('Approval Flows', 'مسارات الموافقة')),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _openForm(context, ref),
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_process_approval_flows')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_processApprovalFlowsProvider),
         child: flowsAsync.when(
           loading: () => LoadingWidget(
@@ -85,10 +89,10 @@ class ProcessApprovalFlowsScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.approval_outlined,
                           size: 56,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -150,9 +154,9 @@ class ProcessApprovalFlowsScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.approval_outlined,
-                          color: AppColors.primary,
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -267,11 +271,11 @@ class ProcessApprovalFlowsScreen extends ConsumerWidget {
                               }
                             },
                             itemBuilder: (_) => [
-                              PopupMenuItem(
+                              if (canAct(context, 'hr_settings_process_approval_flows', 'edit')) PopupMenuItem(
                                 value: 'edit',
                                 child: Text(tr('Edit', 'تعديل')),
                               ),
-                              PopupMenuItem(
+                              if (canAct(context, 'hr_settings_process_approval_flows', 'delete')) PopupMenuItem(
                                 value: 'delete',
                                 child: Text(tr('Delete', 'حذف')),
                               ),
@@ -287,12 +291,16 @@ class ProcessApprovalFlowsScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: canAct(context, 'hr_settings_process_approval_flows', 'add')
+          ? FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
         label: Text(tr('New Approval Flow', 'مسار موافقة جديد')),
-      ),
+      )
+          : null,
     );
   }
 

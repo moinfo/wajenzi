@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +9,7 @@ import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+import '../../widgets/common/date_filter_bar.dart';
 import 'labor_request_detail_screen.dart';
 
 final laborRequestsSearchProvider = StateProvider.autoDispose<String>(
@@ -20,10 +22,10 @@ final laborRequestsStatusFilterProvider = StateProvider.autoDispose<String?>(
   (ref) => null,
 );
 final laborRequestsStartDateProvider = StateProvider.autoDispose<String?>(
-  (ref) => null,
+  (ref) => DateFilterBar.format(defaultStartDate()),
 );
 final laborRequestsEndDateProvider = StateProvider.autoDispose<String?>(
-  (ref) => null,
+  (ref) => DateFilterBar.format(today()),
 );
 
 final _laborRequestsProvider = FutureProvider.autoDispose<Map<String, dynamic>>(
@@ -79,8 +81,7 @@ class LaborRequestsScreen extends ConsumerWidget {
               ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
         ),
         title: Text(isSwahili ? 'Maombi ya Labor' : 'Labor Requests'),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             icon: const Icon(Icons.dashboard_rounded),
             tooltip: isSwahili ? 'Dashibodi' : 'Dashboard',
             onPressed: () => context.go('/labor-dashboard'),
@@ -88,7 +89,7 @@ class LaborRequestsScreen extends ConsumerWidget {
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton(
           onPressed: () {
             showModalBottomSheet(
@@ -104,7 +105,10 @@ class LaborRequestsScreen extends ConsumerWidget {
           child: const Icon(Icons.add),
         ),
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('labor.requests.index')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_laborRequestsProvider);
           ref.invalidate(_laborReferenceDataProvider);
@@ -136,61 +140,19 @@ class LaborRequestsScreen extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               children: [
-                _SectionCard(
-                  isDarkMode: isDarkMode,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isSwahili ? 'Tarehe' : 'Date Range',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDarkMode
-                              ? Colors.white70
-                              : AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _DateFilterField(
-                              label: isSwahili ? 'Tangu' : 'From',
-                              value: startDate,
-                              onChanged: (val) =>
-                                  ref
-                                          .read(
-                                            laborRequestsStartDateProvider
-                                                .notifier,
-                                          )
-                                          .state =
-                                      val,
-                              isDarkMode: isDarkMode,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _DateFilterField(
-                              label: isSwahili ? 'Hadi' : 'To',
-                              value: endDate,
-                              onChanged: (val) =>
-                                  ref
-                                          .read(
-                                            laborRequestsEndDateProvider
-                                                .notifier,
-                                          )
-                                          .state =
-                                      val,
-                              isDarkMode: isDarkMode,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
+                DateFilterBar(
+                  padding: EdgeInsets.zero,
+                  start: startDate == null ? null : DateTime.tryParse(startDate),
+                  end: endDate == null ? null : DateTime.tryParse(endDate),
+                  startLabel: isSwahili ? 'Tarehe ya Kuanza' : 'Start Date',
+                  endLabel: isSwahili ? 'Tarehe ya Mwisho' : 'End Date',
+                  onStart: (d) => ref
+                      .read(laborRequestsStartDateProvider.notifier)
+                      .state = DateFilterBar.format(d),
+                  onEnd: (d) => ref
+                      .read(laborRequestsEndDateProvider.notifier)
+                      .state = DateFilterBar.format(d),
+                ),                const SizedBox(height: 12),
                 _SectionCard(
                   isDarkMode: isDarkMode,
                   child: Column(
@@ -367,6 +329,8 @@ class LaborRequestsScreen extends ConsumerWidget {
             );
           },
         ),
+      )),
+        ],
       ),
     );
   }
@@ -1148,6 +1112,8 @@ class _LaborRequestFormSheetState
                                   value: p['id'] as int,
                                   child: Text(
                                     p['project_name']?.toString() ?? '-',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               )
@@ -1168,7 +1134,11 @@ class _LaborRequestFormSheetState
                               .map(
                                 (p) => DropdownMenuItem(
                                   value: p['id'] as int,
-                                  child: Text(p['name']?.toString() ?? '-'),
+                                  child: Text(
+                                    p['name']?.toString() ?? '-',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               )
                               .toList(),
@@ -1215,48 +1185,54 @@ class _LaborRequestFormSheetState
                           isDarkMode: widget.isDarkMode,
                         ),
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: _textField(
-                                controller: _durationController,
-                                label: widget.isSwahili
-                                    ? 'Muda (Siku)'
-                                    : 'Duration (Days)',
-                                keyboardType: TextInputType.number,
-                                isDarkMode: widget.isDarkMode,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
                             Expanded(
                               child: _dateField(
                                 controller: _startDateController,
                                 label: widget.isSwahili
-                                    ? 'Tarehe ya Kuanza'
+                                    ? 'Kuanza'
                                     : 'Start Date',
                                 selectedDate: _startDate,
                                 onDateSelected: (date) => setState(() {
                                   _startDate = date;
                                   _startDateError = null;
+                                  _syncDuration();
                                 }),
                                 isDarkMode: widget.isDarkMode,
                                 errorText: _startDateError,
                               ),
                             ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _dateField(
+                                controller: _endDateController,
+                                label: widget.isSwahili
+                                    ? 'Kumalizia'
+                                    : 'End Date',
+                                selectedDate: _endDate,
+                                onDateSelected: (date) => setState(() {
+                                  _endDate = date;
+                                  _clearDateErrors();
+                                  _syncDuration();
+                                }),
+                                isDarkMode: widget.isDarkMode,
+                                firstDate: _startDate,
+                                errorText: _endDateError,
+                              ),
+                            ),
                           ],
                         ),
-                        _dateField(
-                          controller: _endDateController,
+                        _textField(
+                          controller: _durationController,
                           label: widget.isSwahili
-                              ? 'Tarehe ya Kumalizia'
-                              : 'End Date',
-                          selectedDate: _endDate,
-                          onDateSelected: (date) => setState(() {
-                            _endDate = date;
-                            _clearDateErrors();
-                          }),
+                              ? 'Muda (Siku)'
+                              : 'Duration (Days)',
+                          hint: widget.isSwahili
+                              ? 'Hujazwa kutoka tarehe'
+                              : 'Filled from the dates',
+                          keyboardType: TextInputType.number,
                           isDarkMode: widget.isDarkMode,
-                          firstDate: _startDate,
-                          errorText: _endDateError,
                         ),
                         const SizedBox(height: 16),
                         _sectionTitle(widget.isSwahili ? 'Malipo' : 'Payment'),
@@ -1498,6 +1474,13 @@ class _LaborRequestFormSheetState
     ),
   );
 
+  /// Duration (days) from the two dates, inclusive, when both are chosen.
+  void _syncDuration() {
+    if (_startDate == null || _endDate == null) return;
+    final days = _endDate!.difference(_startDate!).inDays + 1;
+    if (days > 0) _durationController.text = '$days';
+  }
+
   Widget _dateField({
     required TextEditingController controller,
     required String label,
@@ -1516,7 +1499,7 @@ class _LaborRequestFormSheetState
       ),
       decoration: InputDecoration(
         labelText: label,
-        hintText: isDarkMode ? 'Chagua tarehe' : 'Select date',
+        hintText: 'yyyy-mm-dd',
         filled: true,
         fillColor: isDarkMode ? const Color(0xFF2A2A3E) : Colors.grey[100],
         border: OutlineInputBorder(
@@ -1524,10 +1507,13 @@ class _LaborRequestFormSheetState
           borderSide: BorderSide.none,
         ),
         errorText: errorText,
-        suffixIcon: Icon(
-          Icons.calendar_today,
+        errorMaxLines: 2,
+        prefixIcon: Icon(
+          Icons.calendar_today_outlined,
+          size: 18,
           color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
         ),
+        prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 0),
       ),
       onTap: () async {
         final picked = await showDatePicker(
@@ -1555,6 +1541,7 @@ class _LaborRequestFormSheetState
   }) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
     child: DropdownButtonFormField(
+      isExpanded: true,
       value: value,
       items: items,
       onChanged: enabled ? onChanged : null,

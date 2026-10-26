@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -71,8 +73,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
               ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
         ),
         title: const Text('eSMS'),
-        actions: [
-          IconButton(
+        actions: [IconButton(
             onPressed: () => _showBirthdays(context, ref),
             icon: const Icon(Icons.cake_outlined),
             tooltip: isSwahili ? 'Siku ya Kuzaliwa' : 'Birthdays',
@@ -83,8 +84,9 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
           ),
         ],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+      floatingActionButton: canAct(context, 'eSMS', 'add')
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -103,8 +105,12 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
             ),
           ],
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('eSMS')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_messagesProvider);
           ref.invalidate(_birthdaysProvider);
@@ -125,7 +131,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
                 .toList();
 
             return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
               children: [
                 _SmsHero(stats: stats, isSwahili: isSwahili),
                 const SizedBox(height: 16),
@@ -155,6 +161,8 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
             );
           },
         ),
+      )),
+        ],
       ),
     );
   }
@@ -245,7 +253,7 @@ class _StatsGrid extends StatelessWidget {
         _StatCard(
           label: isSwahili ? 'Jumla ya Ujumbe' : 'Total Messages',
           value: '${stats['total_messages'] ?? 0}',
-          color: AppColors.textPrimary,
+          color: AppColors.text(context),
           icon: Icons.bar_chart_rounded,
         ),
         _StatCard(
@@ -287,10 +295,10 @@ class _StatCard extends StatelessWidget {
           const Spacer(),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              color: AppColors.text(context),
             ),
           ),
           Text(label, style: const TextStyle(color: AppColors.textSecondary)),
@@ -312,10 +320,10 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: AppColors.text(context),
           ),
         ),
         const SizedBox(height: 2),
@@ -364,11 +372,11 @@ class _MessageCard extends ConsumerWidget {
                   }
                 },
                 itemBuilder: (context) => [
-                  PopupMenuItem<String>(
+                  if (canAct(context, 'eSMS', 'edit')) PopupMenuItem<String>(
                     value: 'edit',
                     child: Text(isSwahili ? 'Hariri' : 'Edit'),
                   ),
-                  PopupMenuItem<String>(
+                  if (canAct(context, 'eSMS', 'delete')) PopupMenuItem<String>(
                     value: 'delete',
                     child: Text(isSwahili ? 'Futa' : 'Delete'),
                   ),
@@ -852,6 +860,7 @@ class _BulkMessageSheetState extends ConsumerState<_BulkMessageSheet> {
               ),
               const SizedBox(height: 18),
               DropdownButtonFormField<int?>(
+      isExpanded: true,
                 value: _departmentId,
                 decoration: _inputDecoration('Department'),
                 items: [

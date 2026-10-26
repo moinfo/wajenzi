@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
-import '../../../core/services/external_launcher_service.dart';
 import '../../../presentation/providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 
@@ -163,7 +162,7 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
                       totalCount: reports.length,
                       subtitleOverride: _reportsTr(
                         language,
-                        en: 'Important reports available on mobile',
+                        en: 'All the reports you can access',
                         sw: 'Ripoti muhimu zilizo tayari kwa simu',
                         fr: 'Rapports importants disponibles sur mobile',
                         ar: 'تقارير مهمة متاحة على الهاتف',
@@ -182,7 +181,7 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     sliver: SliverLayoutBuilder(
                       builder: (context, constraints) {
                         final width = constraints.crossAxisExtent;
@@ -224,59 +223,110 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
     );
   }
 
+  /// Reports the app shows as the web page's own table (via web-tables API).
+  static const _webTableReports = {
+    'reports_vat_analysis',
+    'reports_vat_payment',
+    'reports_exempt_analysis',
+    'reports_sales_report',
+    'reports_purchases_report',
+    'reports_attendances_report',
+    'reports_daily_attendances_report',
+    'reports_purchases_by_supplier_report',
+    'reports_gross_summary_report',
+    'reports_deduction_report',
+    'reports_allowance_subscriptions_report',
+    'reports_statement_of_comprehensive_income_report',
+    'reports_statement_of_financial_position_report',
+    'reports_detailed_expenditure_statement_report',
+    'reports_efd_report',
+    'reports_detailed_efd_report',
+    'reports_annually_sales_summary_report',
+    'reports_annually_purchases_summary_report',
+    'reports_annually_expenses_summary_report',
+    'reports_annually_expense_sub_categories_summary_report',
+    'reports_annually_financial_charges_summary_report',
+    'reports_annually_salaries_summary_report',
+    'reports_annually_sdl_summary_report',
+    'reports_annually_advance_salary_summary_report',
+    'reports_annually_allowance_summary_report',
+    'reports_annually_heslb_summary_report',
+    'reports_annually_net_salary_summary_report',
+    'reports_annually_nhif_summary_report',
+    'reports_annually_nssf_summary_report',
+    'reports_annually_deduction_report',
+    'reports_annually_paye_summary_report',
+    'reports_annually_wcf_summary_report',
+  };
+
+  /// The screen for a report the server lists: its route name as sent, or with
+  /// the `_report` suffix, then the report-specific special cases, then the
+  /// app-wide menu resolver (for entries such as Departments).
+  String? _destinationFor(String route, String? url) {
+    final r = route.trim().toLowerCase();
+    if (r.isEmpty) return null;
+    if (_webTableReports.contains(r)) return '/tables/$r';
+
+    for (final key in [r, '${r}_report']) {
+      final d = _resolveMobileReportRoute(key, url);
+      if (d != null && d != '/reports') return d;
+    }
+    if (r == 'reports_vat_payment') return '/reports-vat-payments';
+
+    final fromMenu = resolveMobileMenuDestination(route: route, url: url);
+    const generic = {'/dashboard', '/reports', '/settings', '/employee-profile'};
+    if (fromMenu != null && !generic.contains(fromMenu)) return fromMenu;
+    return null;
+  }
+
+  /// Every report the web's Reports page offers this user (the server filters
+  /// them by permission, as the web does), each opening its own screen.
   List<_ReportItem> _buildReportItems(List<dynamic> payload) {
     final items = <_ReportItem>[];
+    final seen = <String>{};
+
     final rawReports = payload
         .whereType<Map>()
         .map((raw) => Map<String, dynamic>.from(raw))
         .toList();
 
-    for (final supported in _supportedReports) {
-      Map<String, dynamic>? match;
-      for (final report in rawReports) {
-        final route = (report['route'] ?? '').toString().trim().toLowerCase();
-        final url = report['url']?.toString() ?? '';
-        final path = Uri.tryParse(url)?.path.toLowerCase() ?? '';
-        if (supported.routeAliases.contains(route) ||
-            supported.pathAliases.contains(path)) {
-          match = report;
-          break;
-        }
-      }
+    for (final report in rawReports) {
+      final name = (report['name'] ?? '').toString().trim();
+      final route = (report['route'] ?? '').toString().trim();
+      final url = report['url']?.toString();
+      if (name.isEmpty) continue;
 
-      if (match == null) continue;
-
-      final name = (match['name'] ?? '').toString().trim();
-      final route = (match['route'] ?? '').toString().trim();
-      final url = match['url']?.toString();
+      final destination = _destinationFor(route, url);
+      seen.add(route.toLowerCase());
       items.add(
         _ReportItem(
-          name: name.isNotEmpty ? name : supported.fallbackName,
+          name: name,
           route: route,
           url: url,
+          mobileDestination: destination,
+          supportsMobile: destination != null,
+        ),
+      );
+    }
+
+    // Reports the app has that the server's list does not carry (Architect
+    // Bonus and the statutory reports) stay available.
+    for (final supported in _supportedReports) {
+      final already = supported.routeAliases.any(seen.contains);
+      if (already) continue;
+      items.add(
+        _ReportItem(
+          name: supported.fallbackName,
+          route: supported.routeAliases.first,
+          url: null,
           mobileDestination: supported.mobileDestination,
           supportsMobile: true,
         ),
       );
     }
 
-    if (items.isEmpty) {
-      for (final supported in _supportedReports) {
-        items.add(
-          _ReportItem(
-            name: supported.fallbackName,
-            route: '',
-            url: null,
-            mobileDestination: supported.mobileDestination,
-            supportsMobile: true,
-          ),
-        );
-      }
-    }
-
     return items;
   }
-
   String? _resolveMobileReportRoute(String route, String? url) {
     final normalizedRoute = route.trim().toLowerCase();
     final path = Uri.tryParse(url ?? '')?.path.toLowerCase() ?? '';
@@ -355,6 +405,8 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
       'reports_statutory_category_report': '/reports-statutory-category',
       'reports_statutory_payment_report': '/reports-statutory-payment',
       'reports_statutory_schedules_report': '/reports-statutory-schedules',
+      'reports_bank_statement_report':
+          '/tables/bank_reconciliation_bank_reconciliation_statement',
       'bank_deposit_report': '/reports-bank-deposit',
       'bank_withdraw_report': '/reports-bank-withdraw',
     };
@@ -522,11 +574,7 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
       return;
     }
 
-    final opened = await ExternalLauncherService.openMenuUrlInApp(
-      item.url,
-      fallbackPath: '/reports',
-    );
-    if (!mounted || opened) return;
+    if (!mounted) return;
 
     final language = ref.read(currentLanguageProvider);
     ScaffoldMessenger.of(context).showSnackBar(

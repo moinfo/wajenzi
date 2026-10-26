@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/utils/web_actions.dart';
+import '../../../core/services/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -88,13 +90,14 @@ class _BoqItemCategoriesScreenState
         ),
         title: Text(
           isSwahili ? 'Kundi la Vifaa vya BOQ' : 'BOQ Item Categories',
-        ),
+        ), actions: [],
       ),
-      floatingActionButton: categoriesAsync.maybeWhen(
+      floatingActionButton: canAct(context, 'hr_settings_boq_item_categories', 'add')
+          ? categoriesAsync.maybeWhen(
         data: (payload) => payload['unavailable_on_live'] == true
             ? null
             : Padding(
-                padding: const EdgeInsets.only(bottom: 80),
+                padding: const EdgeInsets.only(bottom: 0),
                 child: FloatingActionButton(
                   onPressed: () => _openForm(context, ref),
                   child: const Icon(Icons.add_rounded),
@@ -102,15 +105,19 @@ class _BoqItemCategoriesScreenState
                 ),
               ),
         orElse: () => Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 0),
           child: FloatingActionButton(
             onPressed: () => _openForm(context, ref),
             child: const Icon(Icons.add_rounded),
             tooltip: isSwahili ? 'Ongeza Kundi' : 'Add Category',
           ),
         ),
-      ),
-      body: RefreshIndicator(
+      )
+          : null,
+      body: Column(
+        children: [
+          ExportButtonsBar(options: webTableExportOptions('hr_settings_boq_item_categories')),
+          Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_boqItemCategoriesProvider),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -331,7 +338,7 @@ class _BoqItemCategoriesScreenState
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final category = filteredCategories[index];
@@ -351,6 +358,8 @@ class _BoqItemCategoriesScreenState
             ),
           ],
         ),
+      )),
+        ],
       ),
     );
   }
@@ -625,7 +634,7 @@ class _BoqCategoryCard extends StatelessWidget {
                 }
               },
               itemBuilder: (_) => [
-                PopupMenuItem(
+                if (canAct(context, 'hr_settings_boq_item_categories', 'edit')) PopupMenuItem(
                   value: 'edit',
                   child: Row(
                     children: [
@@ -635,7 +644,7 @@ class _BoqCategoryCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                PopupMenuItem(
+                if (canAct(context, 'hr_settings_boq_item_categories', 'delete')) PopupMenuItem(
                   value: 'delete',
                   child: Row(
                     children: [
@@ -845,6 +854,7 @@ class _BoqItemCategoryFormSheetState
                         const SizedBox(width: 12),
                         Expanded(
                           child: DropdownButtonFormField<bool>(
+      isExpanded: true,
                             value: _isActive,
                             decoration: inputStyle(
                               isSwahili ? 'Hali *' : 'Status *',

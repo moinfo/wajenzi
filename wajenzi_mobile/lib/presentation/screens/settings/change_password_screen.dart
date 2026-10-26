@@ -123,7 +123,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   color: AppColors.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.lock_outline, size: 48, color: AppColors.primary),
+                child: Icon(Icons.lock_outline, size: 48, color: AppColors.accent(context)),
               ),
             ),
             const SizedBox(height: 8),
