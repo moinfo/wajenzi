@@ -57,14 +57,126 @@ class FieldMarketingApiController extends Controller
         }
     }
 
+    /** The web's Stats tab: totals by status and the By Officer table. */
     public function stats(Request $request): JsonResponse
+    {
+        abort_unless($this->can('View Field Marketing Stats'), 403, 'You do not have permission to view stats.');
+
+        $month = $request->input('month', now()->format('Y-m'));
+        [$year, $mon] = $this->parseMonth($month);
+
+        $byOfficer = FieldMarketingSession::with('officer:id,name')
+            ->withCount([
+                'visits',
+                'visits as converted_count' => fn ($q) => $q->where('status', 'converted'),
+            ])
+            ->whereYear('date', (int) $year)->whereMonth('date', (int) $mon)
+            ->get()
+            ->groupBy('officer_id')
+            ->map(function ($sessions) {
+                $visits = (int) $sessions->sum('visits_count');
+                $converted = (int) $sessions->sum('converted_count');
+
+                return [
+                    'officer_id' => $sessions->first()->officer_id,
+                    'officer_name' => $sessions->first()->officer?->name,
+                    'visits' => $visits,
+                    'converted' => $converted,
+                    'rate' => $visits > 0 ? (int) round($converted / $visits * 100) : 0,
+                ];
+            })->values()->all();
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->buildStats((int) $year, (int) $mon) + ['by_officer' => $byOfficer],
+        ]);
+    }
+
+    /** The web's Targets tab: each officer's monthly target, visits and wins. */
+    public function targets(Request $request): JsonResponse
+    {
+        abort_unless($this->can('Set Field Marketing Target'), 403, 'You do not have permission to view targets.');
+
+        $month = $request->input('month', now()->format('Y-m'));
+        [$year, $mon] = $this->parseMonth($month);
+
+        $targets = FieldMarketingTarget::where('year', (int) $year)->where('month', (int) $mon)->get()->keyBy('officer_id');
+
+        $visitCounts = FieldMarketingSession::withCount('visits')
+            ->whereYear('date', (int) $year)->whereMonth('date', (int) $mon)
+            ->get()->groupBy('officer_id')
+            ->map(fn ($sessions) => (int) $sessions->sum('visits_count'));
+
+        $convertedCounts = FieldMarketingVisit::query()
+            ->join('field_marketing_sessions', 'field_marketing_sessions.id', '=', 'field_marketing_visits.session_id')
+            ->where('field_marketing_visits.status', 'converted')
+            ->whereYear('field_marketing_sessions.date', (int) $year)
+            ->whereMonth('field_marketing_sessions.date', (int) $mon)
+            ->select('field_marketing_sessions.officer_id', \Illuminate\Support\Facades\DB::raw('count(*) as cnt'))
+            ->groupBy('field_marketing_sessions.officer_id')
+            ->pluck('cnt', 'officer_id');
+
+        $rows = $this->getOfficers()->map(function ($officer) use ($targets, $visitCounts, $convertedCounts) {
+            $target = $targets[$officer->id] ?? null;
+            $converted = (int) ($convertedCounts[$officer->id] ?? 0);
+            $targetConv = (int) ($target->target_conversions ?? 0);
+
+            return [
+                'officer_id' => $officer->id,
+                'officer_name' => $officer->name,
+                'target_visits' => (int) ($target->target_visits ?? 0),
+                'target_conversions' => $targetConv,
+                'visits' => (int) ($visitCounts[$officer->id] ?? 0),
+                'converted' => $converted,
+                'progress' => $targetConv > 0 ? min(100, (int) round($converted / $targetConv * 100)) : 0,
+            ];
+        })->values();
+
+        return response()->json(['success' => true, 'data' => ['month' => $month, 'officers' => $rows]]);
+    }
+
+    /** The web's All Visits tab, with its filters (officer, status, from / to date). */
+    public function visits(Request $request): JsonResponse
     {
         $month = $request->input('month', now()->format('Y-m'));
         [$year, $mon] = $this->parseMonth($month);
 
+        $query = FieldMarketingVisit::with(['session.officer:id,name', 'services', 'lead:id,name'])
+            ->whereHas('session', fn ($q) => $q->whereYear('date', (int) $year)->whereMonth('date', (int) $mon));
+
+        if ($this->isFieldOfficer()) {
+            $query->whereHas('session', fn ($q) => $q->where('officer_id', Auth::id()));
+        } elseif ($request->filled('officer_id')) {
+            $query->whereHas('session', fn ($q) => $q->where('officer_id', $request->officer_id));
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('from_date')) {
+            $query->whereHas('session', fn ($q) => $q->where('date', '>=', $request->from_date));
+        }
+        if ($request->filled('to_date')) {
+            $query->whereHas('session', fn ($q) => $q->where('date', '<=', $request->to_date));
+        }
+
+        $visits = $query->orderByDesc('id')->get()->map(fn ($v) => $this->transformVisit($v) + [
+            'date' => optional($v->session?->date)->format('Y-m-d'),
+            'officer_name' => $v->session?->officer?->name,
+            'area' => $v->session?->area,
+            'client_name' => $v->lead?->name,
+        ])->values();
+
+        return response()->json(['success' => true, 'data' => $visits, 'meta' => ['total' => $visits->count()]]);
+    }
+
+    /** The web's Services tab: every service, in order. */
+    public function services(): JsonResponse
+    {
+        abort_unless($this->can('Manage Field Marketing Services'), 403, 'You do not have permission to manage services.');
+
         return response()->json([
             'success' => true,
-            'data' => $this->buildStats((int) $year, (int) $mon),
+            'data' => FieldMarketingService::orderBy('sort_order')->orderBy('name')->get(['id', 'name', 'sort_order', 'status']),
         ]);
     }
 
@@ -287,7 +399,7 @@ class FieldMarketingApiController extends Controller
     {
         // Only marketing managers may set targets — field officers shouldn't be
         // able to set their own quotas.
-        abort_unless($this->isMarketingManager(), 403, 'Only marketing managers can set targets.');
+        abort_unless($this->can('Set Field Marketing Target'), 403, 'You do not have permission to set targets.');
 
         $validated = $request->validate([
             'officer_id'         => 'required|exists:users,id',
@@ -319,7 +431,7 @@ class FieldMarketingApiController extends Controller
     // from the catalog but shouldn't edit it.
     public function storeService(Request $request): JsonResponse
     {
-        abort_unless($this->isMarketingManager(), 403, 'Only marketing managers can manage services.');
+        abort_unless($this->can('Manage Field Marketing Services'), 403, 'You do not have permission to manage services.');
 
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:field_marketing_services,name',
@@ -340,7 +452,7 @@ class FieldMarketingApiController extends Controller
 
     public function updateService(Request $request, int $id): JsonResponse
     {
-        abort_unless($this->isMarketingManager(), 403, 'Only marketing managers can manage services.');
+        abort_unless($this->can('Manage Field Marketing Services'), 403, 'You do not have permission to manage services.');
 
         $service = FieldMarketingService::findOrFail($id);
 
@@ -359,7 +471,7 @@ class FieldMarketingApiController extends Controller
 
     public function destroyService(int $id): JsonResponse
     {
-        abort_unless($this->isMarketingManager(), 403, 'Only marketing managers can manage services.');
+        abort_unless($this->can('Manage Field Marketing Services'), 403, 'You do not have permission to manage services.');
 
         FieldMarketingService::findOrFail($id)->delete();
 
@@ -492,6 +604,11 @@ class FieldMarketingApiController extends Controller
         $managerRoleIds = [1, 2, 7, 9, 12, 14, 15, 16];
         $isManager = $user->roles()->whereIn('roles.id', $managerRoleIds)->exists();
         return !$isManager && $user->roles()->where('roles.id', 13)->exists();
+    }
+
+    private function can(string $permission): bool
+    {
+        return (bool) Auth::user()?->can($permission);
     }
 
     /** Inverse of isFieldOfficer — true for everyone who isn't a pure field officer. */

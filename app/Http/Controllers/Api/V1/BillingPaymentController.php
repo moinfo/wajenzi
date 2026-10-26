@@ -8,6 +8,7 @@ use App\Models\BillingDocument;
 use App\Models\BillingPayment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BillingPaymentController extends Controller
 {
@@ -62,6 +63,14 @@ class BillingPaymentController extends Controller
 
         if ($request->status) {
             $query->where('status', $request->status);
+        }
+
+        // Start Date / End Date on the payment date
+        if ($request->start_date) {
+            $query->whereDate('payment_date', '>=', $request->start_date);
+        }
+        if ($request->end_date) {
+            $query->whereDate('payment_date', '<=', $request->end_date);
         }
 
         $payments = $query->paginate($request->per_page ?? 20);
@@ -120,22 +129,35 @@ class BillingPaymentController extends Controller
     {
         $payment = BillingPayment::findOrFail($id);
 
+        // Same rules as the web: a voided payment cannot be edited, the invoice
+        // cannot change, and the amount cannot exceed the invoice's available balance.
+        if ($payment->status === 'voided') {
+            return response()->json(['success' => false, 'message' => 'Voided payments cannot be edited.'], 422);
+        }
+
         $validated = $request->validate([
-            'document_id' => 'sometimes|exists:billing_documents,id',
-            'payment_date' => 'sometimes|date',
-            'amount' => 'sometimes|numeric|min:0.01',
-            'payment_method' => 'sometimes|string',
-            'reference_number' => 'nullable|string',
+            'payment_date' => 'required|date',
+            'amount' => 'required|numeric|min:0.01',
+            'payment_method' => 'required|string|max:50',
+            'reference_number' => 'nullable|string|max:255',
             'bank_name' => 'nullable|string',
             'cheque_number' => 'nullable|string',
             'transaction_id' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
 
-        if (array_key_exists('document_id', $validated)) {
-            $validated['client_id'] = BillingDocument::find($validated['document_id'])?->client_id;
+        $document = $payment->document;
+        if ($document) {
+            $available = $document->balance_amount + $payment->amount;
+            if ($validated['amount'] > $available) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment amount cannot exceed available balance of ' . number_format($available, 2),
+                ], 422);
+            }
         }
 
+        // The payment's own hooks recompute the invoice's paid amount and status.
         $payment->update($validated);
 
         return response()->json([
@@ -143,6 +165,63 @@ class BillingPaymentController extends Controller
             'message' => 'Payment updated successfully.',
             'data' => new BillingPaymentResource($payment->fresh(['document.client', 'client'])),
         ]);
+    }
+
+    /** Void a completed payment: the invoice's paid amount and status are recalculated. */
+    public function void(int $id): JsonResponse
+    {
+        $payment = BillingPayment::with('document')->findOrFail($id);
+
+        if ($payment->status === 'voided') {
+            return response()->json(['success' => false, 'message' => 'Payment is already voided.'], 422);
+        }
+
+        // Voiding needs the 'voided' value in the status column (the web's void
+        // relies on it too). Refuse instead of writing a blank status where a
+        // database does not have it yet.
+        $statusType = collect(DB::select('SHOW COLUMNS FROM billing_payments'))->firstWhere('Field', 'status')->Type ?? '';
+        if (!str_contains($statusType, "'voided'")) {
+            return response()->json([
+                'success' => false,
+                'message' => "This database cannot store voided payments yet (the payment status 'voided' is missing).",
+            ], 409);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $document = $payment->document;
+
+            $changes = ['status' => 'voided'];
+            foreach (['voided_at' => now(), 'voided_by' => auth()->id()] as $column => $value) {
+                if (\Illuminate\Support\Facades\Schema::hasColumn('billing_payments', $column)) {
+                    $changes[$column] = $value;
+                }
+            }
+            // voided_at / voided_by are not mass-assignable on the model, so set them directly
+            $payment->forceFill($changes)->save();
+
+            if ($document) {
+                $document->refresh();
+                $document->paid_amount = $document->payments()->where('status', 'completed')->sum('amount');
+                $document->balance_amount = $document->total_amount - $document->paid_amount;
+
+                if ($document->balance_amount > 0) {
+                    $document->status = $document->paid_amount > 0 ? 'partial_paid' : 'pending';
+                    $document->paid_at = null;
+                }
+
+                $document->save();
+            }
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Payment voided successfully.']);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return response()->json(['success' => false, 'message' => 'Error voiding payment: ' . $e->getMessage()], 500);
+        }
     }
 
     public function destroy(int $id): JsonResponse

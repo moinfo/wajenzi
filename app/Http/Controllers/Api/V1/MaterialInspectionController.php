@@ -443,6 +443,37 @@ class MaterialInspectionController extends Controller
      * Manual re-run for approved inspections that missed the automatic stock
      * update (mirrors web updateStock: must be approved and not yet updated).
      */
+    /**
+     * Delete a material inspection that is still pending (as on the web list,
+     * where only pending inspections have the Delete button). An approved
+     * inspection, or one that already updated stock, is kept.
+     */
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        if (!$request->user()->can('Material Inspections')) {
+            return $this->permissionDenied();
+        }
+
+        $inspection = MaterialInspection::findOrFail($id);
+
+        if (strtolower((string) $inspection->status) !== 'pending' || $inspection->stock_updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only pending inspections can be deleted.',
+            ], 422);
+        }
+
+        try {
+            $inspection->delete();
+        } catch (\Throwable $e) {
+            Log::error('Material inspection delete failed: ' . $e->getMessage());
+
+            return response()->json(['success' => false, 'message' => 'Failed to delete the inspection.'], 500);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Inspection deleted successfully.']);
+    }
+
     public function updateStock(Request $request, int $id): JsonResponse
     {
         if (!$request->user()->can('Material Inspections')) {

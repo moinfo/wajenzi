@@ -10,39 +10,82 @@ use Illuminate\Support\Carbon;
 
 class SalesDailyReportController extends Controller
 {
+    /**
+     * The web's Sales Daily Reports page as data: the same filters (a user sees
+     * only their own reports unless they may view all), the summary cards and
+     * "Invoices Written - by Preparer" table, and the report rows with the
+     * counts, department and approval steps the web's list shows.
+     */
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
+        $canViewAll = (bool) $user->can('View All Daily Reports');
+
         $query = SalesDailyReport::with([
-                'preparedBy:id,name',
-                'leadFollowups:id,sales_daily_report_id,lead_name,details_discussion,outcome,next_step,followup_date',
+                'preparedBy.department',
+                'approvalStatus',
+                'leadFollowups:id,sales_daily_report_id',
                 'salesActivities:id,sales_daily_report_id,invoice_no,invoice_sum,activity,status',
-                'clientConcerns:id,sales_daily_report_id,client_name,issue_concern,action_taken',
+                'clientConcerns:id,sales_daily_report_id',
             ])
             ->orderBy('report_date', 'desc');
+
+        if (!$canViewAll || $request->boolean('my_reports')) {
+            $query->where('prepared_by', $user->id);
+        }
 
         if ($request->filled('status')) {
             $query->where('status', strtoupper((string) $request->status));
         }
-
         if ($request->filled('start_date')) {
             $query->whereDate('report_date', '>=', Carbon::parse($request->start_date));
         }
-
         if ($request->filled('end_date')) {
             $query->whereDate('report_date', '<=', Carbon::parse($request->end_date));
         }
-
-        if ($request->boolean('my_reports')) {
-            $query->where('prepared_by', $request->user()->id);
+        if ($request->filled('user_id')) {
+            $query->where('prepared_by', $request->user_id);
         }
 
         $reports = $query->paginate((int) ($request->per_page ?? 20));
 
+        $flowSteps = [];
+        $rows = collect($reports->items())->map(function (SalesDailyReport $report) use (&$flowSteps) {
+            $row = $this->transformReport($report, false);
+
+            $approvals = collect($report->approvalStatus?->steps ?? [])->map(function ($step) use (&$flowSteps) {
+                $id = $step['id'] ?? null;
+                if ($id !== null && !array_key_exists($id, $flowSteps)) {
+                    $flowSteps[$id] = \RingleSoft\LaravelProcessApproval\Models\ProcessApprovalFlowStep::with('role')->find($id)?->role?->name;
+                }
+
+                return [
+                    'role_name' => $flowSteps[$id] ?? 'Step',
+                    'action' => $step['process_approval_action'] ?? 'Pending',
+                ];
+            })->values();
+
+            return $row + [
+                'department_name' => $report->preparedBy?->department?->name,
+                'followups_count' => $report->leadFollowups->count(),
+                'activities_count' => $report->salesActivities->count(),
+                'activities_total' => (float) $report->salesActivities->sum('invoice_sum'),
+                'concerns_count' => $report->clientConcerns->count(),
+                'approval_status' => $report->approvalStatus?->status ?? 'PENDING',
+                'approvals' => $approvals,
+            ];
+        })->values();
+
         return response()->json([
             'success' => true,
-            'data' => collect($reports->items())
-                ->map(fn (SalesDailyReport $report) => $this->transformReport($report, false))
-                ->values(),
+            'data' => $rows,
+            'summary' => $this->summary($request),
+            'filters' => [
+                'can_view_all' => $canViewAll,
+                'users' => $canViewAll
+                    ? \App\Models\User::orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['id' => $u->id, 'name' => $u->name])->values()
+                    : [],
+            ],
             'meta' => [
                 'current_page' => $reports->currentPage(),
                 'last_page' => $reports->lastPage(),
@@ -52,6 +95,31 @@ class SalesDailyReportController extends Controller
         ]);
     }
 
+    /**
+     * The summary cards and per-preparer invoice table, computed by the web
+     * controller's own method so the numbers are the web's. They are the totals
+     * of everything the user may see: the list's date, status and preparer
+     * filters narrow the list only, never these figures.
+     */
+    private function summary(Request $request): array
+    {
+        $web = app(\App\Http\Controllers\SalesDailyReportController::class);
+        $method = new \ReflectionMethod($web, 'buildSummary');
+        $method->setAccessible(true);
+        $summary = $method->invoke($web, Request::create('/x', 'GET'));
+
+        $summary['by_user'] = collect($summary['by_user'])->map(fn ($r) => [
+            'user_id' => (int) $r->user_id,
+            'user_name' => $r->user_name,
+            'invoice_count' => (int) $r->invoice_count,
+            'invoice_total' => (float) $r->invoice_total,
+            'paid_total' => (float) $r->paid_total,
+            'unpaid_total' => (float) $r->unpaid_total,
+        ])->values()->all();
+        unset($summary['filters']);
+
+        return $summary;
+    }
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([

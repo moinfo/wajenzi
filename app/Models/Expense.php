@@ -57,7 +57,7 @@ class Expense extends Model implements ApprovableModel
             ->where('expenses_sub_categories.expenses_category_id','=',1)
             ->WhereBetween('expenses.date',[$start_date,$end_date])
             ->Where('expenses.status','APPROVED')
-             ->get()->first()['total_amount'];
+             ->get()->first()['total_amount'] ?? 0;
     }
     public static function getTotalExpensesGroupByExpensesCategory($start_date,$end_date,$category){
       $expenses =  Expense::select(DB::raw("SUM(expenses.amount) as total_amount"))
@@ -69,7 +69,7 @@ class Expense extends Model implements ApprovableModel
              $expenses->Where('expenses_sub_categories.expenses_category_id',$category);
          }
 
-        return $expenses ->groupBy('expenses_sub_categories.expenses_category_id')->get()->first()['total_amount'];
+        return $expenses ->groupBy('expenses_sub_categories.expenses_category_id')->get()->first()['total_amount'] ?? 0;
     }
     public static function getTotalExpensesGroupBySubExpensesCategory($start_date,$end_date,$sub_category_id){
         $expenses = Expense::select(DB::raw("SUM(expenses.amount) as total_amount"))
@@ -79,7 +79,7 @@ class Expense extends Model implements ApprovableModel
                     $expenses->Where('expenses.expenses_sub_category_id',$sub_category_id);
                 }
 
-        return $expenses->get()->first()['total_amount'];
+        return $expenses->get()->first()['total_amount'] ?? 0;
     }
     public static function getTotalExpensesGroupBySubExpensesCategoryOnlyFinancial($start_date,$end_date){
         $expenses = Expense::select(DB::raw("SUM(expenses.amount) as total_amount"))
@@ -88,7 +88,7 @@ class Expense extends Model implements ApprovableModel
              ->Where('expenses.status','APPROVED')
         ->Where('expenses_sub_categories.is_financial','YES');
 
-        return $expenses->get()->first()['total_amount'];
+        return $expenses->get()->first()['total_amount'] ?? 0;
     }
 
     public static function getTotalFinancialCharges($start_date,$end_date){
@@ -97,7 +97,7 @@ class Expense extends Model implements ApprovableModel
             ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses_sub_categories.expenses_category_id')
             ->where('expenses_sub_categories.expenses_category_id','=',2)
             ->WhereBetween('expenses.date',[$start_date,$end_date])
-            ->get()->first()['total_amount'];
+            ->get()->first()['total_amount'] ?? 0;
     }
 
     public static function getTotalDepreciation($start_date,$end_date){
@@ -107,11 +107,11 @@ class Expense extends Model implements ApprovableModel
             ->where('expenses_sub_categories.expenses_category_id','=',3)
             ->WhereBetween('expenses.date',[$start_date,$end_date])
             ->Where('expenses.status','APPROVED')
-            ->get()->first()['total_amount'];
+            ->get()->first()['total_amount'] ?? 0;
     }
 
     public static function getTotalExpense($start_date,$end_date){
-     return   Expense::select(DB::raw("SUM(amount) as total_amount"))->Where('status','APPROVED')->WhereBetween('date',[$start_date,$end_date])->get()->first()['total_amount'];
+     return   Expense::select(DB::raw("SUM(amount) as total_amount"))->Where('status','APPROVED')->WhereBetween('date',[$start_date,$end_date])->get()->first()['total_amount'] ?? 0;
     }
 
     public static function getTotalExpensesInFinancial($start_date,$end_date){

@@ -41,6 +41,14 @@ class BillingDocumentController extends Controller
             $query->where('status', $request->status);
         }
 
+        // Start Date / End Date, on the issue date like the web's invoice filters.
+        if ($request->start_date) {
+            $query->whereDate('issue_date', '>=', $request->start_date);
+        }
+        if ($request->end_date) {
+            $query->whereDate('issue_date', '<=', $request->end_date);
+        }
+
         if ($request->client_id) {
             $query->where('client_id', $request->client_id);
         }
@@ -166,10 +174,18 @@ class BillingDocumentController extends Controller
     {
         $document = BillingDocument::findOrFail($id);
 
-        if (!in_array($document->status, ['draft'])) {
+        // Invoices follow the web's rule (draft, pending, sent or viewed);
+        // quotations and proformas stay draft-only.
+        $editable = $document->document_type === 'invoice'
+            ? $document->is_editable
+            : in_array($document->status, ['draft']);
+
+        if (!$editable) {
             return response()->json([
                 'success' => false,
-                'message' => 'Only draft documents can be edited.',
+                'message' => $document->document_type === 'invoice'
+                    ? 'This invoice cannot be edited.'
+                    : 'Only draft documents can be edited.',
             ], 403);
         }
 
@@ -251,6 +267,21 @@ class BillingDocumentController extends Controller
     public function destroy(int $id): JsonResponse
     {
         $document = BillingDocument::findOrFail($id);
+
+        // Invoices: the web offers Delete while editable, refuses when payments
+        // exist, and cancels the invoice instead of removing the record.
+        if ($document->document_type === 'invoice') {
+            if (!$document->is_editable) {
+                return response()->json(['success' => false, 'message' => 'This invoice cannot be deleted.'], 403);
+            }
+            if ($document->payments()->exists()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete invoice with payments.'], 422);
+            }
+
+            $document->update(['status' => 'cancelled']);
+
+            return response()->json(['success' => true, 'message' => 'Invoice cancelled successfully.']);
+        }
 
         if ($document->status !== 'draft') {
             return response()->json([

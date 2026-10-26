@@ -841,7 +841,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Project Documents
     Route::prefix('project-documents')->group(function () {
         Route::get('/', [ProjectDocumentApiController::class, 'index']);
+        Route::post('/', [ProjectDocumentApiController::class, 'store']);
         Route::get('{id}', [ProjectDocumentApiController::class, 'show']);
+        Route::post('{id}', [ProjectDocumentApiController::class, 'update']);
+        Route::delete('{id}', [ProjectDocumentApiController::class, 'destroy']);
     });
 
     // Project Reports
@@ -977,6 +980,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('billing/quotations/{id}/pdf', [ExportApiController::class, 'quotationPdf']);
         Route::get('billing/proformas/{id}/pdf', [ExportApiController::class, 'proformaPdf']);
         Route::get('project-documents/{id}/download', [ExportApiController::class, 'projectDocument']);
+        Route::get('table', [ExportApiController::class, 'table']);
         Route::get('calendar/followups', [ExportApiController::class, 'followupsCalendar']);
         Route::get('calendar/invoices', [ExportApiController::class, 'invoicesCalendar']);
         Route::get('site-daily-reports/{id}/txt', [ExportApiController::class, 'siteDailyReportTxt']);
@@ -1000,6 +1004,14 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('{id}/pdf', [BillingDocumentController::class, 'pdf']);
         });
 
+        // Invoice actions of the web Invoices page (summary cards, record payment, void, duplicate)
+        Route::prefix('invoices')->group(function () {
+            Route::get('summary', [\App\Http\Controllers\Api\V1\InvoiceActionsApiController::class, 'summary']);
+            Route::post('{id}/payments', [\App\Http\Controllers\Api\V1\InvoiceActionsApiController::class, 'recordPayment'])->whereNumber('id');
+            Route::post('{id}/void', [\App\Http\Controllers\Api\V1\InvoiceActionsApiController::class, 'void'])->whereNumber('id');
+            Route::post('{id}/duplicate', [\App\Http\Controllers\Api\V1\InvoiceActionsApiController::class, 'duplicate'])->whereNumber('id');
+        });
+
         // Payments
         Route::prefix('payments')->group(function () {
             Route::get('reference-data', [BillingPaymentController::class, 'referenceData']);
@@ -1007,6 +1019,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [BillingPaymentController::class, 'store']);
             Route::get('{id}', [BillingPaymentController::class, 'show']);
             Route::put('{id}', [BillingPaymentController::class, 'update']);
+            Route::post('{id}/void', [BillingPaymentController::class, 'void'])->whereNumber('id');
             Route::delete('{id}', [BillingPaymentController::class, 'destroy']);
         });
 
@@ -1059,11 +1072,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('payslips', [PayrollController::class, 'payslips']);
         Route::get('payslips/{id}', [PayrollController::class, 'payslipDetail']);
         Route::get('loan-balance', [PayrollController::class, 'loanBalance']);
+        Route::get('staff-payroll', [PayrollController::class, 'staffPayroll']);
+        Route::post('staff-payroll', [PayrollController::class, 'createStaffPayroll']);
         Route::get('crdb-bank-file', [CrdbBankFileApiController::class, 'index']);
     });
 
     Route::prefix('payroll-administration')->group(function () {
         Route::get('reference-data', [PayrollAdministrationApiController::class, 'referenceData']);
+        Route::get('create-preview', [PayrollAdministrationApiController::class, 'createPreview']);
+        Route::post('create', [PayrollAdministrationApiController::class, 'createFromWeb']);
         Route::get('/', [PayrollAdministrationApiController::class, 'index']);
         Route::post('/', [PayrollAdministrationApiController::class, 'store']);
         Route::get('{id}', [PayrollAdministrationApiController::class, 'show']);
@@ -1072,6 +1089,45 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Notifications
+    // The tiles of the web Settings page
+    Route::get('settings-hub', [\App\Http\Controllers\Api\V1\SettingsHubApiController::class, 'index']);
+
+    // Site stock and stock receipts (same rules as the web's stock pages)
+    Route::prefix('project-stock')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\V1\ProjectStockApiController::class, 'items']);
+        Route::post('/', [\App\Http\Controllers\Api\V1\ProjectStockApiController::class, 'storeItem']);
+        Route::put('{id}', [\App\Http\Controllers\Api\V1\ProjectStockApiController::class, 'updateItem'])->whereNumber('id');
+        Route::delete('{id}', [\App\Http\Controllers\Api\V1\ProjectStockApiController::class, 'destroyItem'])->whereNumber('id');
+    });
+    Route::prefix('project-stock-receipts')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\V1\ProjectStockApiController::class, 'receipts']);
+        Route::post('/', [\App\Http\Controllers\Api\V1\ProjectStockApiController::class, 'storeReceipt']);
+        Route::get('{id}', [\App\Http\Controllers\Api\V1\ProjectStockApiController::class, 'showReceipt'])->whereNumber('id');
+        Route::delete('{id}', [\App\Http\Controllers\Api\V1\ProjectStockApiController::class, 'destroyReceipt'])->whereNumber('id');
+    });
+
+    // Data tables of web list / report pages (project, bank reconciliation, bookkeeping)
+    Route::get('web-tables/{route}', [\App\Http\Controllers\Api\V1\WebTableApiController::class, 'show']);
+
+    // Approval of the document types handled on the web only (see the controller)
+    Route::prefix('document-approvals')->group(function () {
+        Route::get('pending', [\App\Http\Controllers\Api\V1\DocumentApprovalApiController::class, 'pending']);
+        Route::get('{type}/{id}', [\App\Http\Controllers\Api\V1\DocumentApprovalApiController::class, 'show'])->whereNumber('id');
+        Route::post('{type}/{id}/submit', [\App\Http\Controllers\Api\V1\DocumentApprovalApiController::class, 'submit'])->whereNumber('id');
+        Route::post('{type}/{id}/approve', [\App\Http\Controllers\Api\V1\DocumentApprovalApiController::class, 'approve'])->whereNumber('id');
+        Route::post('{type}/{id}/reject', [\App\Http\Controllers\Api\V1\DocumentApprovalApiController::class, 'reject'])->whereNumber('id');
+    });
+
+    // Settings pages served by the generic CRUD screen (see MobileCrudRegistry)
+    Route::prefix('crud/{resource}')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\V1\GenericCrudApiController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Api\V1\GenericCrudApiController::class, 'store']);
+        Route::put('{id}', [\App\Http\Controllers\Api\V1\GenericCrudApiController::class, 'update'])->whereNumber('id');
+        // multipart forms (a file attached) are sent with POST: PHP does not parse PUT bodies
+        Route::post('{id}', [\App\Http\Controllers\Api\V1\GenericCrudApiController::class, 'update'])->whereNumber('id');
+        Route::delete('{id}', [\App\Http\Controllers\Api\V1\GenericCrudApiController::class, 'destroy'])->whereNumber('id');
+    });
+
     Route::prefix('notifications')->group(function () {
         Route::get('/', [NotificationController::class, 'index']);
         Route::put('{id}/read', [NotificationController::class, 'markAsRead']);
@@ -1136,6 +1192,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Salary Slips
     Route::prefix('salary-slips')->group(function () {
         Route::get('/', [SalarySlipApiController::class, 'index']);
+        Route::get('/slip', [SalarySlipApiController::class, 'slip']);
         Route::get('/payslip', [SalarySlipApiController::class, 'getPayslip']);
         Route::get('/payslip/pdf', [SalarySlipApiController::class, 'pdf']);
         Route::get('/staff/{staffId}/payslips', [SalarySlipApiController::class, 'listStaffPayslips']);
@@ -1188,6 +1245,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('inspections/receivings/{receivingId}/create-data', [MaterialInspectionController::class, 'createData']);
         Route::post('inspections', [MaterialInspectionController::class, 'store']);
         Route::get('inspections/{id}', [MaterialInspectionController::class, 'show']);
+        Route::delete('inspections/{id}', [MaterialInspectionController::class, 'destroy']);
         Route::post('inspections/{id}/approve', [MaterialInspectionController::class, 'approve']);
         Route::post('inspections/{id}/reject', [MaterialInspectionController::class, 'reject']);
         Route::post('inspections/{id}/update-stock', [MaterialInspectionController::class, 'updateStock']);
@@ -1305,6 +1363,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('field-marketing')->group(function () {
         Route::get('reference-data', [FieldMarketingApiController::class, 'referenceData']);
         Route::get('stats', [FieldMarketingApiController::class, 'stats']);
+        Route::get('targets', [FieldMarketingApiController::class, 'targets']);
+        Route::get('visits', [FieldMarketingApiController::class, 'visits']);
+        Route::get('services', [FieldMarketingApiController::class, 'services']);
         Route::get('/', [FieldMarketingApiController::class, 'index']);
         Route::post('sessions', [FieldMarketingApiController::class, 'storeSession']);
         Route::get('sessions/{id}', [FieldMarketingApiController::class, 'showSession']);
@@ -1341,6 +1402,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('content-creator')->group(function () {
         Route::get('reference-data', [ContentCreatorApiController::class, 'referenceData']);
         Route::get('board', [ContentCreatorApiController::class, 'board']);
+        Route::get('stats', [ContentCreatorApiController::class, 'stats']);
+        Route::get('calendar', [ContentCreatorApiController::class, 'calendar']);
+        Route::get('workability', [ContentCreatorApiController::class, 'workability']);
+        Route::get('targets', [ContentCreatorApiController::class, 'targets']);
         Route::get('/', [ContentCreatorApiController::class, 'index']);
         Route::post('tasks', [ContentCreatorApiController::class, 'storeTask']);
         Route::get('tasks/{id}', [ContentCreatorApiController::class, 'showTask']);

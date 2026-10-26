@@ -401,10 +401,8 @@ class MaterialRequestController extends Controller
      */
     public function updateQuantities(Request $request, int $id): JsonResponse
     {
-        if ($denied = $this->requirePermission($request, 'Edit Material Request')) {
-            return $denied;
-        }
-
+        // No permission check here: the web (ProjectMaterialRequestController::
+        // updateQuantities) only blocks APPROVED requests, so the API does too.
         try {
             $materialRequest = ProjectMaterialRequest::with('items')->findOrFail($id);
 

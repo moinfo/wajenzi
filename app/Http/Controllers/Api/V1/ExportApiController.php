@@ -21,6 +21,7 @@ use App\Models\ProjectDocument;
 use App\Models\ProjectSiteVisit;
 use App\Models\SalesDailyReport;
 use App\Models\SiteDailyReport;
+use App\Services\WebTableExporter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -160,6 +161,36 @@ class ExportApiController extends Controller
     public function invoicesCalendar(Request $request): JsonResponse
     {
         return $this->wrap(app(DashboardController::class)->exportInvoicesToCalendar($request));
+    }
+
+    // ── Web list tables (DataTables Excel / PDF buttons) ──────────────────
+
+    /**
+     * GET exports/table?route=<web route name>&format=excel|pdf[&params[..]=..]
+     */
+    public function table(Request $request, WebTableExporter $exporter): JsonResponse
+    {
+        $format = $request->query('format', 'excel');
+        if (!in_array($format, ['excel', 'pdf'], true)) {
+            return response()->json(['success' => false, 'message' => 'Unsupported format'], 422);
+        }
+
+        try {
+            $table = $exporter->read(
+                (string) $request->query('route'),
+                (array) $request->query('params', []),
+                $request->user(),
+                (int) $request->query('index', 0),
+            );
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        $name = preg_replace('/[^A-Za-z0-9_-]+/', '_', (string) $request->query('route')) . '_' . date('Y-m-d');
+
+        return $format === 'pdf'
+            ? $this->file($exporter->pdf($table), $name . '.pdf', 'application/pdf')
+            : $this->file($exporter->xlsx($table), $name . '.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 
     // ── Site daily reports ────────────────────────────────────────────────

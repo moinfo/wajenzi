@@ -471,7 +471,7 @@ class ContentCreatorApiController extends Controller
 
     private function buildCrew(): array
     {
-        return ContentCreatorCrew::with('user:id,name')
+        $crew = ContentCreatorCrew::with('user:id,name')
             ->whereHas('user', fn ($q) => $q->where('status', 'ACTIVE'))
             ->get()
             ->map(fn ($c) => [
@@ -482,8 +482,138 @@ class ContentCreatorApiController extends Controller
                 'skills'        => $c->skills ?? [],
                 'online_status' => $c->online_status,
             ])->all();
+
+        if (!empty($crew)) {
+            return $crew;
+        }
+
+        // No crew records yet: the web shows users holding a content-creator role.
+        return User::where('status', 'ACTIVE')
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', ['Content creator and IT', 'Digital Marketing and Content Creator']))
+            ->orderBy('name')->get(['id', 'name'])
+            ->map(fn ($u) => [
+                'id'            => null,
+                'user_id'       => $u->id,
+                'name'          => $u->name,
+                'role'          => $u->roles->first()?->name ?? 'Creator',
+                'skills'        => [],
+                'online_status' => 'online',
+            ])->all();
     }
 
+    // ────────────────────────── Web tabs ──────────────────────────
+
+    /** The five stat tiles above the tabs. */
+    public function stats(Request $request): JsonResponse
+    {
+        [$year, $mon] = $this->parseMonth($request->input('month', now()->format('Y-m')));
+
+        return response()->json(['success' => true, 'data' => $this->buildStats((int) $year, (int) $mon)]);
+    }
+
+    /** Content Calendar tab: one week, a row per crew member, each day's tasks and schedule. */
+    public function calendar(Request $request): JsonResponse
+    {
+        try {
+            $anchor = $request->filled('week') ? \Carbon\Carbon::parse($request->input('week')) : now();
+        } catch (\Throwable $e) {
+            $anchor = now();
+        }
+        $start = $anchor->copy()->startOfWeek();
+        $end = $start->copy()->endOfWeek();
+
+        $tasks = ContentCreatorTask::with('assignee:id,name')->whereNotNull('deadline')
+            ->whereBetween('deadline', [$start->toDateString(), $end->toDateString()])->get();
+        $schedules = \App\Models\ContentCreatorSchedule::whereBetween('date', [$start->toDateString(), $end->toDateString()])->get();
+
+        $days = collect(range(0, 6))->map(fn ($i) => $start->copy()->addDays($i)->toDateString())->all();
+
+        $rows = collect($this->buildCrew())->map(function ($m) use ($tasks, $schedules, $days) {
+            $uid = $m['user_id'];
+            $cells = [];
+            foreach ($days as $d) {
+                $items = [];
+                foreach ($schedules->where('user_id', $uid) as $sc) {
+                    if ($sc->date->toDateString() === $d) {
+                        $items[] = ['kind' => 'schedule', 'id' => $sc->id, 'title' => $sc->title, 'task_type' => $sc->task_type];
+                    }
+                }
+                foreach ($tasks->where('assigned_to', $uid) as $t) {
+                    if ($t->deadline && $t->deadline->toDateString() === $d) {
+                        $items[] = ['kind' => 'task', 'id' => $t->id, 'title' => $t->title, 'task_type' => $t->task_type];
+                    }
+                }
+                $cells[$d] = $items;
+            }
+
+            return ['user_id' => $uid, 'name' => $m['name'], 'days' => $cells];
+        })->values()->all();
+
+        return response()->json(['success' => true, 'data' => [
+            'start' => $start->toDateString(),
+            'end' => $end->toDateString(),
+            'days' => $days,
+            'members' => $rows,
+        ]]);
+    }
+
+    /** Crew Workability tab. */
+    public function workability(Request $request): JsonResponse
+    {
+        [$year, $mon] = $this->parseMonth($request->input('month', now()->format('Y-m')));
+
+        $rows = collect($this->buildCrew())->map(function ($m) use ($year, $mon) {
+            $tasks = ContentCreatorTask::where('assigned_to', $m['user_id'])
+                ->whereYear('created_at', (int) $year)->whereMonth('created_at', (int) $mon)->get();
+            $total = $tasks->count();
+            $done = $tasks->where('status', 'published')->count();
+            $inProgress = $tasks->whereIn('status', ['in_progress', 'in_review'])->count();
+            $overdue = $tasks->filter(fn ($t) => $t->isOverdue())->count();
+
+            return $m + [
+                'total' => $total,
+                'done' => $done,
+                'in_progress' => $inProgress,
+                'overdue' => $overdue,
+                'workload' => $total > 0 ? min(100, (int) round(($inProgress + $done) / $total * 100)) : 0,
+            ];
+        })->values()->all();
+
+        return response()->json(['success' => true, 'data' => $rows]);
+    }
+
+    /** Targets & Matrix tab: per-platform post targets plus the responsibility matrix. */
+    public function targets(Request $request): JsonResponse
+    {
+        $month = $request->input('month', now()->format('Y-m'));
+        [$year, $mon] = $this->parseMonth($month);
+
+        $targets = ContentCreatorPlatformTarget::where('month', (int) $mon)->where('year', (int) $year)->get()->keyBy('platform');
+
+        $platforms = collect(['instagram', 'tiktok', 'facebook', 'linkedin', 'youtube'])->map(function ($p) use ($targets, $year, $mon) {
+            $target = (int) ($targets->get($p)?->target_posts ?? 0);
+            $current = ContentCreatorTask::where('platform', $p)->where('status', 'published')
+                ->whereMonth('approved_at', (int) $mon)->whereYear('approved_at', (int) $year)->count();
+
+            return [
+                'platform' => $p,
+                'target' => $target,
+                'current' => $current,
+                'percent' => $target > 0 ? min(100, (int) round($current / $target * 100)) : 0,
+            ];
+        })->all();
+
+        $matrix = collect([
+            ['Video Shoot', 'Videographer', 'Editor', 'Creative Lead', 'Manager'],
+            ['Post Design', 'Designer', 'Copywriter', 'Creative Lead', 'Manager'],
+            ['Captions', 'Copywriter', 'Designer', 'Creative Lead', 'Manager'],
+            ['Scheduling', 'Social Mgr', 'Copywriter', 'Manager', '—'],
+            ['Analytics', 'Analyst', 'Social Mgr', 'Manager', '—'],
+            ['Client Approval', 'Account Mgr', '—', 'Creative Lead', 'Director'],
+        ])->map(fn ($r) => ['task_type' => $r[0], 'primary' => $r[1], 'support' => $r[2], 'review' => $r[3], 'oversight' => $r[4]])->all();
+
+        return response()->json(['success' => true, 'data' => ['month' => $month, 'platforms' => $platforms, 'matrix' => $matrix]]);
+    }
     // ────────────────────────── Transformers ──────────────────────────
 
     private function transformTask(ContentCreatorTask $task, bool $withComments = false): array

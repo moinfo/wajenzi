@@ -103,8 +103,13 @@ class SettingsController extends Controller
     {
         $this->approvalService = $approvalService;
     }
-    public function index(Request $request){
-        $settings = [
+    /**
+     * The tiles of the Settings page (name = permission that shows it, route = page).
+     * Shared with the mobile API so the app lists exactly the same tiles.
+     */
+    public static function settingsTiles(): array
+    {
+        return [
             ['name'=>'Approval Flows', 'route'=>'hr_settings_process_approval_flows', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Approval Flow Step', 'route'=>'hr_settings_process_approval_flow_steps', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Staff Allowances', 'route'=>'hr_settings_allowances', 'icon' => 'si si-settings', 'badge' => 0],
@@ -167,6 +172,10 @@ class SettingsController extends Controller
 //            ['name'=>'Beneficiaries', 'route'=>'beneficiaries', 'icon' => 'si si-settings', 'badge' => 0],
 //            ['name'=>'Mawakala', 'route'=>'wakalas', 'icon' => 'si si-settings', 'badge' => 0],
         ];
+    }
+
+    public function index(Request $request){
+        $settings = self::settingsTiles();
         $data = [
             'settings' => $settings
         ];

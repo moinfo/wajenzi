@@ -13,13 +13,16 @@ use Illuminate\Support\Facades\Storage;
 
 class ImprestRequestApiController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(\Illuminate\Http\Request $request): JsonResponse
     {
         $requests = ImprestRequest::with([
             'user:id,name',
             'project:id,project_name',
             'expenseSubCategory:id,name',
-        ])->orderByDesc('date')->orderByDesc('id')->get();
+        ])
+            ->when($request->start_date, fn ($q, $d) => $q->whereDate('date', '>=', $d))
+            ->when($request->end_date, fn ($q, $d) => $q->whereDate('date', '<=', $d))
+            ->orderByDesc('date')->orderByDesc('id')->get();
 
         return response()->json([
             'success' => true,

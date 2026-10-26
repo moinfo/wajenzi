@@ -5,12 +5,125 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Payroll;
 use App\Models\User;
+use App\Services\WebTableExporter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PayrollController extends Controller
 {
+    /**
+     * Column order of the web payroll page's `#payroll` table. The web's
+     * "Create Payroll" button reads exactly these cells (hidden raw-value
+     * columns) by position, so the API does the same.
+     */
+    private const STAFF_PAYROLL_COLUMNS = [
+        1 => 'name', 2 => 'basicSalary', 3 => 'allowance', 4 => 'grossPay',
+        5 => 'employerPension', 6 => 'employeePension', 7 => 'employerHealth',
+        8 => 'employeeHealth', 9 => 'taxable', 10 => 'paye', 11 => 'wpf',
+        12 => 'sdl', 13 => 'heslb', 14 => 'advanceSalary', 15 => 'totalLoan',
+        16 => 'loanDeduction', 17 => 'loanBalance', 18 => 'net', 19 => 'staff_id',
+    ];
+
+    /**
+     * GET /payroll/staff-payroll
+     * The "Staff Payroll" table of the web Payroll page for the current month.
+     */
+    public function staffPayroll(Request $request, WebTableExporter $web): JsonResponse
+    {
+        try {
+            $rows = $this->staffPayrollRows($web, $request->user(), true);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        $paid = $this->currentPayrollPaid();
+
+        return response()->json([
+            'success' => true,
+            'data' => $rows,
+            'meta' => [
+                'month' => date('F Y'),
+                'already_created' => $paid,
+                'can_create' => !$paid && $request->user()->can('Add Payroll'),
+            ],
+        ]);
+    }
+
+    /**
+     * POST /payroll/staff-payroll
+     * The web "Create Payroll" button: stores the displayed rows in
+     * payroll_records (AjaxController::ajaxRequestPost), once per month.
+     */
+    public function createStaffPayroll(Request $request, WebTableExporter $web): JsonResponse
+    {
+        if (!$request->user()->can('Add Payroll')) {
+            return response()->json(['success' => false, 'message' => 'You do not have permission to create payroll.'], 403);
+        }
+        if ($this->currentPayrollPaid()) {
+            return response()->json(['success' => false, 'message' => 'Payroll for this month has already been created.'], 422);
+        }
+
+        try {
+            $rows = $this->staffPayrollRows($web, $request->user(), false);
+            if (!$rows) {
+                return response()->json(['success' => false, 'message' => 'There is no payroll data to create.'], 422);
+            }
+            DB::table('payroll_records')->insert($rows);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            \Log::error('Create payroll failed: ' . $e->getMessage());
+
+            return response()->json(['success' => false, 'message' => 'Changes are not saved. There is a problem.'], 500);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Payroll created for this month.']);
+    }
+
+    private function currentPayrollPaid(): bool
+    {
+        return (bool) Payroll::isCurrentPayrollPaid(date('Y-m-01'), date('Y-m-t'));
+    }
+
+    /**
+     * Rows of the `#payroll` table keyed like the web JS (storeTblValues):
+     * every row, minus the header (first) and the totals row (last).
+     */
+    private function staffPayrollRows(WebTableExporter $web, $user, bool $trim): array
+    {
+        $html = $web->html('payroll', [], $user);
+
+        $dom = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="utf-8"?>' . $html);
+        libxml_clear_errors();
+        $xp = new \DOMXPath($dom);
+
+        $trs = [];
+        foreach ($xp->query("//table[@id='payroll']//tr") as $tr) {
+            $trs[] = $tr;
+        }
+        if (count($trs) < 3) {
+            return [];
+        }
+        array_shift($trs);
+        array_pop($trs);
+
+        $rows = [];
+        foreach ($trs as $tr) {
+            $cells = $xp->query('./td', $tr);
+            $row = [];
+            foreach (self::STAFF_PAYROLL_COLUMNS as $i => $key) {
+                $text = $cells->item($i)?->textContent ?? '';
+                $row[$key] = $trim ? trim($text) : $text;
+            }
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
     public function payslips(Request $request): JsonResponse
     {
         $user = $request->user();

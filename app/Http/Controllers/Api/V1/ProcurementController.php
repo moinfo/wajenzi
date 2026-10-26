@@ -29,6 +29,14 @@ class ProcurementController extends Controller
             ->orderByDesc('comparison_date')
             ->orderByDesc('created_at');
 
+        // Start Date / End Date on the comparison date (the web's filter)
+        if ($request->start_date) {
+            $query->whereDate('comparison_date', '>=', $request->start_date);
+        }
+        if ($request->end_date) {
+            $query->whereDate('comparison_date', '<=', $request->end_date);
+        }
+
         if ($request->search) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {

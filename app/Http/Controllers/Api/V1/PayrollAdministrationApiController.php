@@ -3,13 +3,160 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PayrollController;
 use App\Models\Payroll;
 use App\Models\PayrollNetSalary;
+use App\Services\WebTableExporter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PayrollAdministrationApiController extends Controller
 {
+    /**
+     * GET payroll-administration/create-preview?month=&year=
+     *
+     * The table of the web's "Create New Payroll" modal (forms/payroll_form):
+     * every staff member's computed payroll for the month.
+     */
+    public function createPreview(Request $request, WebTableExporter $web): JsonResponse
+    {
+        [$month, $year] = $this->monthYear($request);
+
+        if (Payroll::getIsPayrollOpened($month, $year)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Payroll for the selected month and year already exists',
+            ], 422);
+        }
+
+        try {
+            $form = $this->webPayrollForm($web, $request->user(), $month, $year);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $form['rows'],
+            'meta' => ['month' => (int) $month, 'year' => (int) $year, 'headers' => $form['headers']],
+        ]);
+    }
+
+    /**
+     * POST payroll-administration/create {month, year}
+     *
+     * The web's "Create New Payroll" submit: the values the web form computes
+     * are posted to PayrollController::create_payroll, which writes the payroll
+     * and every staff member's salary, deduction, loan, advance and net lines.
+     * Here the same form is rendered for the user and the same method is run
+     * (inside one transaction), so the result is identical to the web's.
+     */
+    public function createFromWeb(Request $request, WebTableExporter $web): JsonResponse
+    {
+        [$month, $year] = $this->monthYear($request);
+
+        if (Payroll::getIsPayrollOpened($month, $year)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Payroll for the selected month and year already exists',
+            ], 422);
+        }
+
+        try {
+            $form = $this->webPayrollForm($web, $request->user(), $month, $year);
+            if (!$form['inputs'] || empty($form['inputs']['staff_id'])) {
+                return response()->json(['success' => false, 'message' => 'There is no payroll data to create.'], 422);
+            }
+
+            $web_request = Request::create('/payroll/create_payroll', 'POST', $form['inputs']);
+            $web_request->setUserResolver(fn () => $request->user());
+
+            DB::transaction(function () use ($web_request) {
+                app(PayrollController::class)->create_payroll($web_request);
+            });
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            \Log::error('Create payroll failed: ' . $e->getMessage());
+
+            return response()->json(['success' => false, 'message' => 'Failed to create the payroll.'], 500);
+        }
+
+        $payroll = Payroll::with('user:id,name')->where('month', $month)->where('year', $year)->latest('id')->first();
+
+        return response()->json([
+            'success' => true,
+            'data' => $payroll ? $this->transformPayroll($payroll) : null,
+        ], 201);
+    }
+
+    /** @return array{0:int,1:int} */
+    private function monthYear(Request $request): array
+    {
+        $v = $request->validate([
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer|min:2000|max:2100',
+        ]);
+
+        return [(int) $v['month'], (int) $v['year']];
+    }
+
+    /**
+     * Render the web payroll form for a month and read it: the preview table
+     * and the hidden inputs the web form would post to create_payroll.
+     *
+     * @return array{headers:string[], rows:array<int,array<string,string>>, inputs:array<string,mixed>}
+     */
+    private function webPayrollForm(WebTableExporter $web, $user, int $month, int $year): array
+    {
+        $html = $web->render('/ajax/form', [
+            'formName' => 'payroll_form',
+            'className' => 'Payroll',
+            'month' => $month,
+            'year' => $year,
+        ], $user);
+
+        $dom = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="utf-8"?>' . $html);
+        libxml_clear_errors();
+        $xp = new \DOMXPath($dom);
+
+        $headers = [];
+        foreach ($xp->query('//table[1]//thead//th') as $th) {
+            $headers[] = trim(preg_replace('/\s+/u', ' ', $th->textContent));
+        }
+
+        $rows = [];
+        foreach ($xp->query('//table[1]//tbody/tr') as $tr) {
+            $cells = [];
+            foreach ($xp->query('./td', $tr) as $i => $td) {
+                $cells[$headers[$i] ?? (string) $i] = trim(preg_replace('/\s+/u', ' ', $td->textContent));
+            }
+            // Skip group-heading rows such as "HQ's Payroll" (no staff name).
+            if (($cells['Name'] ?? '') !== '') {
+                $rows[] = $cells;
+            }
+        }
+
+        $inputs = [];
+        foreach ($xp->query("//form[contains(@action,'create_payroll')]//input[@type='hidden'][@name]") as $input) {
+            $name = $input->getAttribute('name');
+            if ($name === '_token') {
+                continue;
+            }
+            $value = $input->getAttribute('value');
+            if (str_ends_with($name, '[]')) {
+                $inputs[substr($name, 0, -2)][] = $value;
+            } else {
+                $inputs[$name] = $value;
+            }
+        }
+
+        return ['headers' => $headers, 'rows' => $rows, 'inputs' => $inputs];
+    }
+
     public function index(): JsonResponse
     {
         $payrolls = Payroll::with('user:id,name')

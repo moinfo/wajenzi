@@ -14,9 +14,11 @@ use Illuminate\Support\Facades\Storage;
 
 class PettyCashRefillRequestApiController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(\Illuminate\Http\Request $request): JsonResponse
     {
         $query = PettyCashRefillRequest::with('user:id,name')
+            ->when($request->start_date, fn ($q, $d) => $q->whereDate('date', '>=', $d))
+            ->when($request->end_date, fn ($q, $d) => $q->whereDate('date', '<=', $d))
             ->orderByDesc('date')
             ->orderByDesc('id');
 
